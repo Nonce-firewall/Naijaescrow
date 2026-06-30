@@ -1,0 +1,1 @@
+- [Supabase migration](supabase-migration.md) — Firebase fully replaced with Supabase; schema SQL must be run in Supabase SQL Editor before first use.

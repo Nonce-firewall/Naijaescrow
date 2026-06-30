@@ -367,7 +367,7 @@ export default function UserDashboard({
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-8 font-sans">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 font-sans">
       
       {/* Real-time exchange rate banner styled as a Bento Grid Rates Card */}
       <div className="bg-[#1A1A1A] text-white rounded-3xl p-6 shadow-sm border border-[#E0E7E0]/10 flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 relative overflow-hidden">
@@ -1430,7 +1430,7 @@ export default function UserDashboard({
       {/* DETAIL RECEIPT MODAL */}
       <AnimatePresence>
         {viewReceipt && (
-          <div className="fixed inset-0 bg-[#1A1A1A]/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-[#1A1A1A]/50 z-50 flex items-center justify-center p-4">
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
