@@ -1,0 +1,106 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "User profile with role, kyc status and creation time",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "role": { "type": "string", "enum": ["user", "admin"] },
+        "kycStatus": { "type": "string", "enum": ["none", "pending", "approved", "rejected"] },
+        "kycData": { "type": "object" },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["uid", "email", "role", "kycStatus", "createdAt"]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "Buy or Sell escrow order details",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "userEmail": { "type": "string" },
+        "type": { "type": "string", "enum": ["buy", "sell"] },
+        "cryptoAmount": { "type": "number" },
+        "ngnAmount": { "type": "number" },
+        "rate": { "type": "number" },
+        "status": { "type": "string", "enum": ["pending", "completed", "rejected"] },
+        "network": { "type": "string", "enum": ["BSC", "Tron", "Polygon"] },
+        "token": { "type": "string" },
+        "paymentScreenshot": { "type": "string" },
+        "createdAt": { "type": "number" },
+        "processedAt": { "type": "number" },
+        "blockchainTxId": { "type": "string" },
+        "rejectionReason": { "type": "string" },
+        "userBankDetails": { "type": "object" },
+        "adminBankDetails": { "type": "object" },
+        "adminWalletAddress": { "type": "string" }
+      },
+      "required": ["userId", "userEmail", "type", "cryptoAmount", "ngnAmount", "rate", "status", "network", "token", "paymentScreenshot", "createdAt"]
+    },
+    "AdminSettings": {
+      "title": "Admin Settings",
+      "description": "Global administrator settings including bank accounts, rates and wallets",
+      "type": "object",
+      "properties": {
+        "ngnBankName": { "type": "string" },
+        "ngnAccountNumber": { "type": "string" },
+        "ngnAccountName": { "type": "string" },
+        "usdtRate": { "type": "number" },
+        "wallets": { "type": "object" }
+      },
+      "required": ["ngnBankName", "ngnAccountNumber", "ngnAccountName", "usdtRate", "wallets"]
+    },
+    "Announcement": {
+      "title": "Announcement",
+      "description": "System bulletin announcement",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "scope": { "type": "string", "enum": ["all", "public", "private"] },
+        "isActive": { "type": "boolean" },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["title", "content", "scope", "isActive", "createdAt"]
+    },
+    "CoinListing": {
+      "title": "Coin Listing",
+      "description": "Individual coin/asset listing with custom exchange rates and wallet addresses",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "symbol": { "type": "string" },
+        "network": { "type": "string" },
+        "walletAddress": { "type": "string" },
+        "rate": { "type": "number" },
+        "logoUrl": { "type": "string" },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["name", "symbol", "network", "walletAddress", "rate", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Individual user profile records"
+    },
+    "/orders/{orderId}": {
+      "schema": { "$ref": "#/entities/Order" },
+      "description": "Buy and sell transaction escrow records"
+    },
+    "/settings/{docId}": {
+      "schema": { "$ref": "#/entities/AdminSettings" },
+      "description": "Configuration settings for rates and recipient bank/wallet details"
+    },
+    "/announcements/{annId}": {
+      "schema": { "$ref": "#/entities/Announcement" },
+      "description": "System bulletin announcements"
+    },
+    "/coins/{coinId}": {
+      "schema": { "$ref": "#/entities/CoinListing" },
+      "description": "Custom cryptocurrency coins and token rates/wallets"
+    }
+  }
+}

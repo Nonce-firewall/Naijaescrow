@@ -1,0 +1,6 @@
+{
+  "name": "9ija Escrow",
+  "description": "A secure NGN/USDT P2P trading escrow platform featuring robust user dashboards, automated rate sheets, KYC verification, and a comprehensive Admin CMS.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
