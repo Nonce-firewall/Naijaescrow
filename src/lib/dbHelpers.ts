@@ -307,6 +307,16 @@ export async function deleteAnnouncement(id: string) {
   if (error) throw new Error(error.message);
 }
 
+export async function updateAnnouncement(id: string, fields: { title?: string; content?: string; scope?: string; is_active?: boolean }) {
+  const { error } = await supabase.from('announcements').update(fields).eq('id', id);
+  if (error) throw new Error(error.message);
+}
+
+export async function hardDeleteAnnouncement(id: string) {
+  const { error } = await supabase.from('announcements').delete().eq('id', id);
+  if (error) throw new Error(error.message);
+}
+
 export async function createCoinListing(coin: Omit<CoinListing, 'id' | 'createdAt'>) {
   const { error } = await supabase.from('coins').insert({
     name: coin.name,

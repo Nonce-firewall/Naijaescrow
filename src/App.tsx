@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { supabase } from './lib/supabase';
 import {
   getOrCreateUserProfile,
@@ -16,10 +16,11 @@ import { UserProfile, Order, AdminSettings, Announcement, CoinListing } from './
 
 import Navbar from './components/Navbar';
 import LandingPage from './components/LandingPage';
-import AuthPage from './components/AuthPage';
-import UserDashboard from './components/UserDashboard';
-import AdminCMS from './components/AdminCMS';
 import Notification, { ToastMessage } from './components/Notification';
+
+const AuthPage = lazy(() => import('./components/AuthPage'));
+const UserDashboard = lazy(() => import('./components/UserDashboard'));
+const AdminCMS = lazy(() => import('./components/AdminCMS'));
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState<'landing' | 'auth' | 'dashboard'>('landing');
@@ -270,16 +271,18 @@ export default function App() {
         )}
 
         {currentPage === 'auth' && (
-          <AuthPage
-            onBack={() => setCurrentPage('landing')}
-            onAuthSuccess={() => setCurrentPage('dashboard')}
-            addToast={addToast}
-            initialMode={authInitialMode}
-          />
+          <Suspense fallback={<div className="min-h-screen bg-[#F7F9F7] flex items-center justify-center"><div className="w-8 h-8 border-4 border-[#008751] border-t-transparent rounded-full animate-spin" /></div>}>
+            <AuthPage
+              onBack={() => setCurrentPage('landing')}
+              onAuthSuccess={() => setCurrentPage('dashboard')}
+              addToast={addToast}
+              initialMode={authInitialMode}
+            />
+          </Suspense>
         )}
 
         {currentPage === 'dashboard' && userProfile && (
-          <>
+          <Suspense fallback={<div className="min-h-screen bg-[#F7F9F7] flex items-center justify-center"><div className="w-8 h-8 border-4 border-[#008751] border-t-transparent rounded-full animate-spin" /></div>}>
             {isAdminMode && userProfile.role === 'admin' ? (
               <AdminCMS
                 userProfile={userProfile}
@@ -302,7 +305,7 @@ export default function App() {
                 onRefresh={handleDatabaseRefresh}
               />
             )}
-          </>
+          </Suspense>
         )}
       </div>
 

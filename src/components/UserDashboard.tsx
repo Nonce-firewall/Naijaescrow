@@ -1390,8 +1390,18 @@ export default function UserDashboard({
           {/* User Specific Notice Board */}
           <div className="bg-white rounded-3xl border border-[#E0E7E0] shadow-sm p-6 space-y-4">
             <div className="flex items-center gap-2 text-[#1A1A1A] border-b border-[#E0E7E0] pb-3">
-              <Bell className="w-4 h-4 text-[#008751]" />
+              <div className="relative shrink-0">
+                <Bell className="w-4 h-4 text-[#008751]" />
+                {privateAnnouncements.length > 0 && (
+                  <span className="notification-dot absolute -top-1 -right-1 w-2 h-2 bg-rose-500 rounded-full border border-white" />
+                )}
+              </div>
               <h4 className="font-bold text-xs uppercase tracking-wider">System Bulletin</h4>
+              {privateAnnouncements.length > 0 && (
+                <span className="ml-auto shrink-0 bg-rose-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full leading-none">
+                  {privateAnnouncements.length}
+                </span>
+              )}
             </div>
 
             {privateAnnouncements.length === 0 ? (

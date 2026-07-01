@@ -137,6 +137,32 @@ export default function LandingPage({ announcements, settings, onNavigate }: Lan
     <div className="bg-[#F7F9F7] min-h-screen font-sans text-[#1A1A1A]">
       <Modal type={activeModal} onClose={() => setActiveModal(null)} />
 
+      {/* Scrolling Announcement Ticker */}
+      {publicAnnouncements.length > 0 && (
+        <div className="bg-[#0a1a0f] border-b border-[#008751]/30 overflow-hidden relative" style={{ height: '34px' }}>
+          <div className="absolute inset-y-0 left-0 w-10 z-10 pointer-events-none" style={{ background: 'linear-gradient(to right, #0a1a0f, transparent)' }} />
+          <div className="absolute inset-y-0 right-0 w-10 z-10 pointer-events-none" style={{ background: 'linear-gradient(to left, #0a1a0f, transparent)' }} />
+          <div className="flex items-center h-full overflow-hidden">
+            <div className="shrink-0 flex items-center gap-1.5 pl-3 pr-4 z-10 bg-[#0a1a0f]">
+              <Bell className="w-3 h-3 text-[#00FF85]" />
+              <span className="text-[#00FF85] text-[10px] font-bold uppercase tracking-widest font-mono">LIVE</span>
+            </div>
+            <div className="flex-1 overflow-hidden relative">
+              <div className="ticker-track">
+                {[...publicAnnouncements, ...publicAnnouncements].map((ann, i) => (
+                  <span key={i} className="inline-flex items-center gap-3 px-6 text-[11px] font-medium text-gray-300">
+                    <span className="text-[#00FF85] font-bold">▸</span>
+                    <span className="font-semibold text-white">{ann.title}:</span>
+                    <span>{ann.content}</span>
+                    <span className="text-gray-600 mx-2">•••</span>
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Hero */}
       <header className="bg-[#1A1A1A] text-white py-14 sm:py-20 px-4 sm:px-6 rounded-b-[2rem]">
         <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">

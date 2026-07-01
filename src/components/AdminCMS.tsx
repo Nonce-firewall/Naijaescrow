@@ -32,6 +32,8 @@ import {
   updateAdminSettings, 
   createAnnouncement, 
   deleteAnnouncement,
+  updateAnnouncement,
+  hardDeleteAnnouncement,
   createCoinListing,
   deleteCoinListing,
   toggleCoinPublish,
@@ -100,6 +102,11 @@ export default function AdminCMS({
   const [bulletinScope, setBulletinScope] = useState<Announcement['scope']>('all');
   const [isCreatingBulletin, setIsCreatingBulletin] = useState(false);
   const [showArchivedBulletins, setShowArchivedBulletins] = useState(false);
+  const [editingAnn, setEditingAnn] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [editContent, setEditContent] = useState('');
+  const [editScope, setEditScope] = useState<'public' | 'private' | 'all'>('all');
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
 
   // Calculate quick metrics for Analytics view
   const totalBuyVolumeUsdt = orders
@@ -254,7 +261,7 @@ export default function AdminCMS({
     }
   };
 
-  // Toggle/Delete announcement
+  // Archive announcement
   const handleDeactivateBulletin = async (id: string) => {
     try {
       await deleteAnnouncement(id);
@@ -263,6 +270,34 @@ export default function AdminCMS({
     } catch (err: any) {
       console.error(err);
       addToast('Error: ' + err.message, 'error');
+    }
+  };
+
+  // Hard delete announcement
+  const handleHardDeleteBulletin = async (id: string, title: string) => {
+    if (!confirm(`Permanently delete "${title}"? This cannot be undone.`)) return;
+    try {
+      await hardDeleteAnnouncement(id);
+      addToast('Announcement permanently deleted.', 'info');
+      onRefresh();
+    } catch (err: any) {
+      addToast('Error: ' + err.message, 'error');
+    }
+  };
+
+  // Save edited announcement
+  const handleSaveEdit = async () => {
+    if (!editingAnn || !editTitle.trim() || !editContent.trim()) return;
+    setIsSavingEdit(true);
+    try {
+      await updateAnnouncement(editingAnn, { title: editTitle.trim(), content: editContent.trim(), scope: editScope });
+      addToast('Announcement updated.', 'success');
+      setEditingAnn(null);
+      onRefresh();
+    } catch (err: any) {
+      addToast('Update failed: ' + err.message, 'error');
+    } finally {
+      setIsSavingEdit(false);
     }
   };
 
@@ -912,31 +947,72 @@ export default function AdminCMS({
                   ) : (
                     <div className="space-y-3 max-h-[360px] overflow-y-auto pr-1">
                       {filtered.map((ann) => (
-                        <div key={ann.id} className={`p-3 border rounded-xl flex items-start justify-between gap-4 ${ann.isActive ? 'bg-slate-50 border-slate-100' : 'bg-slate-50/40 border-dashed border-slate-200 opacity-70'}`}>
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <h5 className="font-bold text-slate-800 text-xs">{ann.title}</h5>
-                              <span className={`text-[8px] px-1.5 py-0.5 rounded font-mono uppercase font-bold ${
-                                ann.scope === 'public' ? 'bg-blue-50 text-blue-700' : ann.scope === 'private' ? 'bg-amber-50 text-amber-700' : 'bg-purple-50 text-purple-700'
-                              }`}>
-                                {ann.scope}
-                              </span>
-                              {!ann.isActive && (
-                                <span className="bg-slate-200 text-slate-500 text-[8px] px-1.5 rounded font-mono font-bold">ARCHIVED</span>
-                              )}
+                        <div key={ann.id} className={`border rounded-xl overflow-hidden ${ann.isActive ? 'bg-slate-50 border-slate-100' : 'bg-slate-50/40 border-dashed border-slate-200 opacity-70'}`}>
+                          {/* Edit inline form */}
+                          {editingAnn === ann.id ? (
+                            <div className="p-3 space-y-2.5 bg-white border-b border-slate-100">
+                              <input
+                                value={editTitle}
+                                onChange={e => setEditTitle(e.target.value)}
+                                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs font-bold bg-white focus:outline-none focus:ring-2 focus:ring-[#008751]"
+                                placeholder="Announcement title"
+                              />
+                              <textarea
+                                value={editContent}
+                                onChange={e => setEditContent(e.target.value)}
+                                rows={3}
+                                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs bg-white focus:outline-none focus:ring-2 focus:ring-[#008751] resize-none"
+                                placeholder="Announcement content"
+                              />
+                              <div className="flex items-center gap-2">
+                                <select
+                                  value={editScope}
+                                  onChange={e => setEditScope(e.target.value as 'public' | 'private' | 'all')}
+                                  className="px-2 py-1.5 border border-slate-200 rounded-lg text-xs bg-white focus:outline-none"
+                                >
+                                  <option value="all">All Users</option>
+                                  <option value="public">Public Only</option>
+                                  <option value="private">Traders Only</option>
+                                </select>
+                                <button type="button" onClick={handleSaveEdit} disabled={isSavingEdit} className="px-3 py-1.5 bg-[#008751] hover:bg-[#007043] text-white text-[10px] font-bold rounded-lg cursor-pointer transition disabled:opacity-50">
+                                  {isSavingEdit ? 'Saving…' : 'Save'}
+                                </button>
+                                <button type="button" onClick={() => setEditingAnn(null)} className="px-3 py-1.5 border border-slate-200 text-[10px] font-bold rounded-lg cursor-pointer transition hover:bg-slate-100">
+                                  Cancel
+                                </button>
+                              </div>
                             </div>
-                            <p className="text-[11px] text-slate-500 leading-relaxed">{ann.content}</p>
-                            <span className="text-[9px] text-slate-400 font-mono block">Published: {new Date(ann.createdAt).toLocaleDateString()}</span>
-                          </div>
-
-                          {ann.isActive && (
-                            <button
-                              type="button"
-                              onClick={() => handleDeactivateBulletin(ann.id)}
-                              className="shrink-0 text-rose-600 hover:text-rose-800 text-[10px] font-bold border border-rose-200 hover:border-rose-300 px-2.5 py-1 rounded cursor-pointer transition bg-white"
-                            >
-                              Archive
-                            </button>
+                          ) : (
+                            <div className="p-3 flex items-start justify-between gap-4">
+                              <div className="space-y-1 min-w-0">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <h5 className="font-bold text-slate-800 text-xs">{ann.title}</h5>
+                                  <span className={`text-[8px] px-1.5 py-0.5 rounded font-mono uppercase font-bold ${
+                                    ann.scope === 'public' ? 'bg-blue-50 text-blue-700' : ann.scope === 'private' ? 'bg-amber-50 text-amber-700' : 'bg-purple-50 text-purple-700'
+                                  }`}>{ann.scope}</span>
+                                  {!ann.isActive && <span className="bg-slate-200 text-slate-500 text-[8px] px-1.5 rounded font-mono font-bold">ARCHIVED</span>}
+                                </div>
+                                <p className="text-[11px] text-slate-500 leading-relaxed">{ann.content}</p>
+                                <span className="text-[9px] text-slate-400 font-mono block">Published: {new Date(ann.createdAt).toLocaleDateString()}</span>
+                              </div>
+                              <div className="flex items-center gap-1.5 shrink-0">
+                                <button
+                                  type="button"
+                                  onClick={() => { setEditingAnn(ann.id); setEditTitle(ann.title); setEditContent(ann.content); setEditScope(ann.scope as 'public' | 'private' | 'all'); }}
+                                  className="text-[10px] font-bold border border-slate-200 hover:border-[#008751] hover:text-[#008751] px-2 py-1 rounded cursor-pointer transition bg-white"
+                                >
+                                  Edit
+                                </button>
+                                {ann.isActive && (
+                                  <button type="button" onClick={() => handleDeactivateBulletin(ann.id)} className="text-[10px] font-bold border border-amber-200 hover:border-amber-400 text-amber-700 hover:text-amber-900 px-2 py-1 rounded cursor-pointer transition bg-white">
+                                    Archive
+                                  </button>
+                                )}
+                                <button type="button" onClick={() => handleHardDeleteBulletin(ann.id, ann.title)} className="text-[10px] font-bold border border-rose-200 hover:border-rose-400 text-rose-600 hover:text-rose-800 px-2 py-1 rounded cursor-pointer transition bg-white">
+                                  Delete
+                                </button>
+                              </div>
+                            </div>
                           )}
                         </div>
                       ))}
