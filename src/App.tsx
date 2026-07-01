@@ -1,24 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { onAuthStateChanged } from 'firebase/auth';
-import { 
-  collection, 
-  query, 
-  where, 
-  orderBy, 
-  onSnapshot,
-  doc 
-} from 'firebase/firestore';
-import { auth, db } from './lib/firebase';
-import { 
-  getOrCreateUserProfile, 
-  ensureDefaultSettings, 
-  ensureDefaultAnnouncements, 
-  ensureDefaultCoins, 
-  DEFAULT_SETTINGS 
+import { supabase } from './lib/supabase';
+import {
+  getOrCreateUserProfile,
+  ensureDefaultSettings,
+  ensureDefaultAnnouncements,
+  ensureDefaultCoins,
+  DEFAULT_SETTINGS,
+  rowToSettings,
+  rowToOrder,
+  rowToAnnouncement,
+  rowToCoin,
+  rowToUserProfile
 } from './lib/dbHelpers';
 import { UserProfile, Order, AdminSettings, Announcement, CoinListing } from './types';
 
-// Component Imports
 import Navbar from './components/Navbar';
 import LandingPage from './components/LandingPage';
 import AuthPage from './components/AuthPage';
@@ -27,219 +22,217 @@ import AdminCMS from './components/AdminCMS';
 import Notification, { ToastMessage } from './components/Notification';
 
 export default function App() {
-  // Navigation State: 'landing' | 'auth' | 'dashboard'
   const [currentPage, setCurrentPage] = useState<'landing' | 'auth' | 'dashboard'>('landing');
   const [authInitialMode, setAuthInitialMode] = useState<'signin' | 'signup'>('signin');
-  
-  // Auth & Profile state
+
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [isAdminMode, setIsAdminMode] = useState<boolean>(false);
   const [isInitializing, setIsInitializing] = useState<boolean>(true);
 
-  // Database Data States
   const [settings, setSettings] = useState<AdminSettings>(DEFAULT_SETTINGS);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [kycUsers, setKycUsers] = useState<UserProfile[]>([]);
   const [coins, setCoins] = useState<CoinListing[]>([]);
 
-  // Toast System State
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
-
-  // Graceful error logging for snapshot listeners to prevent test runner crashes on expected auth transitions
-  const handleListenerError = (context: string, error: any) => {
-    const isPermissionError = error?.message?.toLowerCase().includes('permission') || 
-                              error?.code?.toLowerCase().includes('permission') ||
-                              error?.message?.toLowerCase().includes('insufficient');
-    if (isPermissionError) {
-      console.warn(`[Graceful Boundary] ${context}:`, error.message || error);
-    } else {
-      console.error(`${context}:`, error);
-    }
-  };
 
   const addToast = (message: string, type: 'success' | 'error' | 'info') => {
     const id = Date.now().toString() + Math.random().toString();
     setToasts((prev) => [...prev, { id, message, type }]);
-    
-    // Auto-remove after 4 seconds
-    setTimeout(() => {
-      removeToast(id);
-    }, 4000);
+    setTimeout(() => removeToast(id), 4000);
   };
 
   const removeToast = (id: string) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   };
 
-  // Seed the DB settings, announcements, and coins only when an Admin is logged in to avoid unauthenticated permission errors
+  // Seed DB when admin logs in
   useEffect(() => {
     if (userProfile?.role === 'admin') {
-      const seedDatabase = async () => {
-        await ensureDefaultSettings();
-        await ensureDefaultAnnouncements();
-        await ensureDefaultCoins();
-      };
-      seedDatabase();
+      ensureDefaultSettings();
+      ensureDefaultAnnouncements();
+      ensureDefaultCoins();
     }
   }, [userProfile]);
 
-  // Subscribe to Auth State Changes
+  // Auth state listener
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setIsInitializing(true);
-      if (user) {
-        setCurrentUser(user);
+    setIsInitializing(true);
+
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (session?.user) {
+        setCurrentUser(session.user);
         try {
-          const profile = await getOrCreateUserProfile(user.uid, user.email || '');
+          const profile = await getOrCreateUserProfile(session.user.id, session.user.email || '');
           setUserProfile(profile);
           setIsAdminMode(profile.role === 'admin');
           setCurrentPage('dashboard');
         } catch (err) {
-          console.error('Error fetching user profile:', err);
-          addToast('Could not load user profile metadata.', 'error');
-        }
-      } else {
-        setCurrentUser(null);
-        setUserProfile(null);
-        setIsAdminMode(false);
-        if (currentPage === 'dashboard') {
-          setCurrentPage('landing');
+          console.error('Error fetching profile:', err);
         }
       }
       setIsInitializing(false);
     });
 
-    return () => unsubscribe();
-  }, [currentPage]);
-
-  // Subscribe to Exchange Rates & Admin Settings
-  useEffect(() => {
-    const settingsDocRef = doc(db, 'settings', 'admin_settings');
-    const unsubscribe = onSnapshot(settingsDocRef, (snapshot) => {
-      if (snapshot.exists()) {
-        setSettings(snapshot.data() as AdminSettings);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN' && session?.user) {
+        setCurrentUser(session.user);
+        try {
+          const profile = await getOrCreateUserProfile(session.user.id, session.user.email || '');
+          setUserProfile(profile);
+          setIsAdminMode(profile.role === 'admin');
+          setCurrentPage('dashboard');
+        } catch (err) {
+          console.error('Error fetching profile:', err);
+          addToast('Could not load user profile.', 'error');
+        }
+      } else if (event === 'SIGNED_OUT') {
+        setCurrentUser(null);
+        setUserProfile(null);
+        setIsAdminMode(false);
+        setCurrentPage('landing');
       }
-    }, (error) => {
-      handleListenerError('Error listening to settings', error);
+      setIsInitializing(false);
     });
 
-    return () => unsubscribe();
+    return () => subscription.unsubscribe();
   }, []);
 
-  // Subscribe to Bulletins/Announcements
+  // Realtime: Settings
   useEffect(() => {
-    const announcementsQuery = query(
-      collection(db, 'announcements'),
-      orderBy('createdAt', 'desc')
-    );
-    const unsubscribe = onSnapshot(announcementsQuery, (snapshot) => {
-      const list: Announcement[] = [];
-      snapshot.forEach((doc) => {
-        list.push({ id: doc.id, ...doc.data() } as Announcement);
-      });
-      setAnnouncements(list);
-    }, (error) => {
-      handleListenerError('Error listening to announcements', error);
+    // Initial fetch
+    supabase.from('settings').select('*').eq('id', 'admin_settings').single().then(({ data }) => {
+      if (data) setSettings(rowToSettings(data));
     });
 
-    return () => unsubscribe();
+    const channel = supabase
+      .channel('settings-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'settings' }, (payload) => {
+        if (payload.new) setSettings(rowToSettings(payload.new));
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
   }, []);
 
-  // Subscribe to Orders based on user identity (Admin hears all, User hears only own)
+  // Realtime: Announcements
+  useEffect(() => {
+    supabase.from('announcements').select('*').order('created_at', { ascending: false }).then(({ data }) => {
+      if (data) setAnnouncements(data.map(rowToAnnouncement));
+    });
+
+    const channel = supabase
+      .channel('announcements-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'announcements' }, () => {
+        supabase.from('announcements').select('*').order('created_at', { ascending: false }).then(({ data }) => {
+          if (data) setAnnouncements(data.map(rowToAnnouncement));
+        });
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, []);
+
+  // Realtime: Orders (filtered by user or admin)
   useEffect(() => {
     if (!currentUser) {
       setOrders([]);
       return;
     }
 
-    let ordersQuery;
-    if (userProfile?.role === 'admin') {
-      ordersQuery = query(
-        collection(db, 'orders'),
-        orderBy('createdAt', 'desc')
-      );
-    } else {
-      ordersQuery = query(
-        collection(db, 'orders'),
-        where('userId', '==', currentUser.uid),
-        orderBy('createdAt', 'desc')
-      );
-    }
+    const fetchOrders = async () => {
+      let query = supabase.from('orders').select('*').order('created_at', { ascending: false });
+      if (userProfile?.role !== 'admin') {
+        query = query.eq('user_id', currentUser.id);
+      }
+      const { data } = await query;
+      if (data) setOrders(data.map(rowToOrder));
+    };
 
-    const unsubscribe = onSnapshot(ordersQuery, (snapshot) => {
-      const list: Order[] = [];
-      snapshot.forEach((doc) => {
-        list.push({ id: doc.id, ...doc.data() } as Order);
-      });
-      setOrders(list);
-    }, (error) => {
-      handleListenerError('Error listening to orders', error);
-    });
+    fetchOrders();
 
-    return () => unsubscribe();
+    const channel = supabase
+      .channel('orders-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, fetchOrders)
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
   }, [currentUser, userProfile]);
 
-  // Subscribe to Users List if current user is an Admin (to manage KYC reviews)
+  // Realtime: KYC Users (admin only)
   useEffect(() => {
     if (userProfile?.role !== 'admin') {
       setKycUsers([]);
       return;
     }
 
-    const usersQuery = query(
-      collection(db, 'users')
-    );
-
-    const unsubscribe = onSnapshot(usersQuery, (snapshot) => {
-      const list: UserProfile[] = [];
-      snapshot.forEach((doc) => {
-        list.push(doc.data() as UserProfile);
-      });
-      setKycUsers(list);
-    }, (error) => {
-      handleListenerError('Error listening to KYC users', error);
+    supabase.from('users').select('*').then(({ data }) => {
+      if (data) setKycUsers(data.map(rowToUserProfile));
     });
 
-    return () => unsubscribe();
+    const channel = supabase
+      .channel('users-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, () => {
+        supabase.from('users').select('*').then(({ data }) => {
+          if (data) setKycUsers(data.map(rowToUserProfile));
+        });
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
   }, [userProfile]);
 
-  // Subscribe to Coins list
+  // Realtime: Coins
   useEffect(() => {
-    const coinsQuery = query(
-      collection(db, 'coins')
-    );
-    const unsubscribe = onSnapshot(coinsQuery, (snapshot) => {
-      const list: CoinListing[] = [];
-      snapshot.forEach((doc) => {
-        list.push({ id: doc.id, ...doc.data() } as CoinListing);
-      });
-      // Sort client-side to ensure robust ordering without database-level constraints
-      list.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-      setCoins(list);
-    }, (error) => {
-      handleListenerError('Error listening to coins', error);
+    supabase.from('coins').select('*').order('created_at', { ascending: false }).then(({ data }) => {
+      if (data) setCoins(data.map(rowToCoin));
     });
 
-    return () => unsubscribe();
+    const channel = supabase
+      .channel('coins-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'coins' }, () => {
+        supabase.from('coins').select('*').order('created_at', { ascending: false }).then(({ data }) => {
+          if (data) setCoins(data.map(rowToCoin));
+        });
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
   }, []);
 
-  // Forced refresh helper passed to child components
+  // Realtime: User profile changes (for KYC status updates)
+  useEffect(() => {
+    if (!currentUser) return;
+
+    const channel = supabase
+      .channel('my-profile-changes')
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'users',
+        filter: `id=eq.${currentUser.id}`
+      }, (payload) => {
+        if (payload.new) setUserProfile(rowToUserProfile(payload.new));
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [currentUser]);
+
   const handleDatabaseRefresh = () => {
     addToast('Ledger data synced with backend.', 'success');
   };
 
   const navigateToPage = (page: 'landing' | 'auth' | 'dashboard', extra?: string) => {
-    if (page === 'auth') {
-      setAuthInitialMode(extra === 'signup' ? 'signup' : 'signin');
-    }
+    if (page === 'auth') setAuthInitialMode(extra === 'signup' ? 'signup' : 'signin');
     setCurrentPage(page);
   };
 
   const handleToggleAdminView = () => {
     setIsAdminMode((prev) => !prev);
-    addToast(`Switched view to ${!isAdminMode ? 'Admin Portal' : 'User Portal'}`, 'info');
+    addToast(`Switched to ${!isAdminMode ? 'Admin Portal' : 'User Portal'}`, 'info');
   };
 
   if (isInitializing) {
@@ -256,12 +249,11 @@ export default function App() {
   }
 
   return (
-    <div className="bg-[#F7F9F7] min-h-screen text-[#1A1A1A] flex flex-col justify-between">
-      <div>
-        {/* Navigation Bar */}
+    <div className="bg-[#F7F9F7] min-h-screen text-[#1A1A1A] flex flex-col">
+      <div className="flex-1">
         {currentPage !== 'auth' && (
-          <Navbar 
-            userProfile={userProfile} 
+          <Navbar
+            userProfile={userProfile}
             isAdminMode={isAdminMode}
             onToggleAdminMode={handleToggleAdminView}
             onNavigate={navigateToPage}
@@ -269,18 +261,17 @@ export default function App() {
           />
         )}
 
-        {/* Core Screen Router */}
         {currentPage === 'landing' && (
-          <LandingPage 
-            announcements={announcements} 
+          <LandingPage
+            announcements={announcements}
             settings={settings}
             onNavigate={navigateToPage}
           />
         )}
 
         {currentPage === 'auth' && (
-          <AuthPage 
-            onBack={() => setCurrentPage('landing')} 
+          <AuthPage
+            onBack={() => setCurrentPage('landing')}
             onAuthSuccess={() => setCurrentPage('dashboard')}
             addToast={addToast}
             initialMode={authInitialMode}
@@ -290,7 +281,7 @@ export default function App() {
         {currentPage === 'dashboard' && userProfile && (
           <>
             {isAdminMode ? (
-              <AdminCMS 
+              <AdminCMS
                 userProfile={userProfile}
                 orders={orders}
                 kycUsers={kycUsers}
@@ -301,7 +292,7 @@ export default function App() {
                 onRefresh={handleDatabaseRefresh}
               />
             ) : (
-              <UserDashboard 
+              <UserDashboard
                 userProfile={userProfile}
                 orders={orders}
                 settings={settings}
@@ -315,7 +306,6 @@ export default function App() {
         )}
       </div>
 
-      {/* Shared Toasts notification center */}
       <Notification toasts={toasts} onClose={removeToast} />
     </div>
   );

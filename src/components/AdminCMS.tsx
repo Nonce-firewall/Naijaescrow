@@ -362,7 +362,7 @@ export default function AdminCMS({
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-8 font-sans text-[#1A1A1A]">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 font-sans text-[#1A1A1A]">
       
       {/* Admin header with metrics */}
       <div className="bg-[#1A1A1A] text-white rounded-3xl p-6 border border-[#E0E7E0]/10 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 mb-8">
@@ -379,15 +379,15 @@ export default function AdminCMS({
         </div>
 
         <div className="flex gap-4 border-t border-[#E0E7E0]/10 lg:border-t-0 pt-4 lg:pt-0 w-full lg:w-auto overflow-x-auto">
-          <div className="bg-black/20 px-4 py-2.5 rounded-2xl border border-[#E0E7E0]/10 text-center min-w-[120px]">
+          <div className="bg-white/10 px-4 py-2.5 rounded-2xl border border-white/10 text-center min-w-[100px]">
             <span className="text-[9px] text-gray-400 font-mono block">PENDING ORDERS</span>
             <span className="text-lg font-bold text-amber-400">{pendingOrdersCount}</span>
           </div>
-          <div className="bg-black/20 px-4 py-2.5 rounded-2xl border border-[#E0E7E0]/10 text-center min-w-[120px]">
+          <div className="bg-white/10 px-4 py-2.5 rounded-2xl border border-white/10 text-center min-w-[100px]">
             <span className="text-[9px] text-gray-400 font-mono block">KYC REQUESTS</span>
             <span className="text-lg font-bold text-amber-400">{pendingKycCount}</span>
           </div>
-          <div className="bg-black/20 px-4 py-2.5 rounded-2xl border border-[#E0E7E0]/10 text-center min-w-[120px]">
+          <div className="bg-white/10 px-4 py-2.5 rounded-2xl border border-white/10 text-center min-w-[100px]">
             <span className="text-[9px] text-gray-400 font-mono block">USDT RATE</span>
             <span className="text-lg font-bold text-[#00FF85]">₦{settings.usdtRate}</span>
           </div>
@@ -1307,7 +1307,7 @@ export default function AdminCMS({
       {/* DETAIL ORDER MODAL FOR ADMIN ACTION */}
       <AnimatePresence>
         {selectedOrder && (
-          <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
+          <div className="fixed inset-0 bg-slate-900/50 z-50 flex items-center justify-center p-4 overflow-y-auto">
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -1471,7 +1471,7 @@ export default function AdminCMS({
       {/* DETAIL KYC USER MODAL FOR ADMIN ACTION */}
       <AnimatePresence>
         {selectedKycUser && (
-          <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
+          <div className="fixed inset-0 bg-slate-900/50 z-50 flex items-center justify-center p-4 overflow-y-auto">
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}

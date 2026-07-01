@@ -1,26 +1,11 @@
-import { 
-  collection, 
-  doc, 
-  setDoc, 
-  getDoc, 
-  addDoc, 
-  query, 
-  where, 
-  orderBy, 
-  onSnapshot, 
-  updateDoc, 
-  getDocs,
-  deleteDoc
-} from 'firebase/firestore';
-import { db, auth } from './firebase';
+import { supabase } from './supabase';
 import { UserProfile, KYCData, Order, AdminSettings, Announcement, CoinListing } from '../types';
 
-// Standard fallback settings in case Firebase loading is delayed or empty
 export const DEFAULT_SETTINGS: AdminSettings = {
   ngnBankName: 'Zenith Bank',
   ngnAccountNumber: '1012345678',
   ngnAccountName: '9ija Escrow Ltd.',
-  usdtRate: 1540, // 1540 NGN per USDT
+  usdtRate: 1540,
   wallets: {
     BSC: '0x71C7656EC7ab88b098defB751B7401B5f6d1476B',
     Tron: 'TYG9xLq5Ym6296U6g1m29P1Pq9T7Pz8D8W',
@@ -28,132 +13,223 @@ export const DEFAULT_SETTINGS: AdminSettings = {
   }
 };
 
-/**
- * Initialize Default Settings in Database if they don't exist
- */
 export async function ensureDefaultSettings() {
   try {
-    const settingsRef = doc(db, 'settings', 'admin_settings');
-    const snap = await getDoc(settingsRef);
-    if (!snap.exists()) {
-      await setDoc(settingsRef, DEFAULT_SETTINGS);
-      console.log('Default settings seeded successfully.');
+    const { data } = await supabase.from('settings').select('*').eq('id', 'admin_settings').single();
+    if (!data) {
+      await supabase.from('settings').insert({
+        id: 'admin_settings',
+        ngn_bank_name: DEFAULT_SETTINGS.ngnBankName,
+        ngn_account_number: DEFAULT_SETTINGS.ngnAccountNumber,
+        ngn_account_name: DEFAULT_SETTINGS.ngnAccountName,
+        usdt_rate: DEFAULT_SETTINGS.usdtRate,
+        wallet_bsc: DEFAULT_SETTINGS.wallets.BSC,
+        wallet_tron: DEFAULT_SETTINGS.wallets.Tron,
+        wallet_polygon: DEFAULT_SETTINGS.wallets.Polygon
+      });
     }
   } catch (err) {
     console.error('Error seeding default settings:', err);
   }
 }
 
-/**
- * Seed sample announcements if none exist
- */
 export async function ensureDefaultAnnouncements() {
   try {
-    const annColl = collection(db, 'announcements');
-    const snap = await getDocs(annColl);
-    if (snap.empty) {
-      const sampleAnnouncements: Omit<Announcement, 'id'>[] = [
+    const { data } = await supabase.from('announcements').select('id').limit(1);
+    if (!data || data.length === 0) {
+      const now = Date.now();
+      await supabase.from('announcements').insert([
         {
           title: 'System Upgrade Notice',
           content: 'We have updated our Polygon USDT wallet addresses. Please ensure you send payments to the newly displayed address to avoid loss of funds.',
           scope: 'all',
-          isActive: true,
-          createdAt: Date.now() - 3600000 * 2 // 2 hours ago
+          is_active: true,
+          created_at: now - 3600000 * 2
         },
         {
           title: 'Welcome to 9ija Escrow',
           content: 'Trade securely with local bank transfers and instant blockchain execution. Fast, secure, and fully verified.',
           scope: 'public',
-          isActive: true,
-          createdAt: Date.now() - 3600000 * 24 // 1 day ago
+          is_active: true,
+          created_at: now - 3600000 * 24
         },
         {
           title: 'KYC Notice for All Users',
           content: 'In compliance with financial regulations, all traders must complete their KYC verification. It takes less than 3 minutes to verify your identity.',
           scope: 'private',
-          isActive: true,
-          createdAt: Date.now() - 3600000 * 4 // 4 hours ago
+          is_active: true,
+          created_at: now - 3600000 * 4
         }
-      ];
-
-      for (const ann of sampleAnnouncements) {
-        await addDoc(annColl, ann);
-      }
-      console.log('Sample announcements seeded.');
+      ]);
     }
   } catch (err) {
     console.error('Error seeding announcements:', err);
   }
 }
 
-/**
- * Fetch or create User Profile
- */
-export async function getOrCreateUserProfile(uid: string, email: string): Promise<UserProfile> {
-  const userRef = doc(db, 'users', uid);
-  const snap = await getDoc(userRef);
-  
-  // Set cryptogangstar247@gmail.com as Admin automatically
-  const isAdmin = email.toLowerCase() === 'cryptogangstar247@gmail.com';
-  
-  if (snap.exists()) {
-    const data = snap.data() as UserProfile;
-    // Keep admin status synced
-    if (isAdmin && data.role !== 'admin') {
-      await updateDoc(userRef, { role: 'admin' });
-      data.role = 'admin';
+export async function ensureDefaultCoins() {
+  try {
+    const { data } = await supabase.from('coins').select('id').limit(1);
+    if (!data || data.length === 0) {
+      const now = Date.now();
+      await supabase.from('coins').insert([
+        {
+          name: 'USDT (BSC)',
+          symbol: 'USDT',
+          network: 'BSC (BEP20)',
+          wallet_address: '0x71C7656EC7ab88b098defB751B7401B5f6d1476B',
+          rate: 1540,
+          logo_url: 'https://cryptologos.cc/logos/tether-usdt-logo.png?v=040',
+          published: true,
+          created_at: now
+        },
+        {
+          name: 'USDT (Tron)',
+          symbol: 'USDT',
+          network: 'Tron (TRC20)',
+          wallet_address: 'TYG9xLq5Ym6296U6g1m29P1Pq9T7Pz8D8W',
+          rate: 1540,
+          logo_url: 'https://cryptologos.cc/logos/tether-usdt-logo.png?v=040',
+          published: true,
+          created_at: now - 1
+        },
+        {
+          name: 'USDT (Polygon)',
+          symbol: 'USDT',
+          network: 'Polygon',
+          wallet_address: '0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC',
+          rate: 1540,
+          logo_url: 'https://cryptologos.cc/logos/tether-usdt-logo.png?v=040',
+          published: true,
+          created_at: now - 2
+        }
+      ]);
     }
-    return data;
+  } catch (err) {
+    console.error('Error seeding default coins:', err);
+  }
+}
+
+function rowToSettings(row: any): AdminSettings {
+  return {
+    ngnBankName: row.ngn_bank_name,
+    ngnAccountNumber: row.ngn_account_number,
+    ngnAccountName: row.ngn_account_name,
+    usdtRate: row.usdt_rate,
+    wallets: {
+      BSC: row.wallet_bsc,
+      Tron: row.wallet_tron,
+      Polygon: row.wallet_polygon
+    }
+  };
+}
+
+function rowToUserProfile(row: any): UserProfile {
+  return {
+    uid: row.id,
+    email: row.email,
+    role: row.role,
+    kycStatus: row.kyc_status,
+    kycData: row.kyc_data || undefined,
+    createdAt: row.created_at
+  };
+}
+
+function rowToOrder(row: any): Order {
+  return {
+    id: row.id,
+    userId: row.user_id,
+    userEmail: row.user_email,
+    type: row.type,
+    cryptoAmount: row.crypto_amount,
+    ngnAmount: row.ngn_amount,
+    rate: row.rate,
+    status: row.status,
+    network: row.network,
+    token: row.token,
+    paymentScreenshot: row.payment_screenshot,
+    userBankDetails: row.user_bank_details || undefined,
+    adminBankDetails: row.admin_bank_details || undefined,
+    adminWalletAddress: row.admin_wallet_address || undefined,
+    blockchainTxId: row.blockchain_tx_id || undefined,
+    rejectionReason: row.rejection_reason || undefined,
+    createdAt: row.created_at,
+    processedAt: row.processed_at || undefined
+  };
+}
+
+function rowToAnnouncement(row: any): Announcement {
+  return {
+    id: row.id,
+    title: row.title,
+    content: row.content,
+    scope: row.scope,
+    isActive: row.is_active,
+    createdAt: row.created_at
+  };
+}
+
+function rowToCoin(row: any): CoinListing {
+  return {
+    id: row.id,
+    name: row.name,
+    symbol: row.symbol,
+    network: row.network,
+    walletAddress: row.wallet_address,
+    rate: row.rate,
+    logoUrl: row.logo_url || undefined,
+    published: row.published,
+    createdAt: row.created_at
+  };
+}
+
+export async function getOrCreateUserProfile(uid: string, email: string): Promise<UserProfile> {
+  const isAdmin = email.toLowerCase() === 'cryptogangstar247@gmail.com';
+
+  const { data: existing } = await supabase.from('users').select('*').eq('id', uid).single();
+
+  if (existing) {
+    if (isAdmin && existing.role !== 'admin') {
+      await supabase.from('users').update({ role: 'admin' }).eq('id', uid);
+      existing.role = 'admin';
+    }
+    return rowToUserProfile(existing);
   }
 
-  const newProfile: UserProfile = {
-    uid,
+  const newRow = {
+    id: uid,
     email,
     role: isAdmin ? 'admin' : 'user',
-    kycStatus: isAdmin ? 'approved' : 'none', // Admin automatically approved for testing
-    createdAt: Date.now()
+    kyc_status: isAdmin ? 'approved' : 'none',
+    created_at: Date.now()
   };
 
-  await setDoc(userRef, newProfile);
-  return newProfile;
+  const { data: inserted } = await supabase.from('users').insert(newRow).select().single();
+  return rowToUserProfile(inserted);
 }
 
-/**
- * Update KYC details for User
- */
 export async function submitKYC(uid: string, kycData: Omit<KYCData, 'submittedAt'>) {
-  const userRef = doc(db, 'users', uid);
-  const fullKYC: KYCData = {
-    ...kycData,
-    submittedAt: Date.now()
-  };
-  await updateDoc(userRef, {
-    kycStatus: 'pending',
-    kycData: fullKYC
-  });
+  const fullKYC: KYCData = { ...kycData, submittedAt: Date.now() };
+  await supabase.from('users').update({
+    kyc_status: 'pending',
+    kyc_data: fullKYC
+  }).eq('id', uid);
 }
 
-/**
- * Admin action: Approve/Reject KYC
- */
 export async function handleKYCReview(uid: string, approve: boolean, rejectionReason?: string) {
-  const userRef = doc(db, 'users', uid);
-  const updates: any = {
-    kycStatus: approve ? 'approved' : 'rejected',
-    'kycData.reviewedAt': Date.now()
+  const existing = await supabase.from('users').select('kyc_data').eq('id', uid).single();
+  const kycData = existing.data?.kyc_data || {};
+  const updatedKyc = {
+    ...kycData,
+    reviewedAt: Date.now(),
+    rejectionReason: approve ? '' : (rejectionReason || '')
   };
-  if (!approve && rejectionReason) {
-    updates['kycData.rejectionReason'] = rejectionReason;
-  } else if (approve) {
-    // Clear any previous rejection reason
-    updates['kycData.rejectionReason'] = '';
-  }
-  await updateDoc(userRef, updates);
+  await supabase.from('users').update({
+    kyc_status: approve ? 'approved' : 'rejected',
+    kyc_data: updatedKyc
+  }).eq('id', uid);
 }
 
-/**
- * Submit a Buy or Sell Order
- */
 export async function createOrder(
   userId: string,
   userEmail: string,
@@ -167,166 +243,101 @@ export async function createOrder(
   adminWalletAddress?: string,
   token: string = 'USDT'
 ) {
-  const ordersColl = collection(db, 'orders');
   const ngnAmount = cryptoAmount * rate;
-  
-  const orderData: Omit<Order, 'id'> = {
-    userId,
-    userEmail,
+  const { data, error } = await supabase.from('orders').insert({
+    user_id: userId,
+    user_email: userEmail,
     type,
-    cryptoAmount,
-    ngnAmount,
+    crypto_amount: cryptoAmount,
+    ngn_amount: ngnAmount,
     rate,
     status: 'pending',
     network,
     token,
-    paymentScreenshot,
-    createdAt: Date.now()
-  };
-
-  if (userBankDetails) orderData.userBankDetails = userBankDetails;
-  if (adminBankDetails) orderData.adminBankDetails = adminBankDetails;
-  if (adminWalletAddress) orderData.adminWalletAddress = adminWalletAddress;
-
-  const docRef = await addDoc(ordersColl, orderData);
-  return docRef.id;
+    payment_screenshot: paymentScreenshot,
+    user_bank_details: userBankDetails || null,
+    admin_bank_details: adminBankDetails || null,
+    admin_wallet_address: adminWalletAddress || null,
+    created_at: Date.now()
+  }).select().single();
+  if (error) throw new Error(error.message);
+  return data.id;
 }
 
-/**
- * Admin action: Process Order (Approve / Reject)
- */
 export async function processOrder(
-  orderId: string, 
-  status: 'completed' | 'rejected', 
-  blockchainTxId?: string, 
+  orderId: string,
+  status: 'completed' | 'rejected',
+  blockchainTxId?: string,
   rejectionReason?: string
 ) {
-  const orderRef = doc(db, 'orders', orderId);
-  const updates: any = {
-    status,
-    processedAt: Date.now()
-  };
-
-  if (status === 'completed' && blockchainTxId) {
-    updates.blockchainTxId = blockchainTxId;
-  }
-  if (status === 'rejected' && rejectionReason) {
-    updates.rejectionReason = rejectionReason;
-  }
-
-  await updateDoc(orderRef, updates);
+  const updates: any = { status, processed_at: Date.now() };
+  if (status === 'completed' && blockchainTxId) updates.blockchain_tx_id = blockchainTxId;
+  if (status === 'rejected' && rejectionReason) updates.rejection_reason = rejectionReason;
+  const { error } = await supabase.from('orders').update(updates).eq('id', orderId);
+  if (error) throw new Error(error.message);
 }
 
-/**
- * Update Admin Settings
- */
 export async function updateAdminSettings(settings: AdminSettings) {
-  const settingsRef = doc(db, 'settings', 'admin_settings');
-  await setDoc(settingsRef, settings);
+  const { error } = await supabase.from('settings').upsert({
+    id: 'admin_settings',
+    ngn_bank_name: settings.ngnBankName,
+    ngn_account_number: settings.ngnAccountNumber,
+    ngn_account_name: settings.ngnAccountName,
+    usdt_rate: settings.usdtRate,
+    wallet_bsc: settings.wallets.BSC,
+    wallet_tron: settings.wallets.Tron,
+    wallet_polygon: settings.wallets.Polygon
+  });
+  if (error) throw new Error(error.message);
 }
 
-/**
- * Create Announcement
- */
 export async function createAnnouncement(ann: Omit<Announcement, 'id' | 'createdAt'>) {
-  const annColl = collection(db, 'announcements');
-  await addDoc(annColl, {
-    ...ann,
-    createdAt: Date.now()
+  const { error } = await supabase.from('announcements').insert({
+    title: ann.title,
+    content: ann.content,
+    scope: ann.scope,
+    is_active: ann.isActive,
+    created_at: Date.now()
   });
+  if (error) throw new Error(error.message);
 }
 
-/**
- * Delete Announcement
- */
 export async function deleteAnnouncement(id: string) {
-  const annRef = doc(db, 'announcements', id);
-  // We can just use updateDoc to mark inactive or delete. Let's delete to keep it simple.
-  // Note: we can import deleteDoc if needed. Or updateDoc to deactivate. Let's deactivate it first:
-  await updateDoc(annRef, { isActive: false });
+  const { error } = await supabase.from('announcements').update({ is_active: false }).eq('id', id);
+  if (error) throw new Error(error.message);
 }
 
-/**
- * Seed sample coins if none exist
- */
-export async function ensureDefaultCoins() {
-  try {
-    const coinColl = collection(db, 'coins');
-    const snap = await getDocs(coinColl);
-    if (snap.empty) {
-      const defaultCoins = [
-        {
-          name: 'USDT (BSC)',
-          symbol: 'USDT',
-          network: 'BSC (BEP20)',
-          walletAddress: '0x71C7656EC7ab88b098defB751B7401B5f6d1476B',
-          rate: 1540,
-          logoUrl: 'https://cryptologos.cc/logos/tether-usdt-logo.png?v=040',
-          createdAt: Date.now()
-        },
-        {
-          name: 'USDT (Tron)',
-          symbol: 'USDT',
-          network: 'Tron (TRC20)',
-          walletAddress: 'TYG9xLq5Ym6296U6g1m29P1Pq9T7Pz8D8W',
-          rate: 1540,
-          logoUrl: 'https://cryptologos.cc/logos/tether-usdt-logo.png?v=040',
-          createdAt: Date.now()
-        },
-        {
-          name: 'USDT (Polygon)',
-          symbol: 'USDT',
-          network: 'Polygon',
-          walletAddress: '0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC',
-          rate: 1540,
-          logoUrl: 'https://cryptologos.cc/logos/tether-usdt-logo.png?v=040',
-          createdAt: Date.now()
-        }
-      ];
-
-      for (const coin of defaultCoins) {
-        await addDoc(coinColl, coin);
-      }
-      console.log('Sample coins seeded.');
-    }
-  } catch (err) {
-    console.error('Error seeding default coins:', err);
-  }
-}
-
-/**
- * Add a coin listing
- */
 export async function createCoinListing(coin: Omit<CoinListing, 'id' | 'createdAt'>) {
-  const coinColl = collection(db, 'coins');
-  await addDoc(coinColl, {
-    ...coin,
-    published: true, // Default to published/active
-    createdAt: Date.now()
+  const { error } = await supabase.from('coins').insert({
+    name: coin.name,
+    symbol: coin.symbol,
+    network: coin.network,
+    wallet_address: coin.walletAddress,
+    rate: coin.rate,
+    logo_url: coin.logoUrl || null,
+    published: true,
+    created_at: Date.now()
   });
+  if (error) throw new Error(error.message);
 }
 
-/**
- * Delete a coin listing (Soft delete to preserve transaction history)
- */
 export async function deleteCoinListing(id: string) {
-  const coinRef = doc(db, 'coins', id);
-  await updateDoc(coinRef, { published: false });
+  const { error } = await supabase.from('coins').update({ published: false }).eq('id', id);
+  if (error) throw new Error(error.message);
 }
 
-/**
- * Toggle a coin's published/active status
- */
 export async function toggleCoinPublish(id: string, published: boolean) {
-  const coinRef = doc(db, 'coins', id);
-  await updateDoc(coinRef, { published });
+  const { error } = await supabase.from('coins').update({ published }).eq('id', id);
+  if (error) throw new Error(error.message);
 }
 
-/**
- * Admin action: Update user profile fields (role or kycStatus) directly
- */
 export async function updateUserAdminAction(uid: string, fields: Partial<UserProfile>) {
-  const userRef = doc(db, 'users', uid);
-  await updateDoc(userRef, fields);
+  const updates: any = {};
+  if (fields.role !== undefined) updates.role = fields.role;
+  if (fields.kycStatus !== undefined) updates.kyc_status = fields.kycStatus;
+  if (fields.kycData !== undefined) updates.kyc_data = fields.kycData ?? null;
+  const { error } = await supabase.from('users').update(updates).eq('id', uid);
+  if (error) throw new Error(error.message);
 }
 
+export { rowToSettings, rowToUserProfile, rowToOrder, rowToAnnouncement, rowToCoin };
