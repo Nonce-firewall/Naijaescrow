@@ -192,6 +192,11 @@ create policy "announcements: authenticated update"
   using (true)
   with check (true);
 
+create policy "announcements: authenticated delete"
+  on public.announcements for delete
+  to authenticated
+  using (true);
+
 -- ── coins ──────────────────────────────────────────────────
 create policy "coins: public read"
   on public.coins for select
@@ -208,6 +213,11 @@ create policy "coins: authenticated update"
   to authenticated
   using (true)
   with check (true);
+
+create policy "coins: authenticated delete"
+  on public.coins for delete
+  to authenticated
+  using (true);
 
 -- ──────────────────────────────────────────────────────────
 -- 4. REALTIME PUBLICATION

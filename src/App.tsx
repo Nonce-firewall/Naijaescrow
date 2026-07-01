@@ -143,11 +143,11 @@ export default function App() {
       return;
     }
 
+    const isTrader = userProfile?.role !== 'admin';
+
     const fetchOrders = async () => {
       let query = supabase.from('orders').select('*').order('created_at', { ascending: false });
-      if (userProfile?.role !== 'admin') {
-        query = query.eq('user_id', currentUser.id);
-      }
+      if (isTrader) query = query.eq('user_id', currentUser.id);
       const { data } = await query;
       if (data) setOrders(data.map(rowToOrder));
     };
@@ -156,7 +156,21 @@ export default function App() {
 
     const channel = supabase
       .channel('orders-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, fetchOrders)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders' }, (payload) => {
+        const updated = payload.new as any;
+        // Push notification to trader when their order is processed
+        if (isTrader && updated?.user_id === currentUser.id) {
+          if (updated?.status === 'completed') {
+            const label = updated?.type === 'buy' ? `${updated?.crypto_amount} USDT purchase` : `₦${Number(updated?.ngn_amount).toLocaleString()} sell`;
+            addToast(`✅ Order approved! Your ${label} has been completed.`, 'success');
+          } else if (updated?.status === 'rejected') {
+            const reason = updated?.rejection_reason ? ` Reason: ${updated.rejection_reason}` : '';
+            addToast(`❌ Order declined.${reason}`, 'error');
+          }
+        }
+        fetchOrders();
+      })
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders' }, fetchOrders)
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
@@ -256,6 +270,7 @@ export default function App() {
           <Navbar
             userProfile={userProfile}
             isAdminMode={isAdminMode}
+            currentPage={currentPage}
             onToggleAdminMode={handleToggleAdminView}
             onNavigate={navigateToPage}
             addToast={addToast}
