@@ -1,6 +1,124 @@
-import React from 'react';
-import { ShieldCheck, TrendingUp, Lock, ArrowRight, Bell, UserCheck } from 'lucide-react';
+import React, { useState } from 'react';
+import { ShieldCheck, TrendingUp, Lock, ArrowRight, Bell, UserCheck, X, Mail, MessageCircle } from 'lucide-react';
 import { Announcement, AdminSettings } from '../types';
+
+type ModalType = 'privacy' | 'terms' | 'support' | null;
+
+function Modal({ type, onClose }: { type: ModalType; onClose: () => void }) {
+  if (!type) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={onClose}>
+      <div
+        className="bg-white rounded-3xl shadow-2xl w-full max-w-lg max-h-[85vh] flex flex-col overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[#E0E7E0] shrink-0">
+          <h2 className="font-bold text-[#1A1A1A] text-base">
+            {type === 'privacy' && 'Privacy Policy'}
+            {type === 'terms' && 'Terms of Use'}
+            {type === 'support' && 'Support'}
+          </h2>
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-[#F7F9F7] text-gray-400 hover:text-[#1A1A1A] transition cursor-pointer">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+        <div className="overflow-y-auto px-6 py-5 text-sm text-gray-600 leading-relaxed space-y-4">
+          {type === 'privacy' && (
+            <>
+              <p className="text-xs text-gray-400 font-mono">Last updated: July 2026</p>
+              <section>
+                <h3 className="font-bold text-[#1A1A1A] mb-1">1. Data We Collect</h3>
+                <p>We collect your email address, KYC identity documents (NIN, Voter's Card, Driver's License), and order transaction records solely to facilitate P2P escrow trades and comply with financial regulations.</p>
+              </section>
+              <section>
+                <h3 className="font-bold text-[#1A1A1A] mb-1">2. How We Use Your Data</h3>
+                <p>Your data is used exclusively to verify your identity, process trades, and prevent fraud. We do not sell, lease, or share your personal information with third parties except where required by Nigerian law.</p>
+              </section>
+              <section>
+                <h3 className="font-bold text-[#1A1A1A] mb-1">3. KYC Documents</h3>
+                <p>KYC submissions are encrypted at rest. Only authorised 9ija Escrow administrators can review your submitted documents. Documents are retained for a minimum of five years in compliance with AML regulations.</p>
+              </section>
+              <section>
+                <h3 className="font-bold text-[#1A1A1A] mb-1">4. Cookies & Tracking</h3>
+                <p>We use session cookies strictly to maintain your authenticated session. No advertising or analytics cookies are used.</p>
+              </section>
+              <section>
+                <h3 className="font-bold text-[#1A1A1A] mb-1">5. Your Rights</h3>
+                <p>You may request deletion of your account and associated data by contacting support. Note that transaction records may be retained for regulatory compliance even after account deletion.</p>
+              </section>
+              <section>
+                <h3 className="font-bold text-[#1A1A1A] mb-1">6. Contact</h3>
+                <p>Privacy inquiries: <span className="text-[#008751] font-semibold">privacy@9ijaescrow.com</span></p>
+              </section>
+            </>
+          )}
+          {type === 'terms' && (
+            <>
+              <p className="text-xs text-gray-400 font-mono">Last updated: July 2026</p>
+              <section>
+                <h3 className="font-bold text-[#1A1A1A] mb-1">1. Eligibility</h3>
+                <p>You must be at least 18 years old and a resident of Nigeria to use 9ija Escrow. By signing up, you confirm that all information you provide is accurate and truthful.</p>
+              </section>
+              <section>
+                <h3 className="font-bold text-[#1A1A1A] mb-1">2. KYC Requirement</h3>
+                <p>All traders must complete KYC verification before placing orders. Submitting false or doctored identity documents will result in immediate account suspension and may be reported to relevant authorities.</p>
+              </section>
+              <section>
+                <h3 className="font-bold text-[#1A1A1A] mb-1">3. Trade Rules</h3>
+                <p>You must provide legitimate bank payment proofs. Fake screenshots, reversed payments, or third-party transfers are strictly prohibited and result in permanent KYC cancellation and order forfeiture.</p>
+              </section>
+              <section>
+                <h3 className="font-bold text-[#1A1A1A] mb-1">4. Rates & Fees</h3>
+                <p>The exchange rate locked at order creation is your guaranteed payout rate. Standard blockchain network (mining) fees are covered by 9ija Escrow. No hidden charges apply.</p>
+              </section>
+              <section>
+                <h3 className="font-bold text-[#1A1A1A] mb-1">5. Liability</h3>
+                <p>9ija Escrow acts as an intermediary and is not liable for losses arising from user-provided incorrect wallet addresses, bank details, or payment delays caused by third-party banks.</p>
+              </section>
+              <section>
+                <h3 className="font-bold text-[#1A1A1A] mb-1">6. Termination</h3>
+                <p>We reserve the right to suspend or terminate any account found to be in violation of these terms, without prior notice.</p>
+              </section>
+            </>
+          )}
+          {type === 'support' && (
+            <div className="space-y-5">
+              <p>Our support team is available Monday–Friday, 9 AM–6 PM WAT. We typically respond within 2–4 business hours.</p>
+              <div className="bg-[#F0F7F2] border border-[#D1E6D8] rounded-2xl p-4 flex items-start gap-3">
+                <div className="p-2 bg-[#008751]/10 rounded-xl shrink-0">
+                  <Mail className="w-4 h-4 text-[#008751]" />
+                </div>
+                <div>
+                  <div className="font-bold text-[#1A1A1A] text-sm mb-0.5">Email Support</div>
+                  <div className="text-xs text-gray-500">For account issues, KYC reviews, and trade disputes</div>
+                  <a href="mailto:support@9ijaescrow.com" className="text-[#008751] font-semibold text-sm mt-1 block hover:underline">
+                    support@9ijaescrow.com
+                  </a>
+                </div>
+              </div>
+              <div className="bg-[#F0F7F2] border border-[#D1E6D8] rounded-2xl p-4 flex items-start gap-3">
+                <div className="p-2 bg-[#008751]/10 rounded-xl shrink-0">
+                  <MessageCircle className="w-4 h-4 text-[#008751]" />
+                </div>
+                <div>
+                  <div className="font-bold text-[#1A1A1A] text-sm mb-0.5">WhatsApp Support</div>
+                  <div className="text-xs text-gray-500">Urgent trade issues and real-time status checks</div>
+                  <a href="https://wa.me/2349000000000" target="_blank" rel="noopener noreferrer" className="text-[#008751] font-semibold text-sm mt-1 block hover:underline">
+                    +234 900 000 0000
+                  </a>
+                </div>
+              </div>
+              <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-xs text-amber-800">
+                <span className="font-bold block mb-0.5">Before reaching out</span>
+                Please have your order ID or registered email address ready to help us resolve your issue faster.
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 interface LandingPageProps {
   announcements: Announcement[];
@@ -9,12 +127,15 @@ interface LandingPageProps {
 }
 
 export default function LandingPage({ announcements, settings, onNavigate }: LandingPageProps) {
+  const [activeModal, setActiveModal] = useState<ModalType>(null);
+
   const publicAnnouncements = announcements.filter(
     (ann) => (ann.scope === 'public' || ann.scope === 'all') && ann.isActive
   );
 
   return (
     <div className="bg-[#F7F9F7] min-h-screen font-sans text-[#1A1A1A]">
+      <Modal type={activeModal} onClose={() => setActiveModal(null)} />
 
       {/* Hero */}
       <header className="bg-[#1A1A1A] text-white py-14 sm:py-20 px-4 sm:px-6 rounded-b-[2rem]">
@@ -215,9 +336,9 @@ export default function LandingPage({ announcements, settings, onNavigate }: Lan
           <div className="flex flex-col sm:flex-row justify-between items-center pt-8 text-xs gap-4">
             <div>&copy; {new Date().getFullYear()} 9ija Escrow Inc. All rights reserved.</div>
             <div className="flex gap-5">
-              <a href="#privacy" className="hover:text-emerald-400 transition">Privacy Policy</a>
-              <a href="#terms" className="hover:text-emerald-400 transition">Terms of Use</a>
-              <a href="#support" className="hover:text-emerald-400 transition">Support</a>
+              <button onClick={() => setActiveModal('privacy')} className="hover:text-emerald-400 transition cursor-pointer">Privacy Policy</button>
+              <button onClick={() => setActiveModal('terms')} className="hover:text-emerald-400 transition cursor-pointer">Terms of Use</button>
+              <button onClick={() => setActiveModal('support')} className="hover:text-emerald-400 transition cursor-pointer">Support</button>
             </div>
           </div>
         </div>

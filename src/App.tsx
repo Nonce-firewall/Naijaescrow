@@ -280,7 +280,7 @@ export default function App() {
 
         {currentPage === 'dashboard' && userProfile && (
           <>
-            {isAdminMode ? (
+            {isAdminMode && userProfile.role === 'admin' ? (
               <AdminCMS
                 userProfile={userProfile}
                 orders={orders}
