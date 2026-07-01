@@ -99,6 +99,7 @@ export default function AdminCMS({
   const [bulletinContent, setBulletinContent] = useState('');
   const [bulletinScope, setBulletinScope] = useState<Announcement['scope']>('all');
   const [isCreatingBulletin, setIsCreatingBulletin] = useState(false);
+  const [showArchivedBulletins, setShowArchivedBulletins] = useState(false);
 
   // Calculate quick metrics for Analytics view
   const totalBuyVolumeUsdt = orders
@@ -112,7 +113,7 @@ export default function AdminCMS({
   const pendingOrdersCount = orders.filter((o) => o.status === 'pending').length;
   const pendingKycCount = kycUsers.filter((u) => u.kycStatus === 'pending').length;
 
-  const totalUsersCount = kycUsers.length;
+  const totalUsersCount = kycUsers.filter(u => u.role !== 'admin').length;
 
   // Process order approval
   const handleOrderApproval = async (id: string) => {
@@ -458,7 +459,7 @@ export default function AdminCMS({
             }`}
           >
             <Users className="w-4 h-4" />
-            Traders Directory ({kycUsers?.length || 0})
+            Traders Directory ({kycUsers?.filter(u => u.role !== 'admin').length || 0})
           </button>
 
           <button
@@ -882,47 +883,66 @@ export default function AdminCMS({
 
               {/* Announcements list */}
               <div className="space-y-4">
-                <h4 className="font-bold text-slate-900 text-sm">Current Announcements Logs</h4>
-                
-                {announcements.length === 0 ? (
-                  <p className="text-xs text-slate-400">No announcements published.</p>
-                ) : (
-                  <div className="space-y-3 max-h-[300px] overflow-y-auto">
-                    {announcements.map((ann) => (
-                      <div key={ann.id} className="p-3 bg-slate-50 border border-slate-100 rounded-xl flex items-start justify-between gap-4">
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2">
-                            <h5 className="font-bold text-slate-800 text-xs">{ann.title}</h5>
-                            <span className={`text-[8px] px-1.5 py-0.5 rounded font-mono uppercase font-bold ${
-                              ann.scope === 'public' 
-                                ? 'bg-blue-50 text-blue-700' 
-                                : ann.scope === 'private' 
-                                  ? 'bg-amber-50 text-amber-700' 
-                                  : 'bg-purple-50 text-purple-700'
-                            }`}>
-                              Scope: {ann.scope}
-                            </span>
-                            {!ann.isActive && (
-                              <span className="bg-slate-200 text-slate-600 text-[8px] px-1.5 rounded font-mono font-bold">INACTIVE</span>
-                            )}
-                          </div>
-                          <p className="text-[11px] text-slate-500 leading-relaxed">{ann.content}</p>
-                          <span className="text-[9px] text-slate-400 font-mono block">Published: {new Date(ann.createdAt).toLocaleDateString()}</span>
-                        </div>
-
-                        {ann.isActive && (
-                          <button
-                            type="button"
-                            onClick={() => handleDeactivateBulletin(ann.id)}
-                            className="text-rose-600 hover:text-rose-800 text-[10px] font-bold border border-rose-200 hover:border-rose-300 px-2.5 py-1 rounded cursor-pointer transition bg-white"
-                          >
-                            Archive
-                          </button>
-                        )}
-                      </div>
-                    ))}
+                <div className="flex items-center justify-between">
+                  <h4 className="font-bold text-slate-900 text-sm">Announcements Log</h4>
+                  <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-lg border border-slate-200">
+                    <button
+                      type="button"
+                      onClick={() => setShowArchivedBulletins(false)}
+                      className={`px-3 py-1 rounded-md text-[10px] font-bold cursor-pointer transition ${!showArchivedBulletins ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}
+                    >
+                      Active ({announcements.filter(a => a.isActive).length})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowArchivedBulletins(true)}
+                      className={`px-3 py-1 rounded-md text-[10px] font-bold cursor-pointer transition ${showArchivedBulletins ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}
+                    >
+                      Archived ({announcements.filter(a => !a.isActive).length})
+                    </button>
                   </div>
-                )}
+                </div>
+
+                {(() => {
+                  const filtered = announcements.filter(a => showArchivedBulletins ? !a.isActive : a.isActive);
+                  return filtered.length === 0 ? (
+                    <p className="text-xs text-slate-400 py-4 text-center">
+                      {showArchivedBulletins ? 'No archived announcements.' : 'No active announcements published.'}
+                    </p>
+                  ) : (
+                    <div className="space-y-3 max-h-[360px] overflow-y-auto pr-1">
+                      {filtered.map((ann) => (
+                        <div key={ann.id} className={`p-3 border rounded-xl flex items-start justify-between gap-4 ${ann.isActive ? 'bg-slate-50 border-slate-100' : 'bg-slate-50/40 border-dashed border-slate-200 opacity-70'}`}>
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <h5 className="font-bold text-slate-800 text-xs">{ann.title}</h5>
+                              <span className={`text-[8px] px-1.5 py-0.5 rounded font-mono uppercase font-bold ${
+                                ann.scope === 'public' ? 'bg-blue-50 text-blue-700' : ann.scope === 'private' ? 'bg-amber-50 text-amber-700' : 'bg-purple-50 text-purple-700'
+                              }`}>
+                                {ann.scope}
+                              </span>
+                              {!ann.isActive && (
+                                <span className="bg-slate-200 text-slate-500 text-[8px] px-1.5 rounded font-mono font-bold">ARCHIVED</span>
+                              )}
+                            </div>
+                            <p className="text-[11px] text-slate-500 leading-relaxed">{ann.content}</p>
+                            <span className="text-[9px] text-slate-400 font-mono block">Published: {new Date(ann.createdAt).toLocaleDateString()}</span>
+                          </div>
+
+                          {ann.isActive && (
+                            <button
+                              type="button"
+                              onClick={() => handleDeactivateBulletin(ann.id)}
+                              className="shrink-0 text-rose-600 hover:text-rose-800 text-[10px] font-bold border border-rose-200 hover:border-rose-300 px-2.5 py-1 rounded cursor-pointer transition bg-white"
+                            >
+                              Archive
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
               </div>
 
             </div>
@@ -938,7 +958,7 @@ export default function AdminCMS({
 
               <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 flex flex-col sm:flex-row gap-4 items-center justify-between">
                 <div className="text-xs text-slate-600 font-medium">
-                  Total Accounts registered: <strong className="text-slate-900">{kycUsers.length}</strong>
+                  Total Traders registered: <strong className="text-slate-900">{kycUsers.filter(u => u.role !== 'admin').length}</strong>
                 </div>
                 <div className="flex gap-2">
                   <span className="bg-emerald-50 text-emerald-700 text-[10px] font-bold px-2.5 py-1 rounded-full border border-emerald-100">

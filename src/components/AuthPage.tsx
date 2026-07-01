@@ -18,12 +18,22 @@ export default function AuthPage({ onBack, onAuthSuccess, addToast, initialMode 
   const [isLoading, setIsLoading] = useState(false);
   const [authErrorAlert, setAuthErrorAlert] = useState<string | null>(null);
 
+  // Admin-reserved emails must only be provisioned via the Supabase dashboard, not the signup form
+  const ADMIN_EMAILS = ['cryptogangstar247@gmail.com'];
+  const isAdminEmail = (e: string) => ADMIN_EMAILS.includes(e.toLowerCase().trim());
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthErrorAlert(null);
     if (!email || !password) { addToast('Please fill in all fields', 'error'); return; }
     if (!isLogin && password !== confirmPassword) { addToast('Passwords do not match', 'error'); return; }
     if (password.length < 6) { addToast('Password must be at least 6 characters', 'error'); return; }
+
+    // Block admin emails from registering via the public signup form
+    if (!isLogin && isAdminEmail(email)) {
+      addToast('Admin accounts are provisioned by the platform. Please sign in or contact support.', 'error');
+      return;
+    }
 
     setIsLoading(true);
     try {
@@ -128,15 +138,20 @@ export default function AuthPage({ onBack, onAuthSuccess, addToast, initialMode 
           </div>
         </div>
         <h2 className="text-center text-2xl sm:text-3xl font-bold text-[#1A1A1A] tracking-tight">
-          {isLogin ? 'Sign in to 9ija Escrow' : 'Create an escrow account'}
+          {isLogin ? 'Sign in to 9ija Escrow' : 'Create a Trader Account'}
         </h2>
+        {!isLogin && (
+          <p className="mt-1.5 text-center text-[11px] text-[#008751] font-semibold">
+            Signup is for traders only. Admin accounts are provisioned by the platform.
+          </p>
+        )}
         <p className="mt-2 text-center text-sm text-gray-500">
           Or{' '}
           <button
             onClick={() => { setIsLogin(!isLogin); setPassword(''); setConfirmPassword(''); }}
             className="font-bold text-[#008751] hover:text-[#007043] cursor-pointer"
           >
-            {isLogin ? 'create a new account for free' : 'sign in to your existing portal'}
+            {isLogin ? 'create a new trader account' : 'sign in to your existing portal'}
           </button>
         </p>
 

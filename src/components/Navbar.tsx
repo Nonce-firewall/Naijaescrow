@@ -75,7 +75,11 @@ export default function Navbar({ userProfile, isAdminMode, onToggleAdminMode, on
               )}
 
               <div className="flex flex-col text-right">
-                <span className="text-xs font-bold text-[#1A1A1A] font-mono truncate max-w-[160px]">{userProfile.email}</span>
+                <span className="text-xs font-bold text-[#1A1A1A] truncate max-w-[160px]">
+                  {userProfile.kycStatus === 'approved' && userProfile.kycData?.fullName
+                    ? userProfile.kycData.fullName.trim().split(/\s+/).slice(0, 2).join(' ')
+                    : userProfile.email}
+                </span>
                 <span className={`text-[10px] font-bold flex items-center gap-1 justify-end ${kycColor}`}>
                   {userProfile.kycStatus === 'approved' && <UserCheck className="w-3 h-3" />}
                   {userProfile.kycStatus === 'pending' && <Clock className="w-3 h-3" />}

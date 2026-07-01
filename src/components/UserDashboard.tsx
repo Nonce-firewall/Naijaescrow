@@ -136,10 +136,26 @@ export default function UserDashboard({
   const [viewReceipt, setViewReceipt] = useState<Order | null>(null);
   const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
 
-  // Private announcements filter
+  // Dismissed announcements (per-user, stored in localStorage)
+  const DISMISSED_KEY = `dismissed_anns_${userProfile.uid}`;
+  const [dismissedIds, setDismissedIds] = useState<string[]>(() => {
+    try { return JSON.parse(localStorage.getItem(DISMISSED_KEY) || '[]'); } catch { return []; }
+  });
+  const dismissAnnouncement = (id: string) => {
+    const updated = [...dismissedIds, id];
+    setDismissedIds(updated);
+    try { localStorage.setItem(DISMISSED_KEY, JSON.stringify(updated)); } catch {}
+  };
+
+  // Private announcements filter (exclude dismissed)
   const privateAnnouncements = announcements.filter(
-    (ann) => (ann.scope === 'private' || ann.scope === 'all') && ann.isActive
+    (ann) => (ann.scope === 'private' || ann.scope === 'all') && ann.isActive && !dismissedIds.includes(ann.id)
   );
+
+  // Display name: first two words of KYC full name, fallback to email prefix
+  const displayName = userProfile.kycStatus === 'approved' && userProfile.kycData?.fullName
+    ? userProfile.kycData.fullName.trim().split(/\s+/).slice(0, 2).join(' ')
+    : userProfile.email.split('@')[0];
 
   const activeRate = activeCoin ? activeCoin.rate : settings.usdtRate;
   const calculatedNgnAmount = cryptoAmount ? cryptoAmount * activeRate : 0;
@@ -388,15 +404,16 @@ export default function UserDashboard({
 
         <div className="flex items-center gap-4 border-t border-white/10 md:border-t-0 pt-4 md:pt-0 relative z-10">
           <div className="text-right">
-            <span className="text-[9px] text-gray-400 font-mono block uppercase tracking-wider">KYC ACCOUNT LEVEL</span>
-            <span className={`text-sm font-bold flex items-center gap-1.5 mt-1 justify-end ${
+            <span className="text-[9px] text-gray-400 font-mono block uppercase tracking-wider">Trader</span>
+            <span className="text-sm font-bold text-white mt-0.5 block">{displayName}</span>
+            <span className={`text-xs font-bold flex items-center gap-1.5 mt-0.5 justify-end ${
               userProfile.kycStatus === 'approved' ? 'text-[#00FF85]' : 'text-amber-400'
             }`}>
-              {userProfile.kycStatus === 'approved' && <CheckCircle2 className="w-4 h-4 text-[#00FF85]" />}
-              {userProfile.kycStatus === 'pending' && <Clock className="w-4 h-4 text-amber-400" />}
-              {userProfile.kycStatus === 'rejected' && <XCircle className="w-4 h-4 text-rose-400" />}
-              {userProfile.kycStatus === 'none' && <AlertCircle className="w-4 h-4 text-amber-400" />}
-              {userProfile.kycStatus.toUpperCase()}
+              {userProfile.kycStatus === 'approved' && <CheckCircle2 className="w-3.5 h-3.5 text-[#00FF85]" />}
+              {userProfile.kycStatus === 'pending' && <Clock className="w-3.5 h-3.5 text-amber-400" />}
+              {userProfile.kycStatus === 'rejected' && <XCircle className="w-3.5 h-3.5 text-rose-400" />}
+              {userProfile.kycStatus === 'none' && <AlertCircle className="w-3.5 h-3.5 text-amber-400" />}
+              KYC {userProfile.kycStatus.toUpperCase()}
             </span>
           </div>
         </div>
@@ -1382,8 +1399,17 @@ export default function UserDashboard({
             ) : (
               <div className="space-y-3 max-h-[300px] overflow-y-auto">
                 {privateAnnouncements.map((ann) => (
-                  <div key={ann.id} className="p-4 bg-[#F7F9F7] rounded-2xl border border-[#E0E7E0] space-y-1.5">
-                    <h5 className="font-bold text-[#1A1A1A] text-xs">{ann.title}</h5>
+                  <div key={ann.id} className="p-4 bg-[#F7F9F7] rounded-2xl border border-[#E0E7E0] space-y-1.5 relative">
+                    <div className="flex items-start justify-between gap-2">
+                      <h5 className="font-bold text-[#1A1A1A] text-xs">{ann.title}</h5>
+                      <button
+                        onClick={() => dismissAnnouncement(ann.id)}
+                        title="Dismiss"
+                        className="shrink-0 text-gray-300 hover:text-rose-400 transition cursor-pointer mt-0.5"
+                      >
+                        <XCircle className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                     <p className="text-[11px] text-gray-600 leading-relaxed">{ann.content}</p>
                     <span className="text-[9px] text-gray-400 font-mono block pt-1">
                       {new Date(ann.createdAt).toLocaleDateString()}
