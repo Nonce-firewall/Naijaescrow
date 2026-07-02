@@ -110,21 +110,6 @@ export default function Navbar({ userProfile, isAdminMode, currentPage, onToggle
                   </button>
                 )}
 
-                <div className="flex flex-col text-right">
-                  <span className="text-xs font-bold text-[#1A1A1A] truncate max-w-[160px]">
-                    {userProfile.kycStatus === 'approved' && userProfile.kycData?.fullName
-                      ? userProfile.kycData.fullName.trim().split(/\s+/).slice(0, 2).join(' ')
-                      : userProfile.email}
-                  </span>
-                  <span className={`text-[10px] font-bold flex items-center gap-1 justify-end ${kycColor}`}>
-                    {userProfile.kycStatus === 'approved' && <UserCheck className="w-3 h-3" />}
-                    {userProfile.kycStatus === 'pending' && <Clock className="w-3 h-3" />}
-                    {userProfile.kycStatus === 'rejected' && <XCircle className="w-3 h-3" />}
-                    {userProfile.kycStatus === 'none' && <AlertCircle className="w-3 h-3" />}
-                    KYC {userProfile.kycStatus.toUpperCase()}
-                  </span>
-                </div>
-
                 <button
                   onClick={handleLogout}
                   className="flex items-center gap-1.5 px-3 py-1.5 border border-[#E0E7E0] hover:bg-rose-50 hover:border-rose-200 hover:text-rose-700 text-gray-600 rounded-xl text-xs font-bold transition cursor-pointer"
