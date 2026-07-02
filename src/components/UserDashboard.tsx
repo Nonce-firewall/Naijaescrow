@@ -1590,8 +1590,8 @@ export default function UserDashboard({
         {/* Right column (Notice board & Guidelines) */}
         <div className="lg:col-span-4 space-y-6">
           
-          {/* System Bulletin — combines real-time activity notifs + admin announcements */}
-          <div className="bg-white rounded-3xl border border-[#E0E7E0] shadow-sm p-6 space-y-4">
+          {/* System Bulletin — desktop/large screen only; mobile uses the bell drawer */}
+          <div className="hidden lg:block bg-white rounded-3xl border border-[#E0E7E0] shadow-sm p-6 space-y-4">
             {/* Header */}
             <div className="flex items-center gap-2 text-[#1A1A1A] border-b border-[#E0E7E0] pb-3">
               <div className="relative shrink-0">

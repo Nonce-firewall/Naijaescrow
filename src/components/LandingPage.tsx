@@ -261,35 +261,6 @@ export default function LandingPage({ announcements, settings, onNavigate }: Lan
         </div>
       </header>
 
-      {/* Announcements */}
-      {publicAnnouncements.length > 0 && (
-        <section className="bg-[#F0F7F2] border-b border-[#D1E6D8] py-7 px-4 sm:px-6">
-          <div className="max-w-3xl mx-auto">
-            <div className="flex items-center gap-2 mb-4 text-[#1A1A1A]">
-              <Bell className="w-4 h-4 text-[#008751]" />
-              <h2 className="text-xs font-bold uppercase tracking-wider">Public Announcements</h2>
-            </div>
-            <div className="space-y-3">
-              {publicAnnouncements.map((ann) => (
-                <div
-                  key={ann.id}
-                  className="bg-white p-4 rounded-2xl border border-[#E0E7E0] flex gap-3"
-                >
-                  <div className="w-1 rounded-full bg-[#008751] shrink-0 self-stretch"></div>
-                  <div>
-                    <h3 className="font-bold text-[#1A1A1A] text-sm">{ann.title}</h3>
-                    <p className="text-xs text-gray-500 mt-1 leading-relaxed">{ann.content}</p>
-                    <span className="text-[10px] text-gray-400 mt-1.5 block font-mono">
-                      {new Date(ann.createdAt).toLocaleDateString()}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
       {/* Features */}
       <section className="py-14 px-4 sm:px-6 max-w-5xl mx-auto">
         <div className="text-center mb-10">
