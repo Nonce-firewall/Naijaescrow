@@ -64,3 +64,14 @@ ALTER TABLE disputes ADD COLUMN IF NOT EXISTS image_urls TEXT;
 -- Re-grant to ensure new column is accessible via Data API
 GRANT SELECT, INSERT, UPDATE ON TABLE disputes TO anon;
 GRANT SELECT, INSERT, UPDATE ON TABLE disputes TO authenticated;
+
+-- ============================================================
+-- ADDENDUM: Notification preferences
+-- Run this if you already ran the migration above previously.
+-- Safe to run multiple times (idempotent).
+-- ============================================================
+
+ALTER TABLE users ADD COLUMN IF NOT EXISTS notification_preferences JSONB;
+
+GRANT SELECT, UPDATE ON TABLE users TO anon;
+GRANT SELECT, UPDATE ON TABLE users TO authenticated;

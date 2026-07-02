@@ -23,8 +23,12 @@ create table if not exists public.users (
   kyc_status    text        not null default 'none'
                               check (kyc_status in ('none', 'pending', 'approved', 'rejected')),
   kyc_data      jsonb,
+  notification_preferences jsonb,
   created_at    bigint      not null default (extract(epoch from now()) * 1000)::bigint
 );
+
+-- Notification preferences column for existing installs (safe idempotent)
+alter table public.users add column if not exists notification_preferences jsonb;
 
 -- Settings (single-row admin config, id = 'admin_settings')
 create table if not exists public.settings (

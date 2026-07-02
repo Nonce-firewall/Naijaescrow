@@ -25,7 +25,8 @@ import {
   MessageSquare,
   AlertOctagon,
   ShieldOff,
-  X
+  X,
+  RotateCw
 } from 'lucide-react';
 import { UserProfile, Order, AdminSettings, Announcement, KYCData, CoinListing, Dispute } from '../types';
 import { createOrder, submitKYC, submitDispute } from '../lib/dbHelpers';
@@ -110,6 +111,60 @@ export default function UserDashboard({
       setActiveTab(order[currentIndex + 1]);
     } else if (dx > 0 && currentIndex > 0) {
       setActiveTab(order[currentIndex - 1]);
+    }
+  };
+
+  // Mobile pull-to-refresh support
+  const [pullDistance, setPullDistance] = useState(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const pullStartRef = useRef<{ x: number; y: number } | null>(null);
+  const pullAxisRef = useRef<'horizontal' | 'vertical' | null>(null);
+  const PULL_THRESHOLD = 70;
+  const MAX_PULL = 110;
+
+  const handlePageTouchStart = (e: React.TouchEvent) => {
+    if (isRefreshing || window.scrollY > 0) {
+      pullStartRef.current = null;
+      return;
+    }
+    const t = e.touches[0];
+    pullStartRef.current = { x: t.clientX, y: t.clientY };
+    pullAxisRef.current = null;
+  };
+
+  const handlePageTouchMove = (e: React.TouchEvent) => {
+    if (!pullStartRef.current || isRefreshing) return;
+    const t = e.touches[0];
+    const dx = t.clientX - pullStartRef.current.x;
+    const dy = t.clientY - pullStartRef.current.y;
+
+    if (!pullAxisRef.current && (Math.abs(dx) > 8 || Math.abs(dy) > 8)) {
+      pullAxisRef.current = Math.abs(dy) > Math.abs(dx) ? 'vertical' : 'horizontal';
+    }
+
+    if (pullAxisRef.current !== 'vertical' || dy <= 0 || window.scrollY > 0) {
+      setPullDistance(0);
+      return;
+    }
+
+    setPullDistance(Math.min(dy * 0.5, MAX_PULL));
+    if (e.cancelable) e.preventDefault();
+  };
+
+  const handlePageTouchEnd = () => {
+    if (!pullStartRef.current) return;
+    pullStartRef.current = null;
+    pullAxisRef.current = null;
+
+    if (pullDistance >= PULL_THRESHOLD) {
+      setIsRefreshing(true);
+      onRefresh();
+      setTimeout(() => {
+        setIsRefreshing(false);
+        setPullDistance(0);
+      }, 600);
+    } else {
+      setPullDistance(0);
     }
   };
   
@@ -578,7 +633,22 @@ export default function UserDashboard({
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-3 sm:px-6 py-4 sm:py-8 font-sans">
+    <div
+      className="max-w-7xl mx-auto px-3 sm:px-6 py-4 sm:py-8 font-sans"
+      onTouchStart={handlePageTouchStart}
+      onTouchMove={handlePageTouchMove}
+      onTouchEnd={handlePageTouchEnd}
+    >
+      {/* Pull-to-refresh indicator — mobile only */}
+      <div
+        className="sm:hidden flex items-center justify-center overflow-hidden transition-[height] duration-200"
+        style={{ height: isRefreshing ? 40 : pullDistance }}
+      >
+        <RotateCw
+          className={`w-5 h-5 text-[#008751] ${isRefreshing ? 'animate-spin' : ''}`}
+          style={!isRefreshing ? { transform: `rotate(${Math.min(pullDistance / PULL_THRESHOLD, 1) * 360}deg)` } : undefined}
+        />
+      </div>
 
       {/* Suspended account banner */}
       {userProfile.accountStatus === 'suspended' && (

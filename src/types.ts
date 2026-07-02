@@ -1,3 +1,9 @@
+export interface NotificationPreferences {
+  orderUpdates: boolean;
+  kycUpdates: boolean;
+  announcements: boolean;
+}
+
 export interface UserProfile {
   uid: string;
   email: string;
@@ -7,6 +13,7 @@ export interface UserProfile {
   accountStatus: 'active' | 'suspended' | 'terminated';
   suspendReason?: string;
   terminateReason?: string;
+  notificationPreferences?: NotificationPreferences;
   createdAt: number;
 }
 

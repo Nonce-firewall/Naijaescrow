@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import { UserProfile, KYCData, Order, AdminSettings, Announcement, CoinListing, Dispute } from '../types';
+import { UserProfile, KYCData, Order, AdminSettings, Announcement, CoinListing, Dispute, NotificationPreferences } from '../types';
 
 export const DEFAULT_SETTINGS: AdminSettings = {
   ngnBankName: 'Zenith Bank',
@@ -134,6 +134,7 @@ export function rowToUserProfile(row: any): UserProfile {
     accountStatus: row.account_status || 'active',
     suspendReason: row.suspend_reason || undefined,
     terminateReason: row.terminate_reason || undefined,
+    notificationPreferences: row.notification_preferences || undefined,
     createdAt: row.created_at
   };
 }
@@ -394,6 +395,18 @@ export async function terminateUser(uid: string, reason: string) {
     account_status: 'terminated',
     terminate_reason: reason
   }).eq('id', uid);
+  if (error) throw new Error(error.message);
+}
+
+export async function updateNotificationPreferences(uid: string, prefs: NotificationPreferences) {
+  const { error } = await supabase.from('users').update({
+    notification_preferences: prefs
+  }).eq('id', uid);
+  if (error) throw new Error(error.message);
+}
+
+export async function changePassword(newPassword: string) {
+  const { error } = await supabase.auth.updateUser({ password: newPassword });
   if (error) throw new Error(error.message);
 }
 

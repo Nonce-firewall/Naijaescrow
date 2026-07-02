@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { UserProfile } from '../types';
+import { UserProfile, NotificationPreferences } from '../types';
+import { updateNotificationPreferences, changePassword } from '../lib/dbHelpers';
 import {
   LogOut,
   UserCheck,
@@ -11,8 +12,20 @@ import {
   Menu,
   X,
   UserCircle2,
-  Bell
+  Bell,
+  Settings,
+  ChevronDown,
+  KeyRound,
+  BellRing,
+  Eye,
+  EyeOff
 } from 'lucide-react';
+
+const DEFAULT_NOTIF_PREFS: NotificationPreferences = {
+  orderUpdates: true,
+  kycUpdates: true,
+  announcements: true
+};
 
 interface NavbarProps {
   userProfile: UserProfile | null;
@@ -28,6 +41,21 @@ interface NavbarProps {
 export default function Navbar({ userProfile, isAdminMode, currentPage, onToggleAdminMode, onNavigate, addToast, bulletinCount = 0, onBellClick }: NavbarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [logoError, setLogoError] = useState(false);
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [showNotifModal, setShowNotifModal] = useState(false);
+  const accountMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!accountMenuOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (accountMenuRef.current && !accountMenuRef.current.contains(e.target as Node)) {
+        setAccountMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [accountMenuOpen]);
 
   const handleLogout = async () => {
     try {
@@ -35,6 +63,7 @@ export default function Navbar({ userProfile, isAdminMode, currentPage, onToggle
       addToast('Logged out successfully.', 'success');
       onNavigate('landing');
       setMenuOpen(false);
+      setAccountMenuOpen(false);
     } catch (err: any) {
       addToast('Logout failed.', 'error');
     }
@@ -110,13 +139,47 @@ export default function Navbar({ userProfile, isAdminMode, currentPage, onToggle
                   </button>
                 )}
 
-                <button
-                  onClick={handleLogout}
-                  className="flex items-center gap-1.5 px-3 py-1.5 border border-[#E0E7E0] hover:bg-rose-50 hover:border-rose-200 hover:text-rose-700 text-gray-600 rounded-xl text-xs font-bold transition cursor-pointer"
-                >
-                  <LogOut className="w-3.5 h-3.5" />
-                  Log Out
-                </button>
+                <div className="relative" ref={accountMenuRef}>
+                  <button
+                    onClick={() => setAccountMenuOpen((v) => !v)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 border rounded-xl text-xs font-bold transition cursor-pointer ${
+                      accountMenuOpen
+                        ? 'border-[#008751]/40 bg-[#E6F4EA] text-[#008751]'
+                        : 'border-[#E0E7E0] hover:bg-[#F7F9F7] text-gray-600'
+                    }`}
+                  >
+                    <Settings className="w-3.5 h-3.5" />
+                    Account
+                    <ChevronDown className={`w-3 h-3 transition-transform ${accountMenuOpen ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  {accountMenuOpen && (
+                    <div className="absolute right-0 top-full mt-2 w-56 bg-white border border-[#E0E7E0] rounded-xl shadow-lg py-1.5 z-50">
+                      <button
+                        onClick={() => { setShowPasswordModal(true); setAccountMenuOpen(false); }}
+                        className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-bold text-gray-600 hover:bg-[#F7F9F7] hover:text-[#008751] transition cursor-pointer"
+                      >
+                        <KeyRound className="w-3.5 h-3.5 shrink-0" />
+                        Change Password
+                      </button>
+                      <button
+                        onClick={() => { setShowNotifModal(true); setAccountMenuOpen(false); }}
+                        className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-bold text-gray-600 hover:bg-[#F7F9F7] hover:text-[#008751] transition cursor-pointer"
+                      >
+                        <BellRing className="w-3.5 h-3.5 shrink-0" />
+                        Notification Preferences
+                      </button>
+                      <div className="my-1.5 border-t border-[#E0E7E0]" />
+                      <button
+                        onClick={handleLogout}
+                        className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-bold text-gray-600 hover:bg-rose-50 hover:text-rose-700 transition cursor-pointer"
+                      >
+                        <LogOut className="w-3.5 h-3.5 shrink-0" />
+                        Log Out
+                      </button>
+                    </div>
+                  )}
+                </div>
               </>
             ) : null
           )}
@@ -198,14 +261,220 @@ export default function Navbar({ userProfile, isAdminMode, currentPage, onToggle
             </span>
           </div>
           <button
-            onClick={handleLogout}
+            onClick={() => { setShowPasswordModal(true); setMenuOpen(false); }}
             className="w-full flex items-center justify-center gap-2 border border-[#E0E7E0] hover:bg-[#F7F9F7] text-gray-600 py-2.5 rounded-xl text-sm font-bold transition cursor-pointer"
+          >
+            <KeyRound className="w-4 h-4" />
+            Change Password
+          </button>
+          <button
+            onClick={() => { setShowNotifModal(true); setMenuOpen(false); }}
+            className="w-full flex items-center justify-center gap-2 border border-[#E0E7E0] hover:bg-[#F7F9F7] text-gray-600 py-2.5 rounded-xl text-sm font-bold transition cursor-pointer"
+          >
+            <BellRing className="w-4 h-4" />
+            Notification Preferences
+          </button>
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center justify-center gap-2 border border-[#E0E7E0] hover:bg-rose-50 hover:border-rose-200 hover:text-rose-700 text-gray-600 py-2.5 rounded-xl text-sm font-bold transition cursor-pointer"
           >
             <LogOut className="w-4 h-4" />
             Log Out
           </button>
         </div>
       )}
+
+      {showPasswordModal && (
+        <ChangePasswordModal onClose={() => setShowPasswordModal(false)} addToast={addToast} />
+      )}
+
+      {showNotifModal && userProfile && (
+        <NotificationPreferencesModal
+          userProfile={userProfile}
+          onClose={() => setShowNotifModal(false)}
+          addToast={addToast}
+        />
+      )}
     </nav>
+  );
+}
+
+function ChangePasswordModal({ onClose, addToast }: { onClose: () => void; addToast: (msg: string, type: 'success' | 'error' | 'info') => void }) {
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPw, setShowPw] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newPassword.length < 6) {
+      addToast('Password must be at least 6 characters.', 'error');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      addToast('Passwords do not match.', 'error');
+      return;
+    }
+    setSaving(true);
+    try {
+      await changePassword(newPassword);
+      addToast('Password updated successfully.', 'success');
+      onClose();
+    } catch (err: any) {
+      addToast(err.message || 'Failed to update password.', 'error');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={onClose}>
+      <div
+        className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 flex flex-col max-h-[90vh]"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between mb-4 shrink-0">
+          <h3 className="text-base font-bold text-[#1A1A1A] flex items-center gap-2">
+            <KeyRound className="w-4 h-4 text-[#008751]" />
+            Change Password
+          </h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-700 cursor-pointer">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4 overflow-y-auto flex-1 min-h-0">
+          <div>
+            <label className="text-xs font-bold text-gray-500 block mb-1.5">New Password</label>
+            <div className="relative">
+              <input
+                type={showPw ? 'text' : 'password'}
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                minLength={6}
+                required
+                autoComplete="new-password"
+                className="w-full border border-[#E0E7E0] rounded-xl px-3 py-2.5 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-[#008751]/30"
+                placeholder="At least 6 characters"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPw((v) => !v)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
+              >
+                {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label className="text-xs font-bold text-gray-500 block mb-1.5">Confirm New Password</label>
+            <input
+              type={showPw ? 'text' : 'password'}
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              minLength={6}
+              required
+              autoComplete="new-password"
+              className="w-full border border-[#E0E7E0] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#008751]/30"
+              placeholder="Re-enter new password"
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={saving}
+            className="w-full bg-[#008751] hover:bg-[#007043] disabled:opacity-60 text-white py-2.5 rounded-xl text-sm font-bold transition cursor-pointer"
+          >
+            {saving ? 'Updating...' : 'Update Password'}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function NotificationPreferencesModal({
+  userProfile,
+  onClose,
+  addToast
+}: {
+  userProfile: UserProfile;
+  onClose: () => void;
+  addToast: (msg: string, type: 'success' | 'error' | 'info') => void;
+}) {
+  const [prefs, setPrefs] = useState<NotificationPreferences>(
+    userProfile.notificationPreferences || DEFAULT_NOTIF_PREFS
+  );
+  const [saving, setSaving] = useState(false);
+
+  const toggle = (key: keyof NotificationPreferences) => {
+    setPrefs((p) => ({ ...p, [key]: !p[key] }));
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      await updateNotificationPreferences(userProfile.uid, prefs);
+      addToast('Notification preferences saved.', 'success');
+      onClose();
+    } catch (err: any) {
+      addToast(err.message || 'Failed to save preferences.', 'error');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const options: { key: keyof NotificationPreferences; label: string; desc: string }[] = [
+    { key: 'orderUpdates', label: 'Order Updates', desc: 'Notify me when an order is approved or rejected.' },
+    { key: 'kycUpdates', label: 'KYC Updates', desc: 'Notify me about identity verification status changes.' },
+    { key: 'announcements', label: 'Announcements', desc: 'Notify me about platform-wide announcements.' }
+  ];
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={onClose}>
+      <div
+        className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 flex flex-col max-h-[90vh]"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between mb-4 shrink-0">
+          <h3 className="text-base font-bold text-[#1A1A1A] flex items-center gap-2">
+            <BellRing className="w-4 h-4 text-[#008751]" />
+            Notification Preferences
+          </h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-700 cursor-pointer">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        <div className="space-y-3 overflow-y-auto flex-1 min-h-0">
+          {options.map(({ key, label, desc }) => (
+            <label
+              key={key}
+              className="flex items-start gap-3 p-3 border border-[#E0E7E0] rounded-xl cursor-pointer hover:border-[#008751]/40"
+            >
+              <input
+                type="checkbox"
+                checked={prefs[key]}
+                onChange={() => toggle(key)}
+                className="mt-0.5 w-4 h-4 accent-[#008751] cursor-pointer"
+              />
+              <div>
+                <div className="text-xs font-bold text-[#1A1A1A]">{label}</div>
+                <div className="text-[11px] text-gray-500">{desc}</div>
+              </div>
+            </label>
+          ))}
+        </div>
+
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="w-full mt-4 shrink-0 bg-[#008751] hover:bg-[#007043] disabled:opacity-60 text-white py-2.5 rounded-xl text-sm font-bold transition cursor-pointer"
+        >
+          {saving ? 'Saving...' : 'Save Preferences'}
+        </button>
+      </div>
+    </div>
   );
 }
