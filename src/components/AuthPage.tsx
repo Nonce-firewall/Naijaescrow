@@ -40,7 +40,13 @@ export default function AuthPage({ onBack, onAuthSuccess, addToast, initialMode 
       if (isLogin) {
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        await getOrCreateUserProfile(data.user.id, data.user.email || '');
+        const profile = await getOrCreateUserProfile(data.user.id, data.user.email || '');
+        if (profile.accountStatus === 'terminated') {
+          await supabase.auth.signOut();
+          const reason = profile.terminateReason ? ` Reason: ${profile.terminateReason}` : '';
+          setAuthErrorAlert(`Your account has been permanently terminated by the platform.${reason} Contact support for assistance.`);
+          return;
+        }
         addToast('Sign in successful!', 'success');
         onAuthSuccess();
       } else {

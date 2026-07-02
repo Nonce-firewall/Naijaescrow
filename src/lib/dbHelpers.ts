@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import { UserProfile, KYCData, Order, AdminSettings, Announcement, CoinListing } from '../types';
+import { UserProfile, KYCData, Order, AdminSettings, Announcement, CoinListing, Dispute } from '../types';
 
 export const DEFAULT_SETTINGS: AdminSettings = {
   ngnBankName: 'Zenith Bank',
@@ -110,7 +110,7 @@ export async function ensureDefaultCoins() {
   }
 }
 
-function rowToSettings(row: any): AdminSettings {
+export function rowToSettings(row: any): AdminSettings {
   return {
     ngnBankName: row.ngn_bank_name,
     ngnAccountNumber: row.ngn_account_number,
@@ -124,18 +124,21 @@ function rowToSettings(row: any): AdminSettings {
   };
 }
 
-function rowToUserProfile(row: any): UserProfile {
+export function rowToUserProfile(row: any): UserProfile {
   return {
     uid: row.id,
     email: row.email,
     role: row.role,
     kycStatus: row.kyc_status,
     kycData: row.kyc_data || undefined,
+    accountStatus: row.account_status || 'active',
+    suspendReason: row.suspend_reason || undefined,
+    terminateReason: row.terminate_reason || undefined,
     createdAt: row.created_at
   };
 }
 
-function rowToOrder(row: any): Order {
+export function rowToOrder(row: any): Order {
   return {
     id: row.id,
     userId: row.user_id,
@@ -158,7 +161,7 @@ function rowToOrder(row: any): Order {
   };
 }
 
-function rowToAnnouncement(row: any): Announcement {
+export function rowToAnnouncement(row: any): Announcement {
   return {
     id: row.id,
     title: row.title,
@@ -169,7 +172,7 @@ function rowToAnnouncement(row: any): Announcement {
   };
 }
 
-function rowToCoin(row: any): CoinListing {
+export function rowToCoin(row: any): CoinListing {
   return {
     id: row.id,
     name: row.name,
@@ -180,6 +183,20 @@ function rowToCoin(row: any): CoinListing {
     logoUrl: row.logo_url || undefined,
     published: row.published,
     createdAt: row.created_at
+  };
+}
+
+export function rowToDispute(row: any): Dispute {
+  return {
+    id: row.id,
+    orderId: row.order_id,
+    userId: row.user_id,
+    userEmail: row.user_email,
+    message: row.message,
+    status: row.status,
+    adminResponse: row.admin_response || undefined,
+    createdAt: row.created_at,
+    resolvedAt: row.resolved_at || undefined
   };
 }
 
@@ -201,6 +218,7 @@ export async function getOrCreateUserProfile(uid: string, email: string): Promis
     email,
     role: isAdmin ? 'admin' : 'user',
     kyc_status: isAdmin ? 'approved' : 'none',
+    account_status: 'active',
     created_at: Date.now()
   };
 
@@ -346,8 +364,55 @@ export async function updateUserAdminAction(uid: string, fields: Partial<UserPro
   if (fields.role !== undefined) updates.role = fields.role;
   if (fields.kycStatus !== undefined) updates.kyc_status = fields.kycStatus;
   if (fields.kycData !== undefined) updates.kyc_data = fields.kycData ?? null;
+  if (fields.accountStatus !== undefined) updates.account_status = fields.accountStatus;
+  if (fields.suspendReason !== undefined) updates.suspend_reason = fields.suspendReason;
+  if (fields.terminateReason !== undefined) updates.terminate_reason = fields.terminateReason;
   const { error } = await supabase.from('users').update(updates).eq('id', uid);
   if (error) throw new Error(error.message);
 }
 
-export { rowToSettings, rowToUserProfile, rowToOrder, rowToAnnouncement, rowToCoin };
+export async function suspendUser(uid: string, reason: string) {
+  const { error } = await supabase.from('users').update({
+    account_status: 'suspended',
+    suspend_reason: reason
+  }).eq('id', uid);
+  if (error) throw new Error(error.message);
+}
+
+export async function terminateUser(uid: string, reason: string) {
+  const { error } = await supabase.from('users').update({
+    account_status: 'terminated',
+    terminate_reason: reason
+  }).eq('id', uid);
+  if (error) throw new Error(error.message);
+}
+
+export async function reinstateUser(uid: string) {
+  const { error } = await supabase.from('users').update({
+    account_status: 'active',
+    suspend_reason: null,
+    terminate_reason: null
+  }).eq('id', uid);
+  if (error) throw new Error(error.message);
+}
+
+export async function submitDispute(orderId: string, userId: string, userEmail: string, message: string) {
+  const { error } = await supabase.from('disputes').insert({
+    order_id: orderId,
+    user_id: userId,
+    user_email: userEmail,
+    message,
+    status: 'open',
+    created_at: Date.now()
+  });
+  if (error) throw new Error(error.message);
+}
+
+export async function resolveDispute(disputeId: string, adminResponse: string) {
+  const { error } = await supabase.from('disputes').update({
+    status: 'resolved',
+    admin_response: adminResponse,
+    resolved_at: Date.now()
+  }).eq('id', disputeId);
+  if (error) throw new Error(error.message);
+}

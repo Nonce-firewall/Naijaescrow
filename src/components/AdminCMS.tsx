@@ -23,9 +23,15 @@ import {
   Trash,
   Camera,
   Eye,
-  EyeOff
+  EyeOff,
+  MessageSquare,
+  Ban,
+  UserX,
+  UserCheck,
+  RotateCcw,
+  ChevronRight
 } from 'lucide-react';
-import { UserProfile, Order, AdminSettings, Announcement, KYCData, CoinListing } from '../types';
+import { UserProfile, Order, AdminSettings, Announcement, KYCData, CoinListing, Dispute } from '../types';
 import { 
   processOrder, 
   handleKYCReview, 
@@ -37,16 +43,21 @@ import {
   createCoinListing,
   deleteCoinListing,
   toggleCoinPublish,
-  updateUserAdminAction
+  updateUserAdminAction,
+  suspendUser,
+  terminateUser,
+  reinstateUser,
+  resolveDispute
 } from '../lib/dbHelpers';
 
 interface AdminCMSProps {
   userProfile: UserProfile;
   orders: Order[];
-  kycUsers: UserProfile[]; // Users with kycStatus !== 'none'
+  kycUsers: UserProfile[];
   settings: AdminSettings;
   announcements: Announcement[];
   coins: CoinListing[];
+  disputes: Dispute[];
   addToast: (msg: string, type: 'success' | 'error' | 'info') => void;
   onRefresh: () => void;
 }
@@ -58,12 +69,13 @@ export default function AdminCMS({
   settings, 
   announcements, 
   coins,
+  disputes,
   addToast,
   onRefresh
 }: AdminCMSProps) {
   
-  // Tabs: 'analytics' | 'orders' | 'kyc' | 'settings' | 'bulletins' | 'coins' | 'accounts'
-  const [activeTab, setActiveTab] = useState<'analytics' | 'orders' | 'kyc' | 'settings' | 'bulletins' | 'coins' | 'accounts'>('analytics');
+  // Tabs
+  const [activeTab, setActiveTab] = useState<'analytics' | 'orders' | 'kyc' | 'settings' | 'bulletins' | 'coins' | 'accounts' | 'disputes'>('analytics');
   
   // Expanded Order for action
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -108,6 +120,16 @@ export default function AdminCMS({
   const [editScope, setEditScope] = useState<'public' | 'private' | 'all'>('all');
   const [isSavingEdit, setIsSavingEdit] = useState(false);
 
+  // Trader directory state
+  const [selectedTrader, setSelectedTrader] = useState<UserProfile | null>(null);
+  const [traderActionReason, setTraderActionReason] = useState('');
+  const [isActioningTrader, setIsActioningTrader] = useState(false);
+
+  // Dispute state
+  const [selectedDispute, setSelectedDispute] = useState<Dispute | null>(null);
+  const [disputeResponseText, setDisputeResponseText] = useState('');
+  const [isResolvingDispute, setIsResolvingDispute] = useState(false);
+
   // Calculate quick metrics for Analytics view
   const totalBuyVolumeUsdt = orders
     .filter((o) => o.type === 'buy' && o.status === 'completed')
@@ -119,6 +141,7 @@ export default function AdminCMS({
 
   const pendingOrdersCount = orders.filter((o) => o.status === 'pending').length;
   const pendingKycCount = kycUsers.filter((u) => u.kycStatus === 'pending').length;
+  const openDisputeCount = disputes.filter((d) => d.status === 'open').length;
 
   const totalUsersCount = kycUsers.filter(u => u.role !== 'admin').length;
 
@@ -198,6 +221,73 @@ export default function AdminCMS({
       addToast('Failed to reject KYC: ' + err.message, 'error');
     } finally {
       setIsProcessingKyc(false);
+    }
+  };
+
+  // Suspend a trader
+  const handleSuspendUser = async (uid: string, email: string) => {
+    if (!traderActionReason.trim()) { addToast('Please enter a reason for suspension.', 'error'); return; }
+    setIsActioningTrader(true);
+    try {
+      await suspendUser(uid, traderActionReason.trim());
+      addToast(`${email} has been suspended.`, 'info');
+      setSelectedTrader(null);
+      setTraderActionReason('');
+      onRefresh();
+    } catch (err: any) {
+      addToast('Failed to suspend: ' + err.message, 'error');
+    } finally {
+      setIsActioningTrader(false);
+    }
+  };
+
+  // Terminate a trader
+  const handleTerminateUser = async (uid: string, email: string) => {
+    if (!traderActionReason.trim()) { addToast('Please enter a reason for termination.', 'error'); return; }
+    if (!confirm(`Permanently terminate ${email}? They will be locked out.`)) return;
+    setIsActioningTrader(true);
+    try {
+      await terminateUser(uid, traderActionReason.trim());
+      addToast(`${email} has been terminated.`, 'info');
+      setSelectedTrader(null);
+      setTraderActionReason('');
+      onRefresh();
+    } catch (err: any) {
+      addToast('Failed to terminate: ' + err.message, 'error');
+    } finally {
+      setIsActioningTrader(false);
+    }
+  };
+
+  // Reinstate a trader
+  const handleReinstateUser = async (uid: string, email: string) => {
+    setIsActioningTrader(true);
+    try {
+      await reinstateUser(uid);
+      addToast(`${email} has been reinstated to active status.`, 'success');
+      if (selectedTrader?.uid === uid) setSelectedTrader({ ...selectedTrader, accountStatus: 'active', suspendReason: undefined, terminateReason: undefined });
+      onRefresh();
+    } catch (err: any) {
+      addToast('Failed to reinstate: ' + err.message, 'error');
+    } finally {
+      setIsActioningTrader(false);
+    }
+  };
+
+  // Resolve a dispute
+  const handleResolveDispute = async (id: string) => {
+    if (!disputeResponseText.trim()) { addToast('Please enter your response before resolving.', 'error'); return; }
+    setIsResolvingDispute(true);
+    try {
+      await resolveDispute(id, disputeResponseText.trim());
+      addToast('Dispute resolved and response sent.', 'success');
+      setSelectedDispute(null);
+      setDisputeResponseText('');
+      onRefresh();
+    } catch (err: any) {
+      addToast('Failed to resolve dispute: ' + err.message, 'error');
+    } finally {
+      setIsResolvingDispute(false);
     }
   };
 
@@ -531,6 +621,25 @@ export default function AdminCMS({
           >
             <Coins className="w-4 h-4" />
             Coin Listings ({coins?.length || 0})
+          </button>
+
+          <button
+            onClick={() => setActiveTab('disputes')}
+            className={`w-full text-left px-5 py-3.5 rounded-2xl text-xs font-bold uppercase tracking-wider flex items-center justify-between border transition cursor-pointer ${
+              activeTab === 'disputes'
+                ? 'bg-[#008751] text-white border-[#008751] shadow-sm'
+                : 'bg-white hover:bg-[#F7F9F7] text-gray-700 border-[#E0E7E0] hover:border-gray-400'
+            }`}
+          >
+            <span className="flex items-center gap-3">
+              <MessageSquare className="w-4 h-4" />
+              Disputes
+            </span>
+            {openDisputeCount > 0 && (
+              <span className="bg-rose-500 text-white font-extrabold px-2 py-0.5 rounded-full text-[10px]">
+                {openDisputeCount}
+              </span>
+            )}
           </button>
         </div>
 
@@ -1024,6 +1133,59 @@ export default function AdminCMS({
             </div>
           )}
 
+          {/* TAB: DISPUTES */}
+          {activeTab === 'disputes' && (
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-lg font-bold text-slate-900 tracking-tight">Trader Disputes</h3>
+                <p className="text-xs text-slate-500">Review trader challenges submitted on rejected orders.</p>
+              </div>
+
+              {disputes.length === 0 ? (
+                <div className="text-center py-16 text-slate-400">
+                  <MessageSquare className="w-10 h-10 mx-auto mb-3 opacity-30" />
+                  <p className="text-sm">No disputes submitted yet.</p>
+                </div>
+              ) : (
+                <div className="divide-y divide-slate-100">
+                  {disputes.map((d) => (
+                    <div key={d.id} className="py-4 flex flex-col md:flex-row md:items-center justify-between gap-4 text-xs">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-mono font-bold text-slate-900 text-sm">Order #{d.orderId.substring(0, 6).toUpperCase()}</span>
+                          <span className={`inline-flex items-center text-[9px] font-bold px-2 py-0.5 rounded-full uppercase ${
+                            d.status === 'open' ? 'bg-rose-50 text-rose-700' : 'bg-emerald-50 text-emerald-700'
+                          }`}>{d.status}</span>
+                        </div>
+                        <div className="text-slate-500">
+                          From: <span className="font-mono">{d.userEmail}</span> • {new Date(d.createdAt).toLocaleString()}
+                        </div>
+                        <div className="text-slate-700 max-w-md line-clamp-2">{d.message}</div>
+                        {d.adminResponse && (
+                          <div className="text-emerald-700 text-[10px] font-mono">
+                            ✓ Response: {d.adminResponse}
+                          </div>
+                        )}
+                      </div>
+                      <div className="shrink-0">
+                        {d.status === 'open' ? (
+                          <button
+                            onClick={() => { setSelectedDispute(d); setDisputeResponseText(''); }}
+                            className="bg-slate-900 hover:bg-[#008751] text-white px-4 py-2 rounded-xl text-xs font-bold cursor-pointer transition"
+                          >
+                            Respond & Resolve
+                          </button>
+                        ) : (
+                          <span className="text-emerald-600 text-xs font-bold">Resolved</span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* TAB 7: TRADERS DIRECTORY */}
           {activeTab === 'accounts' && (
             <div className="space-y-6 text-slate-800 animate-fade-in">
@@ -1116,6 +1278,14 @@ export default function AdminCMS({
                               </td>
                               <td className="px-6 py-4 text-right">
                                 <div className="flex flex-col sm:flex-row gap-1.5 justify-end">
+                                  <button
+                                    type="button"
+                                    onClick={() => { setSelectedTrader(usr); setTraderActionReason(''); }}
+                                    className="px-2 py-1 border border-slate-300 hover:border-[#008751] hover:bg-[#008751] hover:text-white rounded text-[10px] font-bold cursor-pointer transition flex items-center gap-1"
+                                  >
+                                    <ChevronRight className="w-3 h-3" />
+                                    Profile
+                                  </button>
                                   {usr.role === 'user' ? (
                                     <button
                                       type="button"
@@ -1608,7 +1778,7 @@ export default function AdminCMS({
                   </div>
                 </div>
 
-                {/* Document View */}
+                {/* Document View — ID card */}
                 <div className="space-y-1.5">
                   <span className="text-[10px] text-slate-400 font-mono uppercase block">Identity card / slip photo proof</span>
                   <div className="border border-slate-100 rounded-xl p-2 bg-slate-50 flex justify-center">
@@ -1619,6 +1789,20 @@ export default function AdminCMS({
                     />
                   </div>
                 </div>
+
+                {/* Document View — Selfie holding ID */}
+                {selectedKycUser.kycData?.holdingIdUrl && (
+                  <div className="space-y-1.5">
+                    <span className="text-[10px] text-slate-400 font-mono uppercase block">Selfie — holding ID beside face</span>
+                    <div className="border border-slate-100 rounded-xl p-2 bg-slate-50 flex justify-center">
+                      <img 
+                        src={selectedKycUser.kycData.holdingIdUrl} 
+                        alt="Holding ID selfie proof" 
+                        className="max-h-52 w-auto object-contain rounded-lg"
+                      />
+                    </div>
+                  </div>
+                )}
 
                 {/* Audit decisions */}
                 <div className="border-t border-slate-100 pt-5 space-y-4">
@@ -1657,6 +1841,254 @@ export default function AdminCMS({
                 </div>
               </div>
 
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* TRADER PROFILE MODAL */}
+      <AnimatePresence>
+        {selectedTrader && (
+          <div className="fixed inset-0 bg-slate-900/50 z-50 flex items-center justify-center p-4 overflow-y-auto">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-2xl max-w-xl w-full shadow-2xl border border-slate-100 overflow-hidden text-slate-800"
+            >
+              <div className="bg-slate-950 text-white p-5 flex justify-between items-center">
+                <div>
+                  <span className="text-[10px] uppercase font-bold tracking-widest text-emerald-400 font-mono">Trader Profile</span>
+                  <h3 className="text-base font-extrabold mt-0.5">{selectedTrader.email}</h3>
+                </div>
+                <button onClick={() => setSelectedTrader(null)} className="text-slate-400 hover:text-white cursor-pointer"><X className="w-5 h-5" /></button>
+              </div>
+
+              <div className="p-6 space-y-5 max-h-[80vh] overflow-y-auto">
+                {/* Account status badge */}
+                <div className="flex gap-3 flex-wrap">
+                  <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase ${
+                    selectedTrader.accountStatus === 'active' ? 'bg-emerald-100 text-emerald-800' :
+                    selectedTrader.accountStatus === 'suspended' ? 'bg-amber-100 text-amber-800' :
+                    'bg-rose-100 text-rose-800'
+                  }`}>{selectedTrader.accountStatus}</span>
+                  <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase bg-slate-100 text-slate-600">{selectedTrader.role}</span>
+                  <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase ${
+                    selectedTrader.kycStatus === 'approved' ? 'bg-emerald-100 text-emerald-800' :
+                    selectedTrader.kycStatus === 'pending' ? 'bg-amber-100 text-amber-800' :
+                    selectedTrader.kycStatus === 'rejected' ? 'bg-rose-100 text-rose-800' :
+                    'bg-slate-100 text-slate-600'
+                  }`}>KYC: {selectedTrader.kycStatus}</span>
+                </div>
+
+                {/* Basic info */}
+                <div className="grid grid-cols-2 gap-3 text-xs font-mono">
+                  <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                    <span className="text-slate-400 block text-[9px] uppercase">Joined</span>
+                    <span className="font-bold text-slate-800">{new Date(selectedTrader.createdAt).toLocaleDateString()}</span>
+                  </div>
+                  <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                    <span className="text-slate-400 block text-[9px] uppercase">UID</span>
+                    <span className="font-bold text-slate-800 text-[9px] break-all">{selectedTrader.uid}</span>
+                  </div>
+                  {selectedTrader.kycData && (
+                    <>
+                      <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                        <span className="text-slate-400 block text-[9px] uppercase">Full Name</span>
+                        <span className="font-bold text-slate-800">{selectedTrader.kycData.fullName}</span>
+                      </div>
+                      <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                        <span className="text-slate-400 block text-[9px] uppercase">ID ({selectedTrader.kycData.idType})</span>
+                        <span className="font-bold text-slate-800">{selectedTrader.kycData.idNumber}</span>
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* Suspension/termination reason */}
+                {selectedTrader.accountStatus === 'suspended' && selectedTrader.suspendReason && (
+                  <div className="bg-amber-50 border border-amber-200 p-3 rounded-xl text-xs">
+                    <span className="font-bold text-amber-900 block">Suspension Reason:</span>
+                    <span className="text-amber-800">{selectedTrader.suspendReason}</span>
+                  </div>
+                )}
+                {selectedTrader.accountStatus === 'terminated' && selectedTrader.terminateReason && (
+                  <div className="bg-rose-50 border border-rose-200 p-3 rounded-xl text-xs">
+                    <span className="font-bold text-rose-900 block">Termination Reason:</span>
+                    <span className="text-rose-800">{selectedTrader.terminateReason}</span>
+                  </div>
+                )}
+
+                {/* Order stats */}
+                {(() => {
+                  const traderOrders = orders.filter(o => o.userId === selectedTrader.uid);
+                  const completed = traderOrders.filter(o => o.status === 'completed').length;
+                  const pending = traderOrders.filter(o => o.status === 'pending').length;
+                  const rejected = traderOrders.filter(o => o.status === 'rejected').length;
+                  return (
+                    <div className="space-y-2">
+                      <span className="text-[10px] text-slate-400 font-mono uppercase">Order History ({traderOrders.length} total)</span>
+                      <div className="grid grid-cols-3 gap-2 text-xs font-mono">
+                        <div className="bg-emerald-50 p-2 rounded-lg text-center">
+                          <div className="font-bold text-emerald-700 text-lg">{completed}</div>
+                          <div className="text-emerald-600 text-[9px]">Completed</div>
+                        </div>
+                        <div className="bg-amber-50 p-2 rounded-lg text-center">
+                          <div className="font-bold text-amber-700 text-lg">{pending}</div>
+                          <div className="text-amber-600 text-[9px]">Pending</div>
+                        </div>
+                        <div className="bg-rose-50 p-2 rounded-lg text-center">
+                          <div className="font-bold text-rose-700 text-lg">{rejected}</div>
+                          <div className="text-rose-600 text-[9px]">Rejected</div>
+                        </div>
+                      </div>
+                      {traderOrders.length > 0 && (
+                        <div className="space-y-1 max-h-40 overflow-y-auto">
+                          {traderOrders.slice(0, 10).map(o => (
+                            <div key={o.id} className="flex justify-between items-center py-1.5 px-2 bg-slate-50 rounded-lg text-[10px] font-mono">
+                              <span className="font-bold">#{o.id.substring(0,6).toUpperCase()}</span>
+                              <span className={o.type === 'buy' ? 'text-emerald-700' : 'text-rose-700'}>{o.type.toUpperCase()} {o.cryptoAmount} USDT</span>
+                              <span className={o.status === 'completed' ? 'text-emerald-600' : o.status === 'pending' ? 'text-amber-600' : 'text-rose-600'}>{o.status}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+
+                {/* KYC images */}
+                {selectedTrader.kycData?.screenshotUrl && (
+                  <div className="space-y-1.5">
+                    <span className="text-[10px] text-slate-400 font-mono uppercase block">ID Document Photo</span>
+                    <img src={selectedTrader.kycData.screenshotUrl} alt="ID proof" className="max-h-40 w-auto object-contain rounded-lg border border-slate-100" />
+                  </div>
+                )}
+                {selectedTrader.kycData?.holdingIdUrl && (
+                  <div className="space-y-1.5">
+                    <span className="text-[10px] text-slate-400 font-mono uppercase block">Selfie — Holding ID</span>
+                    <img src={selectedTrader.kycData.holdingIdUrl} alt="Selfie proof" className="max-h-40 w-auto object-contain rounded-lg border border-slate-100" />
+                  </div>
+                )}
+
+                {/* Account actions */}
+                {selectedTrader.role !== 'admin' && selectedTrader.uid !== userProfile.uid && (
+                  <div className="border-t border-slate-100 pt-4 space-y-3">
+                    <span className="text-[10px] text-slate-400 font-mono uppercase block">Account Actions</span>
+
+                    {selectedTrader.accountStatus !== 'active' && (
+                      <button
+                        onClick={() => handleReinstateUser(selectedTrader.uid, selectedTrader.email)}
+                        disabled={isActioningTrader}
+                        className="w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white py-2.5 rounded-xl text-xs font-bold cursor-pointer transition"
+                      >
+                        <RotateCcw className="w-4 h-4" />
+                        Reinstate Account
+                      </button>
+                    )}
+
+                    {selectedTrader.accountStatus === 'active' && (
+                      <div className="space-y-2">
+                        <input
+                          type="text"
+                          value={traderActionReason}
+                          onChange={(e) => setTraderActionReason(e.target.value)}
+                          placeholder="Enter reason for suspension or termination..."
+                          className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs"
+                        />
+                        <div className="grid grid-cols-2 gap-2">
+                          <button
+                            onClick={() => handleSuspendUser(selectedTrader.uid, selectedTrader.email)}
+                            disabled={isActioningTrader}
+                            className="flex items-center justify-center gap-1.5 bg-amber-100 hover:bg-amber-200 text-amber-900 py-2.5 rounded-xl text-xs font-bold cursor-pointer transition"
+                          >
+                            <Ban className="w-3.5 h-3.5" />
+                            Suspend
+                          </button>
+                          <button
+                            onClick={() => handleTerminateUser(selectedTrader.uid, selectedTrader.email)}
+                            disabled={isActioningTrader}
+                            className="flex items-center justify-center gap-1.5 bg-rose-600 hover:bg-rose-500 text-white py-2.5 rounded-xl text-xs font-bold cursor-pointer transition"
+                          >
+                            <UserX className="w-3.5 h-3.5" />
+                            Terminate
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {selectedTrader.accountStatus === 'suspended' && (
+                      <div className="space-y-2">
+                        <input
+                          type="text"
+                          value={traderActionReason}
+                          onChange={(e) => setTraderActionReason(e.target.value)}
+                          placeholder="Enter reason for termination..."
+                          className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs"
+                        />
+                        <button
+                          onClick={() => handleTerminateUser(selectedTrader.uid, selectedTrader.email)}
+                          disabled={isActioningTrader}
+                          className="w-full flex items-center justify-center gap-1.5 bg-rose-600 hover:bg-rose-500 text-white py-2.5 rounded-xl text-xs font-bold cursor-pointer transition"
+                        >
+                          <UserX className="w-3.5 h-3.5" />
+                          Terminate Account
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* DISPUTE RESOLUTION MODAL */}
+      <AnimatePresence>
+        {selectedDispute && (
+          <div className="fixed inset-0 bg-slate-900/50 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-100 overflow-hidden"
+            >
+              <div className="bg-slate-950 text-white p-5 flex justify-between items-center">
+                <div>
+                  <span className="text-[10px] uppercase font-bold tracking-widest text-rose-400 font-mono">Dispute Resolution</span>
+                  <h3 className="text-base font-extrabold mt-0.5">Order #{selectedDispute.orderId.substring(0,6).toUpperCase()}</h3>
+                </div>
+                <button onClick={() => setSelectedDispute(null)} className="text-slate-400 hover:text-white cursor-pointer"><X className="w-5 h-5" /></button>
+              </div>
+              <div className="p-6 space-y-4 text-xs">
+                <div>
+                  <span className="text-slate-400 font-mono block text-[9px] uppercase mb-1">From</span>
+                  <span className="font-bold text-slate-800">{selectedDispute.userEmail}</span>
+                  <span className="text-slate-400 ml-2">{new Date(selectedDispute.createdAt).toLocaleString()}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 font-mono block text-[9px] uppercase mb-1">Trader Message</span>
+                  <div className="bg-slate-50 border border-slate-100 p-3 rounded-xl text-slate-800 leading-relaxed">{selectedDispute.message}</div>
+                </div>
+                <div className="space-y-2 pt-2 border-t border-slate-100">
+                  <span className="text-slate-500 font-mono block text-[9px] uppercase">Your Response</span>
+                  <textarea
+                    rows={3}
+                    value={disputeResponseText}
+                    onChange={(e) => setDisputeResponseText(e.target.value)}
+                    placeholder="Explain the resolution or reason for the final decision..."
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs resize-none focus:outline-none focus:ring-1 focus:ring-[#008751]"
+                  />
+                  <button
+                    onClick={() => handleResolveDispute(selectedDispute.id)}
+                    disabled={isResolvingDispute}
+                    className="w-full bg-[#008751] hover:bg-[#007043] text-white py-3 rounded-xl text-xs font-bold transition cursor-pointer disabled:opacity-60"
+                  >
+                    {isResolvingDispute ? 'Resolving...' : 'Mark as Resolved & Send Response'}
+                  </button>
+                </div>
+              </div>
             </motion.div>
           </div>
         )}

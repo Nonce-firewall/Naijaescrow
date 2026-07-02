@@ -4,6 +4,9 @@ export interface UserProfile {
   role: 'user' | 'admin';
   kycStatus: 'none' | 'pending' | 'approved' | 'rejected';
   kycData?: KYCData;
+  accountStatus: 'active' | 'suspended' | 'terminated';
+  suspendReason?: string;
+  terminateReason?: string;
   createdAt: number;
 }
 
@@ -11,8 +14,8 @@ export interface KYCData {
   fullName: string;
   idType: 'nin_paper' | 'nin_plastic' | 'voters_card' | 'drivers_license';
   idNumber: string;
-  screenshotUrl: string; // base64 representation or simulated image
-  holdingIdUrl?: string; // photo holding ID with left hand beside face
+  screenshotUrl: string;
+  holdingIdUrl?: string;
   submittedAt: number;
   rejectionReason?: string;
   reviewedAt?: number;
@@ -27,7 +30,7 @@ export interface AdminSettings {
   ngnBankName: string;
   ngnAccountNumber: string;
   ngnAccountName: string;
-  usdtRate: number; // NGN per USDT
+  usdtRate: number;
   wallets: {
     BSC: string;
     Tron: string;
@@ -40,26 +43,26 @@ export interface Order {
   userId: string;
   userEmail: string;
   type: 'buy' | 'sell';
-  cryptoAmount: number; // USDT
-  ngnAmount: number; // NGN
-  rate: number; // exchange rate at order creation
+  cryptoAmount: number;
+  ngnAmount: number;
+  rate: number;
   status: 'pending' | 'completed' | 'rejected';
   network: 'BSC' | 'Tron' | 'Polygon' | string;
   token: 'USDT' | string;
-  paymentScreenshot: string; // base64 string
+  paymentScreenshot: string;
   userBankDetails?: {
     bankName: string;
     accountNumber: string;
     accountName: string;
-  }; // Only for 'sell' order
+  };
   adminBankDetails?: {
     bankName: string;
     accountNumber: string;
     accountName: string;
-  }; // Copied from settings at the time of 'buy' order
-  adminWalletAddress?: string; // Copied from settings at the time of 'sell' order
-  blockchainTxId?: string; // Filled by admin
-  rejectionReason?: string; // Filled by admin on rejection
+  };
+  adminWalletAddress?: string;
+  blockchainTxId?: string;
+  rejectionReason?: string;
   createdAt: number;
   processedAt?: number;
 }
@@ -80,8 +83,19 @@ export interface CoinListing {
   network: string;
   walletAddress: string;
   rate: number;
-  logoUrl?: string; // base64 logo upload (supports 512x512)
-  published?: boolean; // toggle to hide from users without breaking transactions history
+  logoUrl?: string;
+  published?: boolean;
   createdAt: number;
 }
 
+export interface Dispute {
+  id: string;
+  orderId: string;
+  userId: string;
+  userEmail: string;
+  message: string;
+  status: 'open' | 'resolved';
+  adminResponse?: string;
+  createdAt: number;
+  resolvedAt?: number;
+}

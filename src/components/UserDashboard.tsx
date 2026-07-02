@@ -21,10 +21,14 @@ import {
   Coins,
   Search,
   Filter,
-  Check
+  Check,
+  MessageSquare,
+  AlertOctagon,
+  ShieldOff
 } from 'lucide-react';
 import { UserProfile, Order, AdminSettings, Announcement, KYCData, CoinListing } from '../types';
-import { createOrder, submitKYC } from '../lib/dbHelpers';
+import { createOrder, submitKYC, submitDispute } from '../lib/dbHelpers';
+import { compressImage } from '../lib/imageCompressor';
 
 interface UserDashboardProps {
   userProfile: UserProfile;
@@ -136,6 +140,11 @@ export default function UserDashboard({
   const [viewReceipt, setViewReceipt] = useState<Order | null>(null);
   const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
 
+  // Dispute state
+  const [disputeMessage, setDisputeMessage] = useState('');
+  const [isSubmittingDispute, setIsSubmittingDispute] = useState(false);
+  const [disputeSubmitted, setDisputeSubmitted] = useState<string | null>(null);
+
   // Dismissed announcements (per-user, stored in localStorage)
   const DISMISSED_KEY = `dismissed_anns_${userProfile.uid}`;
   const [dismissedIds, setDismissedIds] = useState<string[]>(() => {
@@ -171,20 +180,21 @@ export default function UserDashboard({
     setIsDragging(false);
   };
 
-  // Convert File to Base64
+  // Convert File to Base64 with compression
   const processFile = (file: File, isKyc: boolean = false, isHolding: boolean = false) => {
     if (!file.type.startsWith('image/')) {
       addToast('Please upload an image file (PNG, JPG, or WEBP)', 'error');
       return;
     }
-    if (file.size > 2 * 1024 * 1024) {
-      addToast('Image size should be less than 2MB', 'error');
+    if (file.size > 10 * 1024 * 1024) {
+      addToast('Image size should be less than 10MB', 'error');
       return;
     }
 
     const reader = new FileReader();
-    reader.onload = () => {
-      const base64 = reader.result as string;
+    reader.onload = async () => {
+      const raw = reader.result as string;
+      const base64 = await compressImage(raw, 250);
       if (isHolding) {
         setKycHoldingId(base64);
       } else if (isKyc) {
@@ -192,7 +202,7 @@ export default function UserDashboard({
       } else {
         setScreenshot(base64);
       }
-      addToast('Image uploaded successfully!', 'success');
+      addToast('Image uploaded & optimised!', 'success');
     };
     reader.onerror = () => {
       addToast('Failed to read image file', 'error');
@@ -244,7 +254,7 @@ export default function UserDashboard({
     setIsCameraActive(false);
   };
 
-  const capturePhoto = () => {
+  const capturePhoto = async () => {
     if (videoRef.current) {
       try {
         const canvas = document.createElement('canvas');
@@ -256,7 +266,8 @@ export default function UserDashboard({
           ctx.translate(canvas.width, 0);
           ctx.scale(-1, 1);
           ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
-          const base64 = canvas.toDataURL('image/jpeg', 0.85);
+          const raw = canvas.toDataURL('image/jpeg', 0.85);
+          const base64 = await compressImage(raw, 250);
           setKycHoldingId(base64);
           addToast('Snapshot captured successfully!', 'success');
           stopCamera();
@@ -384,7 +395,40 @@ export default function UserDashboard({
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 font-sans">
-      
+
+      {/* Suspended account banner */}
+      {userProfile.accountStatus === 'suspended' && (
+        <div className="mb-6 bg-amber-50 border border-amber-300 rounded-2xl p-5 flex gap-4 items-start">
+          <ShieldOff className="w-6 h-6 text-amber-600 shrink-0 mt-0.5" />
+          <div>
+            <div className="font-bold text-amber-900 text-sm">Account Suspended</div>
+            <div className="text-xs text-amber-800 mt-1">Your account has been temporarily suspended by the administrator. You cannot place new orders during this period.</div>
+            {userProfile.suspendReason && (
+              <div className="mt-2 text-xs text-amber-900 bg-amber-100 rounded-lg px-3 py-2 font-mono">
+                <span className="font-bold">Reason: </span>{userProfile.suspendReason}
+              </div>
+            )}
+            <div className="mt-2 text-xs text-amber-700">Contact support to appeal or resolve the issue.</div>
+          </div>
+        </div>
+      )}
+
+      {/* Terminated account banner */}
+      {userProfile.accountStatus === 'terminated' && (
+        <div className="mb-6 bg-red-50 border border-red-300 rounded-2xl p-5 flex gap-4 items-start">
+          <AlertOctagon className="w-6 h-6 text-red-600 shrink-0 mt-0.5" />
+          <div>
+            <div className="font-bold text-red-900 text-sm">Account Terminated</div>
+            <div className="text-xs text-red-800 mt-1">Your account has been permanently terminated and all trading functions are disabled.</div>
+            {userProfile.terminateReason && (
+              <div className="mt-2 text-xs text-red-900 bg-red-100 rounded-lg px-3 py-2 font-mono">
+                <span className="font-bold">Reason: </span>{userProfile.terminateReason}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Real-time exchange rate banner styled as a Bento Grid Rates Card */}
       <div className="bg-[#1A1A1A] text-white rounded-3xl p-6 shadow-sm border border-[#E0E7E0]/10 flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 relative overflow-hidden">
         <div className="relative z-10 space-y-2">
@@ -1583,9 +1627,54 @@ export default function UserDashboard({
                   </div>
                 </div>
 
+                {/* Dispute form — only shown for rejected orders */}
+                {viewReceipt.status === 'rejected' && (
+                  <div className="border-t border-[#E0E7E0] pt-4 space-y-3">
+                    <div className="flex items-center gap-2">
+                      <MessageSquare className="w-4 h-4 text-[#008751]" />
+                      <span className="text-xs font-bold text-[#1A1A1A]">Submit a Dispute</span>
+                    </div>
+                    {disputeSubmitted === viewReceipt.id ? (
+                      <div className="bg-[#F0F7F2] border border-[#D1E6D8] text-emerald-800 p-3 rounded-xl text-[11px] font-mono text-center">
+                        ✅ Dispute submitted. The admin will review and respond to your challenge.
+                      </div>
+                    ) : (
+                      <>
+                        <textarea
+                          rows={3}
+                          value={disputeMessage}
+                          onChange={(e) => setDisputeMessage(e.target.value)}
+                          placeholder="Describe your challenge — include your payment proof, reference number, or any supporting detail..."
+                          className="w-full px-3 py-2 border border-[#E0E7E0] rounded-xl text-[11px] text-[#1A1A1A] resize-none focus:outline-none focus:ring-1 focus:ring-[#008751]"
+                        />
+                        <button
+                          onClick={async () => {
+                            if (!disputeMessage.trim()) { addToast('Please enter a dispute message.', 'error'); return; }
+                            setIsSubmittingDispute(true);
+                            try {
+                              await submitDispute(viewReceipt.id, userProfile.uid, userProfile.email, disputeMessage.trim());
+                              setDisputeSubmitted(viewReceipt.id);
+                              setDisputeMessage('');
+                              addToast('Dispute submitted to admin panel.', 'success');
+                            } catch (err: any) {
+                              addToast('Failed to submit dispute: ' + err.message, 'error');
+                            } finally {
+                              setIsSubmittingDispute(false);
+                            }
+                          }}
+                          disabled={isSubmittingDispute}
+                          className="w-full bg-[#1A1A1A] hover:bg-[#333] text-white py-2.5 rounded-xl text-xs font-bold transition cursor-pointer disabled:opacity-60"
+                        >
+                          {isSubmittingDispute ? 'Submitting...' : 'Submit Dispute'}
+                        </button>
+                      </>
+                    )}
+                  </div>
+                )}
+
                 <div className="pt-2">
                   <button
-                    onClick={() => setViewReceipt(null)}
+                    onClick={() => { setViewReceipt(null); setDisputeMessage(''); }}
                     className="w-full bg-[#008751] hover:bg-[#007043] text-white py-3 rounded-xl text-xs font-bold transition cursor-pointer"
                   >
                     Close Receipt

@@ -10,9 +10,10 @@ import {
   rowToOrder,
   rowToAnnouncement,
   rowToCoin,
-  rowToUserProfile
+  rowToUserProfile,
+  rowToDispute
 } from './lib/dbHelpers';
-import { UserProfile, Order, AdminSettings, Announcement, CoinListing } from './types';
+import { UserProfile, Order, AdminSettings, Announcement, CoinListing, Dispute } from './types';
 
 import Navbar from './components/Navbar';
 import LandingPage from './components/LandingPage';
@@ -36,6 +37,7 @@ export default function App() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [kycUsers, setKycUsers] = useState<UserProfile[]>([]);
   const [coins, setCoins] = useState<CoinListing[]>([]);
+  const [disputes, setDisputes] = useState<Dispute[]>([]);
 
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
@@ -217,6 +219,29 @@ export default function App() {
     return () => { supabase.removeChannel(channel); };
   }, []);
 
+  // Realtime: Disputes (admin only)
+  useEffect(() => {
+    if (userProfile?.role !== 'admin') {
+      setDisputes([]);
+      return;
+    }
+
+    supabase.from('disputes').select('*').order('created_at', { ascending: false }).then(({ data }) => {
+      if (data) setDisputes(data.map(rowToDispute));
+    });
+
+    const channel = supabase
+      .channel('disputes-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'disputes' }, () => {
+        supabase.from('disputes').select('*').order('created_at', { ascending: false }).then(({ data }) => {
+          if (data) setDisputes(data.map(rowToDispute));
+        });
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [userProfile]);
+
   // Realtime: User profile changes (for KYC status updates)
   useEffect(() => {
     if (!currentUser) return;
@@ -306,6 +331,7 @@ export default function App() {
                 settings={settings}
                 announcements={announcements}
                 coins={coins}
+                disputes={disputes}
                 addToast={addToast}
                 onRefresh={handleDatabaseRefresh}
               />
