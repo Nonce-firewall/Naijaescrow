@@ -267,7 +267,8 @@ export async function createOrder(
   userBankDetails?: Order['userBankDetails'],
   adminBankDetails?: Order['adminBankDetails'],
   adminWalletAddress?: string,
-  token: string = 'USDT'
+  token: string = 'USDT',
+  blockchainTxId?: string
 ) {
   const ngnAmount = cryptoAmount * rate;
   const { data, error } = await supabase.from('orders').insert({
@@ -284,6 +285,7 @@ export async function createOrder(
     user_bank_details: userBankDetails || null,
     admin_bank_details: adminBankDetails || null,
     admin_wallet_address: adminWalletAddress || null,
+    blockchain_tx_id: blockchainTxId || null,
     created_at: Date.now()
   }).select().single();
   if (error) throw new Error(error.message);

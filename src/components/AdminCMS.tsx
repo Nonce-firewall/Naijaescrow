@@ -151,13 +151,17 @@ export default function AdminCMS({
 
   // Process order approval
   const handleOrderApproval = async (id: string) => {
-    if (!blockchainTxId.trim()) {
+    // For sell orders, the trader already provided a blockchain tx hash when initiating the order.
+    // The admin only needs to enter a bank reference (optional if trader tx exists).
+    const isSellWithTraderTx = selectedOrder?.type === 'sell' && !!selectedOrder?.blockchainTxId;
+    if (!isSellWithTraderTx && !blockchainTxId.trim()) {
       addToast('Please input the official Blockchain Tx ID or NGN reference code.', 'error');
       return;
     }
     setIsProcessingOrder(true);
     try {
-      await processOrder(id, 'completed', blockchainTxId.trim());
+      // For sell orders with an existing trader tx hash, only update with admin ref if provided
+      await processOrder(id, 'completed', blockchainTxId.trim() || undefined);
       addToast('Order completed and digital receipt generated.', 'success');
       setSelectedOrder(null);
       setBlockchainTxId('');
@@ -1863,19 +1867,36 @@ export default function AdminCMS({
                         <CheckSquare className="w-4 h-4 text-emerald-600" />
                         Authorize & Release Escrow Assets
                       </h4>
+
+                      {/* For sell orders: show trader's blockchain tx hash (read-only) */}
+                      {selectedOrder.type === 'sell' && selectedOrder.blockchainTxId && (
+                        <div className="space-y-1">
+                          <span className="text-[10px] text-slate-400 font-mono uppercase block">Trader's Blockchain Transaction Hash</span>
+                          <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 p-2.5 rounded-lg text-[10px] font-mono break-all font-bold">
+                            {selectedOrder.blockchainTxId}
+                          </div>
+                          <p className="text-[10px] text-slate-400">This is the on-chain TxID the trader submitted. Verify it on the blockchain explorer before approving.</p>
+                        </div>
+                      )}
+
                       <p className="text-[11px] text-slate-500">
-                        {selectedOrder.type === 'buy' 
-                          ? 'Please transfer the USDT crypto assets on-chain, then paste the official Blockchain Transaction Hash ID (TxID) below.' 
-                          : 'Please transfer NGN funds to the user’s bank details listed above, then paste the bank transaction confirmation code below.'}
+                        {selectedOrder.type === 'buy'
+                          ? 'Transfer the USDT crypto assets on-chain, then paste the official Blockchain Transaction Hash ID (TxID) below.'
+                          : selectedOrder.blockchainTxId
+                            ? 'Transfer NGN funds to the user\'s bank account above, then enter your bank transfer reference code below (optional — trader\'s blockchain TxID is already recorded).'
+                            : 'Transfer NGN funds to the user\'s bank account above, then paste the bank transfer confirmation/reference code below.'}
                       </p>
                       
                       <div className="flex gap-2">
                         <input
                           type="text"
-                          required
                           value={blockchainTxId}
                           onChange={(e) => setBlockchainTxId(e.target.value)}
-                          placeholder="blockchain tx_hash / reference code"
+                          placeholder={
+                            selectedOrder.type === 'sell' && selectedOrder.blockchainTxId
+                              ? 'Bank transfer ref (optional)'
+                              : 'blockchain tx_hash / reference code'
+                          }
                           className="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-xs font-mono text-slate-800"
                         />
                         <button

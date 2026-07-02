@@ -119,6 +119,7 @@ export default function UserDashboard({
   const [userBankName, setUserBankName] = useState('');
   const [userAccountNumber, setUserAccountNumber] = useState('');
   const [userAccountName, setUserAccountName] = useState('');
+  const [sellTxHash, setSellTxHash] = useState('');
   
   // Upload drag state
   const [isDragging, setIsDragging] = useState(false);
@@ -320,6 +321,10 @@ export default function UserDashboard({
         addToast('Please provide all NGN bank details to receive payment.', 'error');
         return;
       }
+      if (!sellTxHash.trim()) {
+        addToast('Please provide the blockchain transaction hash for your crypto transfer.', 'error');
+        return;
+      }
     }
 
     setIsSubmittingOrder(true);
@@ -354,7 +359,8 @@ export default function UserDashboard({
         bankDetails,
         adminBank,
         adminWallet,
-        orderToken
+        orderToken,
+        tradeType === 'sell' ? sellTxHash.trim() : undefined
       );
 
       addToast('Escrow order submitted successfully!', 'success');
@@ -364,6 +370,7 @@ export default function UserDashboard({
       setUserBankName('');
       setUserAccountNumber('');
       setUserAccountName('');
+      setSellTxHash('');
       setActiveTab('history');
       onRefresh();
     } catch (err: any) {
@@ -949,10 +956,26 @@ export default function UserDashboard({
                     </div>
                   )}
 
-                  {/* Step 3: Screenshot Upload (Drag & Drop + Click) */}
+                  {/* Blockchain Tx Hash input for sell orders */}
+                  {tradeType === 'sell' && (
+                    <div className="space-y-2">
+                      <h4 className="font-bold text-[#1A1A1A] text-sm">Step 3: Enter Blockchain Transaction Hash</h4>
+                      <p className="text-xs text-gray-500">Paste the transaction hash (TxID) from your crypto wallet after sending to the admin wallet above.</p>
+                      <input
+                        type="text"
+                        required
+                        value={sellTxHash}
+                        onChange={(e) => setSellTxHash(e.target.value)}
+                        placeholder="e.g. 0xabc123... or TxID from your wallet"
+                        className="block w-full px-3 py-2.5 border border-[#E0E7E0] rounded-xl text-xs font-mono bg-[#F7F9F7] text-[#1A1A1A]"
+                      />
+                    </div>
+                  )}
+
+                  {/* Step 3/4: Screenshot Upload (Drag & Drop + Click) */}
                   <div className="space-y-2">
                     <h4 className="font-bold text-[#1A1A1A] text-sm">
-                      {tradeType === 'buy' ? 'Step 2: Upload NGN Transfer Receipt' : 'Step 3: Upload Crypto Transfer Receipt'}
+                      {tradeType === 'buy' ? 'Step 2: Upload NGN Transfer Receipt' : 'Step 4: Upload Crypto Transfer Receipt'}
                     </h4>
                     <p className="text-xs text-gray-500">Provide an authentic screenshot proof of the transfer to trigger admin approval.</p>
                     
