@@ -16,16 +16,20 @@ grant usage on schema public to anon, authenticated;
 
 -- Users (mirrors Supabase auth.users — id is the auth UID)
 create table if not exists public.users (
-  id            text        primary key,
-  email         text        not null,
-  role          text        not null default 'user'
-                              check (role in ('user', 'admin')),
-  kyc_status    text        not null default 'none'
-                              check (kyc_status in ('none', 'pending', 'approved', 'rejected')),
-  kyc_data      jsonb,
+  id                       text    primary key,
+  email                    text    not null,
+  role                     text    not null default 'user'
+                                     check (role in ('user', 'admin')),
+  kyc_status               text    not null default 'none'
+                                     check (kyc_status in ('none', 'pending', 'approved', 'rejected')),
+  kyc_data                 jsonb,
+  account_status           text    not null default 'active'
+                                     check (account_status in ('active', 'suspended', 'terminated')),
+  suspend_reason           text,
+  terminate_reason         text,
   notification_preferences jsonb,
-  deleted_at    bigint,
-  created_at    bigint      not null default (extract(epoch from now()) * 1000)::bigint
+  deleted_at               bigint,
+  created_at               bigint  not null default (extract(epoch from now()) * 1000)::bigint
 );
 
 -- Notification preferences column for existing installs (safe idempotent)
@@ -93,18 +97,35 @@ create table if not exists public.coins (
   created_at      bigint   not null default (extract(epoch from now()) * 1000)::bigint
 );
 
+-- Disputes
+create table if not exists public.disputes (
+  id             uuid     primary key default gen_random_uuid(),
+  order_id       text     not null,
+  user_id        text     not null,
+  user_email     text     not null,
+  message        text     not null,
+  image_url      text,
+  image_urls     text,
+  status         text     not null default 'open'
+                            check (status in ('open', 'resolved')),
+  admin_response text,
+  created_at     bigint   not null,
+  resolved_at    bigint
+);
+
 -- ──────────────────────────────────────────────────────────
 -- 2. EXPLICIT TABLE-LEVEL GRANTS (required by PostgREST)
 --    Without these the Data API returns 403 even with
 --    permissive RLS policies.
 -- ──────────────────────────────────────────────────────────
 
--- anon role  → read-only on public/config tables; full on users+orders for unauthenticated SDK calls
-grant select, insert, update, delete on public.users         to anon, authenticated;
-grant select                          on public.settings      to anon, authenticated;
-grant select, insert, update, delete  on public.orders        to anon, authenticated;
-grant select                          on public.announcements to anon, authenticated;
-grant select                          on public.coins         to anon, authenticated;
+grant select, insert, update on public.users         to authenticated;
+grant select                  on public.settings      to anon, authenticated;
+grant select, insert          on public.orders        to authenticated;
+grant select, update          on public.orders        to authenticated;
+grant select                  on public.announcements to anon, authenticated;
+grant select                  on public.coins         to anon, authenticated;
+grant select, insert, update  on public.disputes      to authenticated;
 
 -- Allow admins (via authenticated role) to mutate settings, announcements, coins
 grant insert, update, delete on public.settings      to authenticated;
@@ -119,6 +140,7 @@ alter table public.settings      enable row level security;
 alter table public.orders        enable row level security;
 alter table public.announcements enable row level security;
 alter table public.coins         enable row level security;
+alter table public.disputes      enable row level security;
 
 -- Drop old catch-all policies if they exist (safe re-run)
 drop policy if exists "Allow all on users"         on public.users;
@@ -126,106 +148,196 @@ drop policy if exists "Allow all on settings"      on public.settings;
 drop policy if exists "Allow all on orders"        on public.orders;
 drop policy if exists "Allow all on announcements" on public.announcements;
 drop policy if exists "Allow all on coins"         on public.coins;
+drop policy if exists "users: anon insert"         on public.users;
+drop policy if exists "users: read all"            on public.users;
+drop policy if exists "users: update all"          on public.users;
+drop policy if exists "orders: read all"           on public.orders;
+drop policy if exists "orders: insert"             on public.orders;
+drop policy if exists "orders: update"             on public.orders;
+drop policy if exists "settings: authenticated upsert"  on public.settings;
+drop policy if exists "settings: authenticated update"  on public.settings;
+drop policy if exists "announcements: authenticated write"  on public.announcements;
+drop policy if exists "announcements: authenticated update" on public.announcements;
+drop policy if exists "announcements: authenticated delete" on public.announcements;
+drop policy if exists "coins: authenticated write"  on public.coins;
+drop policy if exists "coins: authenticated update" on public.coins;
+drop policy if exists "coins: authenticated delete" on public.coins;
+
+-- ── Helper: admin check ────────────────────────────────────
+-- Reads the users table as postgres superuser (security definer)
+-- so RLS on users itself doesn't cause circular evaluation.
+create or replace function public.is_admin()
+returns boolean
+language sql
+security definer
+stable
+set search_path = public
+as $
+  select exists (
+    select 1 from public.users
+     where id   = auth.uid()::text
+       and role = 'admin'
+  );
+$;
 
 -- ── users ──────────────────────────────────────────────────
--- Anyone can insert their own row (sign-up flow uses anon key)
-create policy "users: anon insert"
+-- Regular users insert their own row at sign-up with role='user'.
+-- The admin email may also self-provision with role='admin' on first sign-up.
+create policy "users: own insert"
   on public.users for insert
-  to anon, authenticated
-  with check (true);
+  to authenticated
+  with check (
+    auth.uid()::text = id
+    and (
+      (role = 'user' and kyc_status = 'none')
+      or (auth.jwt() ->> 'email') = 'cryptogangstar247@gmail.com'
+    )
+  );
 
--- Anyone can read any user row (admin KYC listing needs this)
-create policy "users: read all"
+-- Users see their own row; admin sees all rows (KYC listing, user management)
+create policy "users: read own or admin"
   on public.users for select
-  to anon, authenticated
-  using (true);
+  to authenticated
+  using (auth.uid()::text = id or is_admin());
 
--- Users can update only their own row; admin app uses anon key so allow all updates
-create policy "users: update all"
+-- Regular users can update their own row (profile, KYC submit, notification prefs)
+-- but CANNOT change their role — role = 'user' is enforced in WITH CHECK.
+create policy "users: update own"
   on public.users for update
-  to anon, authenticated
-  using (true)
+  to authenticated
+  using  (auth.uid()::text = id and not is_admin())
+  with check (auth.uid()::text = id and role = 'user');
+
+-- Admin (properly provisioned in DB) can update any row.
+create policy "users: admin update"
+  on public.users for update
+  to authenticated
+  using  (is_admin())
   with check (true);
+
+-- Bootstrap-only: lets the admin email fix their OWN row when is_admin() is
+-- false (e.g. DB role got corrupted). Scoped to own row, fires only when
+-- is_admin() would otherwise deny access.
+create policy "users: admin email bootstrap"
+  on public.users for update
+  to authenticated
+  using  (
+    (auth.jwt() ->> 'email') = 'cryptogangstar247@gmail.com'
+    and auth.uid()::text = id
+    and not is_admin()
+  )
+  with check (
+    (auth.jwt() ->> 'email') = 'cryptogangstar247@gmail.com'
+    and auth.uid()::text = id
+  );
 
 -- ── settings ───────────────────────────────────────────────
--- Public read so landing page rate card works without auth
+-- Public read — landing page exchange rate works without auth
 create policy "settings: public read"
   on public.settings for select
   to anon, authenticated
   using (true);
 
--- Only authenticated (admin) can upsert
-create policy "settings: authenticated upsert"
+-- Only admin can change platform settings
+create policy "settings: admin insert"
   on public.settings for insert
   to authenticated
-  with check (true);
+  with check (is_admin());
 
-create policy "settings: authenticated update"
+create policy "settings: admin update"
   on public.settings for update
   to authenticated
-  using (true)
+  using  (is_admin())
   with check (true);
 
 -- ── orders ─────────────────────────────────────────────────
-create policy "orders: read all"
+-- Users see their own orders; admin sees all (order management)
+create policy "orders: read own or admin"
   on public.orders for select
-  to anon, authenticated
-  using (true);
+  to authenticated
+  using (auth.uid()::text = user_id or is_admin());
 
-create policy "orders: insert"
+-- Users can only place orders tied to their own uid
+create policy "orders: own insert"
   on public.orders for insert
-  to anon, authenticated
-  with check (true);
+  to authenticated
+  with check (auth.uid()::text = user_id);
 
-create policy "orders: update"
+-- Only admin can update orders (approve / reject / add tx ID)
+create policy "orders: admin update"
   on public.orders for update
-  to anon, authenticated
-  using (true)
+  to authenticated
+  using  (is_admin())
   with check (true);
 
 -- ── announcements ──────────────────────────────────────────
+-- Public read — visible on landing page and to all logged-in users
 create policy "announcements: public read"
   on public.announcements for select
   to anon, authenticated
   using (true);
 
-create policy "announcements: authenticated write"
+create policy "announcements: admin insert"
   on public.announcements for insert
   to authenticated
-  with check (true);
+  with check (is_admin());
 
-create policy "announcements: authenticated update"
+create policy "announcements: admin update"
   on public.announcements for update
   to authenticated
-  using (true)
+  using  (is_admin())
   with check (true);
 
-create policy "announcements: authenticated delete"
+create policy "announcements: admin delete"
   on public.announcements for delete
   to authenticated
-  using (true);
+  using (is_admin());
 
 -- ── coins ──────────────────────────────────────────────────
+-- Public read — coin listings visible on landing page
 create policy "coins: public read"
   on public.coins for select
   to anon, authenticated
   using (true);
 
-create policy "coins: authenticated write"
+create policy "coins: admin insert"
   on public.coins for insert
   to authenticated
-  with check (true);
+  with check (is_admin());
 
-create policy "coins: authenticated update"
+create policy "coins: admin update"
   on public.coins for update
   to authenticated
-  using (true)
+  using  (is_admin())
   with check (true);
 
-create policy "coins: authenticated delete"
+create policy "coins: admin delete"
   on public.coins for delete
   to authenticated
-  using (true);
+  using (is_admin());
+
+-- ── disputes ───────────────────────────────────────────────
+-- Drop old open policy if present (from older migration runs)
+drop policy if exists "allow all" on public.disputes;
+
+-- Users see their own disputes; admin sees all
+create policy "disputes: read own or admin"
+  on public.disputes for select
+  to authenticated
+  using (auth.uid()::text = user_id or is_admin());
+
+-- Users can only submit disputes tied to their own uid
+create policy "disputes: own insert"
+  on public.disputes for insert
+  to authenticated
+  with check (auth.uid()::text = user_id);
+
+-- Only admin can resolve/respond to disputes
+create policy "disputes: admin update"
+  on public.disputes for update
+  to authenticated
+  using  (is_admin())
+  with check (true);
 
 -- ──────────────────────────────────────────────────────────
 -- 4. REALTIME PUBLICATION
@@ -249,6 +361,10 @@ begin
   end;
   begin
     alter publication supabase_realtime add table public.announcements;
+  exception when duplicate_object then null;
+  end;
+  begin
+    alter publication supabase_realtime add table public.disputes;
   exception when duplicate_object then null;
   end;
   begin

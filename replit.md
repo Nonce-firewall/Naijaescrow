@@ -26,6 +26,15 @@ Run `supabase-schema.sql` in your Supabase project's **SQL Editor** before first
 
 The schema includes a `disputes` table referenced in the app — if that table is missing, apply `migration.sql` as well.
 
+### RLS security fix (existing databases)
+If you already have a live database running the old open `USING(true)` policies, apply **`rls-fix.sql`** in the SQL Editor. It is safe to re-run and:
+- Creates the `is_admin()` helper function (used by all policies)
+- Locks users/orders/disputes so each user can only see and edit their own rows
+- Restricts admin-only mutations (KYC review, order approval, settings, coins, announcements) to the admin account
+- Keeps settings, announcements, and coins publicly readable (needed for the landing page)
+
+Fresh installs using `supabase-schema.sql` already include these correct policies.
+
 ## Account deletion (Supabase Edge Function)
 The "Delete Account" option (Navbar → Account menu) permanently deletes the user's Supabase Auth login while retaining their `kyc_status`/`kyc_data` for fraud/legal purposes. This requires the service-role key, so the actual deletion runs server-side in a Supabase Edge Function — **it will not work until deployed**:
 

@@ -28,15 +28,53 @@ ALTER TABLE disputes ADD COLUMN IF NOT EXISTS image_url TEXT;
 -- 4. Enable Row Level Security on disputes
 ALTER TABLE disputes ENABLE ROW LEVEL SECURITY;
 
--- 5. Open RLS policy for disputes (app handles auth logic via Supabase anon key)
-DO $$
+-- 5. Scoped RLS policies for disputes
+--    (replaces the old open "allow all" policy)
+DO $
+BEGIN
+  -- Remove old open policy if present
+  DROP POLICY IF EXISTS "allow all" ON disputes;
+END $;
+
+-- Users see their own disputes; admin sees all
+DO $
 BEGIN
   IF NOT EXISTS (
-    SELECT 1 FROM pg_policies WHERE tablename = 'disputes' AND policyname = 'allow all'
+    SELECT 1 FROM pg_policies WHERE tablename = 'disputes' AND policyname = 'disputes: read own or admin'
   ) THEN
-    CREATE POLICY "allow all" ON disputes FOR ALL USING (true) WITH CHECK (true);
+    CREATE POLICY "disputes: read own or admin"
+      ON disputes FOR SELECT
+      TO authenticated
+      USING (auth.uid()::text = user_id OR public.is_admin());
   END IF;
-END $$;
+END $;
+
+-- Users can only submit disputes tied to their own uid
+DO $
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE tablename = 'disputes' AND policyname = 'disputes: own insert'
+  ) THEN
+    CREATE POLICY "disputes: own insert"
+      ON disputes FOR INSERT
+      TO authenticated
+      WITH CHECK (auth.uid()::text = user_id);
+  END IF;
+END $;
+
+-- Only admin can resolve/respond to disputes
+DO $
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE tablename = 'disputes' AND policyname = 'disputes: admin update'
+  ) THEN
+    CREATE POLICY "disputes: admin update"
+      ON disputes FOR UPDATE
+      TO authenticated
+      USING (public.is_admin())
+      WITH CHECK (true);
+  END IF;
+END $;
 
 -- 6. Grant Data API access for Supabase PostgREST (anon + authenticated roles)
 GRANT USAGE ON SCHEMA public TO anon, authenticated;
