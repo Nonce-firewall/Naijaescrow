@@ -1,4 +1,4 @@
-import React, { useState, useEffect, lazy, Suspense } from 'react';
+import React, { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import { supabase } from './lib/supabase';
 import {
   getOrCreateUserProfile,
@@ -29,6 +29,8 @@ export default function App() {
 
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  // Keep a non-stale ref so realtime callbacks can compare old vs new profile without stale closures
+  const userProfileRef = useRef<UserProfile | null>(null);
   const [isAdminMode, setIsAdminMode] = useState<boolean>(false);
   const [isInitializing, setIsInitializing] = useState<boolean>(true);
 
@@ -50,6 +52,9 @@ export default function App() {
   const removeToast = (id: string) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   };
+
+  // Keep userProfileRef in sync so realtime callbacks can read current value without stale closures
+  useEffect(() => { userProfileRef.current = userProfile; }, [userProfile]);
 
   // Seed DB when admin logs in
   useEffect(() => {
@@ -172,7 +177,15 @@ export default function App() {
         }
         fetchOrders();
       })
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders' }, fetchOrders)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders' }, (payload) => {
+        const inserted = payload.new as any;
+        if (isTrader && inserted?.user_id === currentUser.id) {
+          const typeLabel = inserted?.type === 'buy' ? 'Buy' : 'Sell';
+          const ordId = (inserted?.id as string)?.substring(0, 6).toUpperCase();
+          addToast(`📋 ${typeLabel} order #${ordId} submitted! Awaiting admin review.`, 'info');
+        }
+        fetchOrders();
+      })
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
@@ -254,7 +267,35 @@ export default function App() {
         table: 'users',
         filter: `id=eq.${currentUser.id}`
       }, (payload) => {
-        if (payload.new) setUserProfile(rowToUserProfile(payload.new));
+        if (!payload.new) return;
+        const newProfile = rowToUserProfile(payload.new);
+        const old = userProfileRef.current;
+
+        // KYC status notifications
+        if (old && old.kycStatus !== newProfile.kycStatus) {
+          if (newProfile.kycStatus === 'approved') {
+            addToast('🎉 KYC Approved! Your account is now verified — trading is unlocked.', 'success');
+          } else if (newProfile.kycStatus === 'rejected') {
+            addToast('⚠️ KYC Rejected. Check the reason and resubmit with clearer documents.', 'error');
+          } else if (newProfile.kycStatus === 'none') {
+            addToast('ℹ️ KYC has been reset by admin. Please resubmit your documents.', 'info');
+          } else if (newProfile.kycStatus === 'pending') {
+            addToast('⏳ KYC documents are under review. You\'ll be notified when done.', 'info');
+          }
+        }
+
+        // Account status notifications
+        if (old && old.accountStatus !== newProfile.accountStatus) {
+          if (newProfile.accountStatus === 'suspended') {
+            addToast('🚫 Your account has been suspended. Contact support for details.', 'error');
+          } else if (newProfile.accountStatus === 'active' && old.accountStatus === 'suspended') {
+            addToast('✅ Account suspension lifted! You can place orders again.', 'success');
+          } else if (newProfile.accountStatus === 'terminated') {
+            addToast('❌ Your account has been permanently terminated.', 'error');
+          }
+        }
+
+        setUserProfile(newProfile);
       })
       .subscribe();
 

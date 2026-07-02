@@ -76,6 +76,9 @@ export default function AdminCMS({
   
   // Tabs
   const [activeTab, setActiveTab] = useState<'analytics' | 'orders' | 'kyc' | 'settings' | 'bulletins' | 'coins' | 'accounts' | 'disputes'>('analytics');
+
+  // Pagination for order queue
+  const [ordersQueueLimit, setOrdersQueueLimit] = useState(5);
   
   // Expanded Order for action
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -742,7 +745,7 @@ export default function AdminCMS({
                 <p className="text-sm text-slate-400 py-12 text-center">No buy/sell orders found in the platform database.</p>
               ) : (
                 <div className="divide-y divide-slate-100">
-                  {orders.map((ord) => {
+                  {orders.slice(0, ordersQueueLimit).map((ord) => {
                     const isPending = ord.status === 'pending';
                     const isCompleted = ord.status === 'completed';
                     
@@ -797,6 +800,16 @@ export default function AdminCMS({
                       </div>
                     );
                   })}
+                  {orders.length > ordersQueueLimit && (
+                    <div className="pt-4 border-t border-slate-100 text-center">
+                      <button
+                        onClick={() => setOrdersQueueLimit((prev) => prev + 5)}
+                        className="text-xs font-bold text-slate-600 hover:text-slate-900 border border-slate-200 hover:border-slate-400 bg-slate-50 hover:bg-slate-100 px-5 py-2 rounded-xl transition cursor-pointer"
+                      >
+                        Load more orders ({orders.length - ordersQueueLimit} remaining)
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

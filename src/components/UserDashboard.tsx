@@ -120,6 +120,20 @@ export default function UserDashboard({
   const [userAccountNumber, setUserAccountNumber] = useState('');
   const [userAccountName, setUserAccountName] = useState('');
   const [sellTxHash, setSellTxHash] = useState('');
+
+  // Order history pagination
+  const [ordersLimit, setOrdersLimit] = useState(5);
+
+  // Local notification centre
+  interface LocalNotif {
+    id: string;
+    message: string;
+    type: 'success' | 'error' | 'info';
+    timestamp: number;
+  }
+  const [localNotifs, setLocalNotifs] = useState<LocalNotif[]>([]);
+  const prevOrdersRef = useRef<Order[] | null>(null);
+  const prevProfileRef = useRef<UserProfile | null>(null);
   
   // Upload drag state
   const [isDragging, setIsDragging] = useState(false);
@@ -381,6 +395,99 @@ export default function UserDashboard({
     }
   };
 
+  // ── Notification tracking: orders ────────────────────────────────────────
+  useEffect(() => {
+    if (prevOrdersRef.current === null) {
+      prevOrdersRef.current = orders;
+      return;
+    }
+    const prev = prevOrdersRef.current;
+    const notifs: LocalNotif[] = [];
+
+    orders.forEach((ord) => {
+      const existed = prev.find((p) => p.id === ord.id);
+      if (!existed) {
+        // New order inserted
+        const typeLabel = ord.type === 'buy' ? 'Buy' : 'Sell';
+        notifs.push({
+          id: `new-${ord.id}`,
+          message: `📋 ${typeLabel} order #${ord.id.substring(0, 6).toUpperCase()} submitted and is pending admin review.`,
+          type: 'info',
+          timestamp: Date.now(),
+        });
+      } else if (existed.status !== ord.status) {
+        if (ord.status === 'completed') {
+          const label = ord.type === 'buy'
+            ? `${ord.cryptoAmount} ${ord.token} purchase`
+            : `₦${ord.ngnAmount.toLocaleString()} sell payout`;
+          notifs.push({
+            id: `done-${ord.id}`,
+            message: `✅ Order #${ord.id.substring(0, 6).toUpperCase()} completed! Your ${label} has been approved.`,
+            type: 'success',
+            timestamp: Date.now(),
+          });
+        } else if (ord.status === 'rejected') {
+          const suffix = ord.rejectionReason ? ` Reason: ${ord.rejectionReason}` : '';
+          notifs.push({
+            id: `rejected-${ord.id}`,
+            message: `❌ Order #${ord.id.substring(0, 6).toUpperCase()} was declined.${suffix}`,
+            type: 'error',
+            timestamp: Date.now(),
+          });
+        } else if (ord.status === 'pending') {
+          notifs.push({
+            id: `pending-${ord.id}`,
+            message: `⏳ Order #${ord.id.substring(0, 6).toUpperCase()} is awaiting admin review.`,
+            type: 'info',
+            timestamp: Date.now(),
+          });
+        }
+      }
+    });
+
+    prevOrdersRef.current = orders;
+    if (notifs.length > 0) {
+      setLocalNotifs((prev) => [...notifs, ...prev].slice(0, 30));
+    }
+  }, [orders]);
+
+  // ── Notification tracking: profile (KYC + account status) ────────────────
+  useEffect(() => {
+    if (prevProfileRef.current === null) {
+      prevProfileRef.current = userProfile;
+      return;
+    }
+    const prev = prevProfileRef.current;
+    const notifs: LocalNotif[] = [];
+
+    if (prev.kycStatus !== userProfile.kycStatus) {
+      if (userProfile.kycStatus === 'approved') {
+        notifs.push({ id: `kyc-approved-${Date.now()}`, message: '🎉 KYC Approved! Your identity is verified and trading is now unlocked.', type: 'success', timestamp: Date.now() });
+      } else if (userProfile.kycStatus === 'rejected') {
+        notifs.push({ id: `kyc-rejected-${Date.now()}`, message: '⚠️ KYC Rejected. Review the feedback and resubmit with clearer documents.', type: 'error', timestamp: Date.now() });
+      } else if (userProfile.kycStatus === 'none') {
+        notifs.push({ id: `kyc-reset-${Date.now()}`, message: 'ℹ️ KYC has been reset by admin. Please resubmit your identity documents.', type: 'info', timestamp: Date.now() });
+      } else if (userProfile.kycStatus === 'pending') {
+        notifs.push({ id: `kyc-pending-${Date.now()}`, message: '⏳ KYC documents submitted. You will be notified once reviewed.', type: 'info', timestamp: Date.now() });
+      }
+    }
+
+    if (prev.accountStatus !== userProfile.accountStatus) {
+      if (userProfile.accountStatus === 'suspended') {
+        notifs.push({ id: `susp-${Date.now()}`, message: '🚫 Your account has been suspended. Contact support for assistance.', type: 'error', timestamp: Date.now() });
+      } else if (userProfile.accountStatus === 'active' && prev.accountStatus === 'suspended') {
+        notifs.push({ id: `unsusp-${Date.now()}`, message: '✅ Suspension lifted! Your account is active and you can trade again.', type: 'success', timestamp: Date.now() });
+      } else if (userProfile.accountStatus === 'terminated') {
+        notifs.push({ id: `term-${Date.now()}`, message: '❌ Your account has been permanently terminated. Contact support.', type: 'error', timestamp: Date.now() });
+      }
+    }
+
+    prevProfileRef.current = userProfile;
+    if (notifs.length > 0) {
+      setLocalNotifs((prev) => [...notifs, ...prev].slice(0, 30));
+    }
+  }, [userProfile]);
+
   // Submit KYC Request
   const handleKycSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -441,6 +548,46 @@ export default function UserDashboard({
               </div>
             )}
           </div>
+        </div>
+      )}
+
+      {/* ── Notification Centre ──────────────────────────────────────────── */}
+      {localNotifs.length > 0 && (
+        <div className="mb-6 space-y-2">
+          <div className="flex items-center justify-between mb-1">
+            <span className="flex items-center gap-1.5 text-[11px] font-bold text-[#1A1A1A] uppercase tracking-wider">
+              <Bell className="w-3.5 h-3.5 text-[#008751]" />
+              Notifications
+              <span className="bg-[#008751] text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">{localNotifs.length}</span>
+            </span>
+            <button
+              onClick={() => setLocalNotifs([])}
+              className="text-[10px] text-gray-400 hover:text-gray-600 font-medium cursor-pointer transition"
+            >
+              Clear all
+            </button>
+          </div>
+          {localNotifs.map((n) => (
+            <div
+              key={n.id}
+              className={`flex items-start gap-3 px-4 py-3 rounded-xl border text-xs font-medium ${
+                n.type === 'success'
+                  ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
+                  : n.type === 'error'
+                  ? 'bg-red-50 border-red-200 text-red-900'
+                  : 'bg-blue-50 border-blue-200 text-blue-900'
+              }`}
+            >
+              <span className="flex-1 leading-relaxed">{n.message}</span>
+              <button
+                onClick={() => setLocalNotifs((prev) => prev.filter((x) => x.id !== n.id))}
+                className="shrink-0 opacity-50 hover:opacity-100 cursor-pointer transition mt-0.5"
+                aria-label="Dismiss"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          ))}
         </div>
       )}
 
@@ -1085,7 +1232,7 @@ export default function UserDashboard({
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 text-xs">
-                      {orders.map((ord) => {
+                      {orders.slice(0, ordersLimit).map((ord) => {
                         const isBuy = ord.type === 'buy';
                         const dateStr = new Date(ord.createdAt).toLocaleDateString();
 
@@ -1149,6 +1296,16 @@ export default function UserDashboard({
                       })}
                     </tbody>
                   </table>
+                  {orders.length > ordersLimit && (
+                    <div className="px-6 py-4 border-t border-[#E0E7E0] text-center">
+                      <button
+                        onClick={() => setOrdersLimit((prev) => prev + 5)}
+                        className="text-xs font-bold text-[#008751] hover:text-[#007043] border border-[#D1E6D8] hover:border-[#008751] bg-[#F7F9F7] hover:bg-[#F0F7F2] px-5 py-2 rounded-xl transition cursor-pointer"
+                      >
+                        Load more orders ({orders.length - ordersLimit} remaining)
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
