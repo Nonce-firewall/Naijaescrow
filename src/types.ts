@@ -94,7 +94,7 @@ export interface Dispute {
   userId: string;
   userEmail: string;
   message: string;
-  imageUrl?: string;
+  imageUrls?: string[];
   status: 'open' | 'resolved';
   adminResponse?: string;
   createdAt: number;

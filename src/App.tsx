@@ -342,6 +342,7 @@ export default function App() {
                 settings={settings}
                 announcements={announcements}
                 coins={coins}
+                disputes={disputes}
                 addToast={addToast}
                 onRefresh={handleDatabaseRefresh}
               />

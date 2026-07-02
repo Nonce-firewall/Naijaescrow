@@ -51,3 +51,16 @@ GRANT SELECT, UPDATE ON TABLE users TO authenticated;
 
 -- 7. Enable Realtime on disputes table
 ALTER PUBLICATION supabase_realtime ADD TABLE disputes;
+
+-- ============================================================
+-- ADDENDUM: Multi-image dispute support
+-- Run this if you already ran the migration above previously.
+-- Safe to run multiple times (idempotent).
+-- ============================================================
+
+-- Add image_urls column (stores JSON array of base64 strings)
+ALTER TABLE disputes ADD COLUMN IF NOT EXISTS image_urls TEXT;
+
+-- Re-grant to ensure new column is accessible via Data API
+GRANT SELECT, INSERT, UPDATE ON TABLE disputes TO anon;
+GRANT SELECT, INSERT, UPDATE ON TABLE disputes TO authenticated;

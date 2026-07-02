@@ -187,13 +187,20 @@ export function rowToCoin(row: any): CoinListing {
 }
 
 export function rowToDispute(row: any): Dispute {
+  const imageUrls: string[] = (() => {
+    if (row.image_urls) {
+      try { return JSON.parse(row.image_urls) as string[]; } catch { return []; }
+    }
+    if (row.image_url) return [row.image_url];
+    return [];
+  })();
   return {
     id: row.id,
     orderId: row.order_id,
     userId: row.user_id,
     userEmail: row.user_email,
     message: row.message,
-    imageUrl: row.image_url || undefined,
+    imageUrls: imageUrls.length > 0 ? imageUrls : undefined,
     status: row.status,
     adminResponse: row.admin_response || undefined,
     createdAt: row.created_at,
@@ -397,13 +404,13 @@ export async function reinstateUser(uid: string) {
   if (error) throw new Error(error.message);
 }
 
-export async function submitDispute(orderId: string, userId: string, userEmail: string, message: string, imageUrl?: string) {
+export async function submitDispute(orderId: string, userId: string, userEmail: string, message: string, imageUrls?: string[]) {
   const { error } = await supabase.from('disputes').insert({
     order_id: orderId,
     user_id: userId,
     user_email: userEmail,
     message,
-    image_url: imageUrl || null,
+    image_urls: imageUrls && imageUrls.length > 0 ? JSON.stringify(imageUrls) : null,
     status: 'open',
     created_at: Date.now()
   });

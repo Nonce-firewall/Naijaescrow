@@ -1367,6 +1367,15 @@ export default function AdminCMS({
                           From: <span className="font-mono">{d.userEmail}</span> • {new Date(d.createdAt).toLocaleString()}
                         </div>
                         <div className="text-slate-700 max-w-md line-clamp-2">{d.message}</div>
+                        {d.imageUrls && d.imageUrls.length > 0 && (
+                          <div className="flex gap-2 flex-wrap pt-1">
+                            {d.imageUrls.map((url, idx) => (
+                              <a key={idx} href={url} target="_blank" rel="noreferrer">
+                                <img src={url} alt={`proof ${idx + 1}`} className="h-14 w-18 object-cover rounded-lg border border-slate-200 hover:opacity-80 transition cursor-pointer" />
+                              </a>
+                            ))}
+                          </div>
+                        )}
                         {d.adminResponse && (
                           <div className="text-emerald-700 text-[10px] font-mono">
                             ✓ Response: {d.adminResponse}
@@ -2267,7 +2276,7 @@ export default function AdminCMS({
                 </div>
                 <button onClick={() => setSelectedDispute(null)} className="text-slate-400 hover:text-white cursor-pointer"><X className="w-5 h-5" /></button>
               </div>
-              <div className="p-6 space-y-4 text-xs">
+              <div className="p-6 space-y-4 text-xs overflow-y-auto max-h-[75vh]">
                 <div>
                   <span className="text-slate-400 font-mono block text-[9px] uppercase mb-1">From</span>
                   <span className="font-bold text-slate-800">{selectedDispute.userEmail}</span>
@@ -2277,6 +2286,24 @@ export default function AdminCMS({
                   <span className="text-slate-400 font-mono block text-[9px] uppercase mb-1">Trader Message</span>
                   <div className="bg-slate-50 border border-slate-100 p-3 rounded-xl text-slate-800 leading-relaxed">{selectedDispute.message}</div>
                 </div>
+                {selectedDispute.imageUrls && selectedDispute.imageUrls.length > 0 && (
+                  <div>
+                    <span className="text-slate-400 font-mono block text-[9px] uppercase mb-2">
+                      Payment Proof ({selectedDispute.imageUrls.length} image{selectedDispute.imageUrls.length > 1 ? 's' : ''})
+                    </span>
+                    <div className="flex gap-2 flex-wrap">
+                      {selectedDispute.imageUrls.map((url, idx) => (
+                        <a key={idx} href={url} target="_blank" rel="noreferrer">
+                          <img
+                            src={url}
+                            alt={`Proof ${idx + 1}`}
+                            className="h-24 w-28 object-cover rounded-xl border border-slate-200 hover:opacity-80 transition cursor-pointer"
+                          />
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 <div className="space-y-2 pt-2 border-t border-slate-100">
                   <span className="text-slate-500 font-mono block text-[9px] uppercase">Your Response</span>
                   <textarea

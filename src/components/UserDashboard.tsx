@@ -27,7 +27,7 @@ import {
   ShieldOff,
   X
 } from 'lucide-react';
-import { UserProfile, Order, AdminSettings, Announcement, KYCData, CoinListing } from '../types';
+import { UserProfile, Order, AdminSettings, Announcement, KYCData, CoinListing, Dispute } from '../types';
 import { createOrder, submitKYC, submitDispute } from '../lib/dbHelpers';
 import { compressImage } from '../lib/imageCompressor';
 
@@ -37,6 +37,7 @@ interface UserDashboardProps {
   settings: AdminSettings;
   announcements: Announcement[];
   coins: CoinListing[];
+  disputes?: Dispute[];
   addToast: (msg: string, type: 'success' | 'error' | 'info') => void;
   onRefresh: () => void;
 }
@@ -47,6 +48,7 @@ export default function UserDashboard({
   settings, 
   announcements, 
   coins = [],
+  disputes = [],
   addToast,
   onRefresh
 }: UserDashboardProps) {
@@ -143,9 +145,13 @@ export default function UserDashboard({
 
   // Dispute state
   const [disputeMessage, setDisputeMessage] = useState('');
-  const [disputeImageUrl, setDisputeImageUrl] = useState<string | null>(null);
+  const [disputeImageUrls, setDisputeImageUrls] = useState<string[]>([]);
   const [isSubmittingDispute, setIsSubmittingDispute] = useState(false);
   const [disputeSubmitted, setDisputeSubmitted] = useState<string | null>(null);
+
+  // Collapsible announcements (collapsed by default — click title to expand)
+  const [expandedAnnIds, setExpandedAnnIds] = useState<string[]>([]);
+  const toggleAnn = (id: string) => setExpandedAnnIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
 
   // Dismissed announcements (per-user, stored in localStorage)
   const DISMISSED_KEY = `dismissed_anns_${userProfile.uid}`;
@@ -1453,25 +1459,36 @@ export default function UserDashboard({
             {privateAnnouncements.length === 0 ? (
               <p className="text-xs text-gray-400">No official platform bulletins currently active.</p>
             ) : (
-              <div className="space-y-3 max-h-[300px] overflow-y-auto">
-                {privateAnnouncements.map((ann) => (
-                  <div key={ann.id} className="p-4 bg-[#F7F9F7] rounded-2xl border border-[#E0E7E0] space-y-1.5 relative">
-                    <div className="flex items-start justify-between gap-2">
-                      <h5 className="font-bold text-[#1A1A1A] text-xs">{ann.title}</h5>
+              <div className="space-y-2 max-h-[340px] overflow-y-auto">
+                {privateAnnouncements.map((ann) => {
+                  const isExpanded = expandedAnnIds.includes(ann.id);
+                  return (
+                    <div key={ann.id} className="bg-[#F7F9F7] rounded-2xl border border-[#E0E7E0] overflow-hidden">
+                      {/* Collapsible header row */}
                       <button
-                        onClick={() => dismissAnnouncement(ann.id)}
-                        title="Dismiss"
-                        className="shrink-0 text-gray-300 hover:text-rose-400 transition cursor-pointer mt-0.5"
+                        onClick={() => toggleAnn(ann.id)}
+                        className="w-full flex items-center gap-2 px-4 py-3 text-left cursor-pointer hover:bg-[#F0F5F1] transition"
                       >
-                        <XCircle className="w-3.5 h-3.5" />
+                        <ChevronRight className={`w-3 h-3 text-[#008751] shrink-0 transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`} />
+                        <h5 className="font-bold text-[#1A1A1A] text-xs flex-1 leading-snug">{ann.title}</h5>
+                        <span className="text-[9px] text-gray-400 font-mono shrink-0">{new Date(ann.createdAt).toLocaleDateString()}</span>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); dismissAnnouncement(ann.id); }}
+                          title="Dismiss permanently"
+                          className="shrink-0 text-gray-300 hover:text-rose-400 transition cursor-pointer ml-1"
+                        >
+                          <XCircle className="w-3.5 h-3.5" />
+                        </button>
                       </button>
+                      {/* Expanded content */}
+                      {isExpanded && (
+                        <div className="px-4 pb-3 border-t border-[#E8EFE8]">
+                          <p className="text-[11px] text-gray-600 leading-relaxed pt-2">{ann.content}</p>
+                        </div>
+                      )}
                     </div>
-                    <p className="text-[11px] text-gray-600 leading-relaxed">{ann.content}</p>
-                    <span className="text-[9px] text-gray-400 font-mono block pt-1">
-                      {new Date(ann.createdAt).toLocaleDateString()}
-                    </span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
@@ -1629,98 +1646,156 @@ export default function UserDashboard({
                   </div>
                 </div>
 
-                {/* Dispute form — only shown for rejected orders */}
-                {viewReceipt.status === 'rejected' && (
-                  <div className="border-t border-[#E0E7E0] pt-4 space-y-3">
-                    <div className="flex items-center gap-2">
-                      <MessageSquare className="w-4 h-4 text-[#008751]" />
-                      <span className="text-xs font-bold text-[#1A1A1A]">Submit a Dispute</span>
-                    </div>
-                    {disputeSubmitted === viewReceipt.id ? (
-                      <div className="bg-[#F0F7F2] border border-[#D1E6D8] text-emerald-800 p-3 rounded-xl text-[11px] font-mono text-center">
-                        ✅ Dispute submitted. The admin will review and respond to your challenge.
-                      </div>
-                    ) : (
-                      <>
-                        <textarea
-                          rows={3}
-                          value={disputeMessage}
-                          onChange={(e) => setDisputeMessage(e.target.value)}
-                          placeholder="Describe your challenge — include your reference number, transaction details, or any relevant info..."
-                          className="w-full px-3 py-2 border border-[#E0E7E0] rounded-xl text-[11px] text-[#1A1A1A] resize-none focus:outline-none focus:ring-1 focus:ring-[#008751]"
-                        />
+                {/* Dispute section — only shown for rejected orders */}
+                {viewReceipt.status === 'rejected' && (() => {
+                  const orderDisputes = disputes.filter(d => d.orderId === viewReceipt.id);
+                  return (
+                    <div className="border-t border-[#E0E7E0] pt-4 space-y-4">
 
-                        {/* Image upload for payment proof */}
-                        <div className="space-y-1.5">
-                          <label className="text-[10px] text-gray-500 font-mono uppercase block">Attach Payment Proof (optional)</label>
-                          {disputeImageUrl ? (
-                            <div className="relative rounded-xl overflow-hidden border border-[#D1E6D8]">
-                              <img src={disputeImageUrl} alt="Payment proof" className="w-full max-h-36 object-cover" />
-                              <button
-                                onClick={() => setDisputeImageUrl(null)}
-                                className="absolute top-1.5 right-1.5 bg-white/90 hover:bg-white text-red-600 rounded-full p-1 text-xs cursor-pointer"
-                              >
-                                <X className="w-3 h-3" />
-                              </button>
+                      {/* Past dispute history */}
+                      {orderDisputes.length > 0 && (
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <MessageSquare className="w-4 h-4 text-[#008751]" />
+                            <span className="text-xs font-bold text-[#1A1A1A]">
+                              Dispute History ({orderDisputes.length})
+                            </span>
+                          </div>
+                          {orderDisputes.map((d, i) => (
+                            <div key={d.id} className="bg-[#F7F9F7] border border-[#E0E7E0] rounded-xl p-3 space-y-2 text-[11px]">
+                              <div className="flex items-center justify-between">
+                                <span className="text-[9px] text-gray-400 font-mono">
+                                  Dispute #{i + 1} · {new Date(d.createdAt).toLocaleString()}
+                                </span>
+                                <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase ${
+                                  d.status === 'open' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'
+                                }`}>{d.status}</span>
+                              </div>
+                              <p className="text-gray-700 leading-relaxed">{d.message}</p>
+                              {d.imageUrls && d.imageUrls.length > 0 && (
+                                <div className="flex gap-2 flex-wrap">
+                                  {d.imageUrls.map((url, idx) => (
+                                    <a key={idx} href={url} target="_blank" rel="noreferrer">
+                                      <img src={url} alt={`proof ${idx + 1}`} className="h-16 w-20 object-cover rounded-lg border border-[#E0E7E0] hover:opacity-80 transition" />
+                                    </a>
+                                  ))}
+                                </div>
+                              )}
+                              {d.adminResponse ? (
+                                <div className="bg-emerald-50 border border-emerald-200 p-2.5 rounded-lg">
+                                  <span className="text-[9px] font-bold text-emerald-700 uppercase tracking-wider block mb-1">✅ Admin Response</span>
+                                  <p className="text-emerald-900 leading-relaxed">{d.adminResponse}</p>
+                                  {d.resolvedAt && (
+                                    <span className="text-[9px] text-emerald-500 font-mono block mt-1">
+                                      Resolved {new Date(d.resolvedAt).toLocaleString()}
+                                    </span>
+                                  )}
+                                </div>
+                              ) : (
+                                <div className="text-[9px] text-amber-600 font-mono">⏳ Awaiting admin review…</div>
+                              )}
                             </div>
-                          ) : (
-                            <label className="flex items-center gap-2 px-3 py-2.5 border border-dashed border-[#D1E6D8] rounded-xl cursor-pointer hover:bg-[#F7FBF8] transition">
-                              <Upload className="w-4 h-4 text-[#008751]" />
-                              <span className="text-[11px] text-gray-500">Click to upload image</span>
-                              <input
-                                type="file"
-                                accept="image/*"
-                                className="hidden"
-                                onChange={async (e) => {
-                                  const file = e.target.files?.[0];
-                                  if (!file) return;
-                                  const reader = new FileReader();
-                                  reader.onload = async (ev) => {
-                                    try {
-                                      const base64 = ev.target?.result as string;
-                                      const compressed = await compressImage(base64, 250);
-                                      setDisputeImageUrl(compressed);
-                                    } catch {
-                                      addToast('Failed to process image.', 'error');
-                                    }
-                                  };
-                                  reader.readAsDataURL(file);
-                                  e.target.value = '';
-                                }}
-                              />
-                            </label>
-                          )}
+                          ))}
                         </div>
+                      )}
 
-                        <button
-                          onClick={async () => {
-                            if (!disputeMessage.trim()) { addToast('Please enter a dispute message.', 'error'); return; }
-                            setIsSubmittingDispute(true);
-                            try {
-                              await submitDispute(viewReceipt.id, userProfile.uid, userProfile.email, disputeMessage.trim(), disputeImageUrl || undefined);
-                              setDisputeSubmitted(viewReceipt.id);
-                              setDisputeMessage('');
-                              setDisputeImageUrl(null);
-                              addToast('Dispute submitted to admin panel.', 'success');
-                            } catch (err: any) {
-                              addToast('Failed to submit dispute: ' + err.message, 'error');
-                            } finally {
-                              setIsSubmittingDispute(false);
-                            }
-                          }}
-                          disabled={isSubmittingDispute}
-                          className="w-full bg-[#1A1A1A] hover:bg-[#333] text-white py-2.5 rounded-xl text-xs font-bold transition cursor-pointer disabled:opacity-60"
-                        >
-                          {isSubmittingDispute ? 'Submitting...' : 'Submit Dispute'}
-                        </button>
-                      </>
-                    )}
-                  </div>
-                )}
+                      {/* Submit new dispute */}
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <MessageSquare className="w-4 h-4 text-[#008751]" />
+                          <span className="text-xs font-bold text-[#1A1A1A]">
+                            {orderDisputes.length > 0 ? 'Submit Another Dispute' : 'Submit a Dispute'}
+                          </span>
+                        </div>
+                        {disputeSubmitted === viewReceipt.id ? (
+                          <div className="bg-[#F0F7F2] border border-[#D1E6D8] text-emerald-800 p-3 rounded-xl text-[11px] font-mono text-center">
+                            ✅ Dispute submitted. The admin will review and respond.
+                          </div>
+                        ) : (
+                          <>
+                            <textarea
+                              rows={3}
+                              value={disputeMessage}
+                              onChange={(e) => setDisputeMessage(e.target.value)}
+                              placeholder="Describe your challenge — include your reference number, transaction details, or any relevant info…"
+                              className="w-full px-3 py-2 border border-[#E0E7E0] rounded-xl text-[11px] text-[#1A1A1A] resize-none focus:outline-none focus:ring-1 focus:ring-[#008751]"
+                            />
+
+                            {/* Multi-image upload — up to 3 */}
+                            <div className="space-y-1.5">
+                              <label className="text-[10px] text-gray-500 font-mono uppercase block">
+                                Attach Payment Proof ({disputeImageUrls.length}/3 images)
+                              </label>
+                              <div className="flex gap-2 flex-wrap">
+                                {disputeImageUrls.map((url, i) => (
+                                  <div key={i} className="relative w-20 h-16 rounded-lg overflow-hidden border border-[#D1E6D8]">
+                                    <img src={url} alt={`proof ${i + 1}`} className="w-full h-full object-cover" />
+                                    <button
+                                      onClick={() => setDisputeImageUrls(prev => prev.filter((_, idx) => idx !== i))}
+                                      className="absolute top-0.5 right-0.5 bg-white/90 hover:bg-white text-red-600 rounded-full p-0.5 cursor-pointer"
+                                    >
+                                      <X className="w-2.5 h-2.5" />
+                                    </button>
+                                  </div>
+                                ))}
+                                {disputeImageUrls.length < 3 && (
+                                  <label className="w-20 h-16 flex flex-col items-center justify-center border border-dashed border-[#D1E6D8] rounded-lg cursor-pointer hover:bg-[#F7FBF8] transition gap-1">
+                                    <Upload className="w-3.5 h-3.5 text-[#008751]" />
+                                    <span className="text-[9px] text-gray-400">Add</span>
+                                    <input
+                                      type="file"
+                                      accept="image/*"
+                                      className="hidden"
+                                      onChange={async (e) => {
+                                        const file = e.target.files?.[0];
+                                        if (!file) return;
+                                        const reader = new FileReader();
+                                        reader.onload = async (ev) => {
+                                          try {
+                                            const compressed = await compressImage(ev.target?.result as string, 250);
+                                            setDisputeImageUrls(prev => [...prev, compressed]);
+                                          } catch { addToast('Failed to process image.', 'error'); }
+                                        };
+                                        reader.readAsDataURL(file);
+                                        e.target.value = '';
+                                      }}
+                                    />
+                                  </label>
+                                )}
+                              </div>
+                            </div>
+
+                            <button
+                              onClick={async () => {
+                                if (!disputeMessage.trim()) { addToast('Please enter a dispute message.', 'error'); return; }
+                                setIsSubmittingDispute(true);
+                                try {
+                                  await submitDispute(viewReceipt.id, userProfile.uid, userProfile.email, disputeMessage.trim(), disputeImageUrls.length > 0 ? disputeImageUrls : undefined);
+                                  setDisputeSubmitted(viewReceipt.id);
+                                  setDisputeMessage('');
+                                  setDisputeImageUrls([]);
+                                  addToast('Dispute submitted to admin panel.', 'success');
+                                } catch (err: any) {
+                                  addToast('Failed to submit dispute: ' + err.message, 'error');
+                                } finally {
+                                  setIsSubmittingDispute(false);
+                                }
+                              }}
+                              disabled={isSubmittingDispute}
+                              className="w-full bg-[#1A1A1A] hover:bg-[#333] text-white py-2.5 rounded-xl text-xs font-bold transition cursor-pointer disabled:opacity-60"
+                            >
+                              {isSubmittingDispute ? 'Submitting…' : 'Submit Dispute'}
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 <div className="pt-2">
                   <button
-                    onClick={() => { setViewReceipt(null); setDisputeMessage(''); }}
+                    onClick={() => { setViewReceipt(null); setDisputeMessage(''); setDisputeImageUrls([]); setDisputeSubmitted(null); }}
                     className="w-full bg-[#008751] hover:bg-[#007043] text-white py-3 rounded-xl text-xs font-bold transition cursor-pointer"
                   >
                     Close Receipt
