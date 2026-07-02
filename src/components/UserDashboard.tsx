@@ -61,6 +61,49 @@ export default function UserDashboard({
   
   // Tab states: 'trade' | 'history' | 'kyc'
   const [activeTab, setActiveTab] = useState<'trade' | 'history' | 'kyc'>('trade');
+
+  // Mobile swipe-between-tabs support
+  const tabOrder = useRef<Array<'trade' | 'history' | 'kyc'>>(['trade', 'history', 'kyc']);
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+  const swipeLockedRef = useRef<'horizontal' | 'vertical' | null>(null);
+
+  const handleTabTouchStart = (e: React.TouchEvent) => {
+    const t = e.touches[0];
+    touchStartRef.current = { x: t.clientX, y: t.clientY };
+    swipeLockedRef.current = null;
+  };
+
+  const handleTabTouchMove = (e: React.TouchEvent) => {
+    if (!touchStartRef.current) return;
+    const t = e.touches[0];
+    const dx = t.clientX - touchStartRef.current.x;
+    const dy = t.clientY - touchStartRef.current.y;
+    if (!swipeLockedRef.current && (Math.abs(dx) > 8 || Math.abs(dy) > 8)) {
+      swipeLockedRef.current = Math.abs(dx) > Math.abs(dy) ? 'horizontal' : 'vertical';
+    }
+    if (swipeLockedRef.current === 'horizontal' && e.cancelable) {
+      e.preventDefault();
+    }
+  };
+
+  const handleTabTouchEnd = (e: React.TouchEvent) => {
+    if (!touchStartRef.current) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - touchStartRef.current.x;
+    const isHorizontalSwipe = swipeLockedRef.current === 'horizontal';
+    touchStartRef.current = null;
+    swipeLockedRef.current = null;
+
+    if (!isHorizontalSwipe || Math.abs(dx) < 50) return;
+
+    const order = tabOrder.current;
+    const currentIndex = order.indexOf(activeTab);
+    if (dx < 0 && currentIndex < order.length - 1) {
+      setActiveTab(order[currentIndex + 1]);
+    } else if (dx > 0 && currentIndex > 0) {
+      setActiveTab(order[currentIndex - 1]);
+    }
+  };
   
   // Trade form states
   const [tradeType, setTradeType] = useState<'buy' | 'sell'>('buy');
@@ -731,6 +774,13 @@ export default function UserDashboard({
             </button>
           </div>
 
+          {/* Swipeable tab panel area (mobile: swipe left/right between Trade / History / KYC) */}
+          <div
+            className="touch-pan-y"
+            onTouchStart={handleTabTouchStart}
+            onTouchMove={handleTabTouchMove}
+            onTouchEnd={handleTabTouchEnd}
+          >
           {/* TAB 1: Start Order (Trade) */}
           {activeTab === 'trade' && (
             <div className="bg-white p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-[#E0E7E0] shadow-sm">
@@ -1675,6 +1725,7 @@ export default function UserDashboard({
               )}
             </div>
           )}
+          </div>
 
         </div>
 
