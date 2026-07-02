@@ -311,6 +311,11 @@ export default function App() {
   const [bulletinCount, setBulletinCount] = useState(0);
 
   const navigateToPage = (page: 'landing' | 'auth' | 'dashboard', extra?: string) => {
+    // If the user is already logged in, skip the auth page entirely
+    if (page === 'auth' && userProfile) {
+      setCurrentPage('dashboard');
+      return;
+    }
     if (page === 'auth') setAuthInitialMode(extra === 'signup' ? 'signup' : 'signin');
     setCurrentPage(page);
   };
