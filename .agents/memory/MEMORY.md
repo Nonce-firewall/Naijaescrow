@@ -1,1 +1,2 @@
 - [Supabase migration](supabase-migration.md) — Firebase fully replaced with Supabase; schema SQL must be run in Supabase SQL Editor before first use.
+- [Modal height pattern](modal-height-pattern.md) — Tall modals require flex flex-col + max-h-[96vh] on motion.div, shrink-0 on header, overflow-y-auto flex-1 min-h-0 on body.

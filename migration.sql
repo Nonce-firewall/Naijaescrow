@@ -8,23 +8,27 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS account_status TEXT NOT NULL DEFAULT 
 ALTER TABLE users ADD COLUMN IF NOT EXISTS suspend_reason TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS terminate_reason TEXT;
 
--- 2. Create disputes table
+-- 2. Create disputes table (with image_url support)
 CREATE TABLE IF NOT EXISTS disputes (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   order_id TEXT NOT NULL,
   user_id TEXT NOT NULL,
   user_email TEXT NOT NULL,
   message TEXT NOT NULL,
+  image_url TEXT,
   status TEXT NOT NULL DEFAULT 'open',
   admin_response TEXT,
   created_at BIGINT NOT NULL,
   resolved_at BIGINT
 );
 
--- 3. Enable Row Level Security on disputes
+-- 3. Add image_url to disputes if table already exists (safe idempotent)
+ALTER TABLE disputes ADD COLUMN IF NOT EXISTS image_url TEXT;
+
+-- 4. Enable Row Level Security on disputes
 ALTER TABLE disputes ENABLE ROW LEVEL SECURITY;
 
--- 4. Open RLS policy for disputes (app handles auth logic)
+-- 5. Open RLS policy for disputes (app handles auth logic via Supabase anon key)
 DO $$
 BEGIN
   IF NOT EXISTS (
@@ -34,5 +38,16 @@ BEGIN
   END IF;
 END $$;
 
--- 5. Enable Realtime on disputes table
+-- 6. Grant Data API access for Supabase PostgREST (anon + authenticated roles)
+GRANT USAGE ON SCHEMA public TO anon, authenticated;
+
+-- disputes table: traders insert their own disputes; admin reads/updates all
+GRANT SELECT, INSERT, UPDATE ON TABLE disputes TO anon;
+GRANT SELECT, INSERT, UPDATE ON TABLE disputes TO authenticated;
+
+-- users table: grant access to the new columns we added
+GRANT SELECT, UPDATE ON TABLE users TO anon;
+GRANT SELECT, UPDATE ON TABLE users TO authenticated;
+
+-- 7. Enable Realtime on disputes table
 ALTER PUBLICATION supabase_realtime ADD TABLE disputes;

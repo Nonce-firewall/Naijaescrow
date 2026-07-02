@@ -24,7 +24,8 @@ import {
   Check,
   MessageSquare,
   AlertOctagon,
-  ShieldOff
+  ShieldOff,
+  X
 } from 'lucide-react';
 import { UserProfile, Order, AdminSettings, Announcement, KYCData, CoinListing } from '../types';
 import { createOrder, submitKYC, submitDispute } from '../lib/dbHelpers';
@@ -142,6 +143,7 @@ export default function UserDashboard({
 
   // Dispute state
   const [disputeMessage, setDisputeMessage] = useState('');
+  const [disputeImageUrl, setDisputeImageUrl] = useState<string | null>(null);
   const [isSubmittingDispute, setIsSubmittingDispute] = useState(false);
   const [disputeSubmitted, setDisputeSubmitted] = useState<string | null>(null);
 
@@ -1510,15 +1512,15 @@ export default function UserDashboard({
       {/* DETAIL RECEIPT MODAL */}
       <AnimatePresence>
         {viewReceipt && (
-          <div className="fixed inset-0 bg-[#1A1A1A]/50 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-[#1A1A1A]/50 z-50 flex items-start md:items-center justify-center p-3 sm:p-4 overflow-y-auto">
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white rounded-3xl max-w-md w-full shadow-xl border border-[#E0E7E0] overflow-hidden text-[#1A1A1A]"
+              className="bg-white rounded-3xl max-w-md w-full shadow-xl border border-[#E0E7E0] overflow-hidden text-[#1A1A1A] flex flex-col my-2 sm:my-4 max-h-[96vh]"
             >
               {/* Receipt Header styling like paper slip */}
-              <div className="bg-[#1A1A1A] text-white p-6 text-center space-y-1 relative">
+              <div className="bg-[#1A1A1A] text-white p-6 text-center space-y-1 relative shrink-0">
                 <span className="text-[10px] bg-[#E6F4EA]/10 border border-[#E6F4EA]/20 text-[#00FF85] font-mono px-2.5 py-1 rounded-full uppercase tracking-widest font-bold">
                   9IJA ESCROW LEDGER
                 </span>
@@ -1533,7 +1535,7 @@ export default function UserDashboard({
               </div>
 
               {/* Receipt body */}
-              <div className="p-6 space-y-5">
+              <div className="p-6 space-y-5 overflow-y-auto flex-1">
                 <div className="text-center">
                   <span className="text-[10px] text-gray-400 font-mono uppercase">TOTAL TRANSACTION PAYOUT</span>
                   <div className="text-3xl font-bold text-[#1A1A1A] mt-1">
@@ -1644,17 +1646,61 @@ export default function UserDashboard({
                           rows={3}
                           value={disputeMessage}
                           onChange={(e) => setDisputeMessage(e.target.value)}
-                          placeholder="Describe your challenge — include your payment proof, reference number, or any supporting detail..."
+                          placeholder="Describe your challenge — include your reference number, transaction details, or any relevant info..."
                           className="w-full px-3 py-2 border border-[#E0E7E0] rounded-xl text-[11px] text-[#1A1A1A] resize-none focus:outline-none focus:ring-1 focus:ring-[#008751]"
                         />
+
+                        {/* Image upload for payment proof */}
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] text-gray-500 font-mono uppercase block">Attach Payment Proof (optional)</label>
+                          {disputeImageUrl ? (
+                            <div className="relative rounded-xl overflow-hidden border border-[#D1E6D8]">
+                              <img src={disputeImageUrl} alt="Payment proof" className="w-full max-h-36 object-cover" />
+                              <button
+                                onClick={() => setDisputeImageUrl(null)}
+                                className="absolute top-1.5 right-1.5 bg-white/90 hover:bg-white text-red-600 rounded-full p-1 text-xs cursor-pointer"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                            </div>
+                          ) : (
+                            <label className="flex items-center gap-2 px-3 py-2.5 border border-dashed border-[#D1E6D8] rounded-xl cursor-pointer hover:bg-[#F7FBF8] transition">
+                              <Upload className="w-4 h-4 text-[#008751]" />
+                              <span className="text-[11px] text-gray-500">Click to upload image</span>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={async (e) => {
+                                  const file = e.target.files?.[0];
+                                  if (!file) return;
+                                  const reader = new FileReader();
+                                  reader.onload = async (ev) => {
+                                    try {
+                                      const base64 = ev.target?.result as string;
+                                      const compressed = await compressImage(base64, 250);
+                                      setDisputeImageUrl(compressed);
+                                    } catch {
+                                      addToast('Failed to process image.', 'error');
+                                    }
+                                  };
+                                  reader.readAsDataURL(file);
+                                  e.target.value = '';
+                                }}
+                              />
+                            </label>
+                          )}
+                        </div>
+
                         <button
                           onClick={async () => {
                             if (!disputeMessage.trim()) { addToast('Please enter a dispute message.', 'error'); return; }
                             setIsSubmittingDispute(true);
                             try {
-                              await submitDispute(viewReceipt.id, userProfile.uid, userProfile.email, disputeMessage.trim());
+                              await submitDispute(viewReceipt.id, userProfile.uid, userProfile.email, disputeMessage.trim(), disputeImageUrl || undefined);
                               setDisputeSubmitted(viewReceipt.id);
                               setDisputeMessage('');
+                              setDisputeImageUrl(null);
                               addToast('Dispute submitted to admin panel.', 'success');
                             } catch (err: any) {
                               addToast('Failed to submit dispute: ' + err.message, 'error');

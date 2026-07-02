@@ -193,6 +193,7 @@ export function rowToDispute(row: any): Dispute {
     userId: row.user_id,
     userEmail: row.user_email,
     message: row.message,
+    imageUrl: row.image_url || undefined,
     status: row.status,
     adminResponse: row.admin_response || undefined,
     createdAt: row.created_at,
@@ -396,12 +397,13 @@ export async function reinstateUser(uid: string) {
   if (error) throw new Error(error.message);
 }
 
-export async function submitDispute(orderId: string, userId: string, userEmail: string, message: string) {
+export async function submitDispute(orderId: string, userId: string, userEmail: string, message: string, imageUrl?: string) {
   const { error } = await supabase.from('disputes').insert({
     order_id: orderId,
     user_id: userId,
     user_email: userEmail,
     message,
+    image_url: imageUrl || null,
     status: 'open',
     created_at: Date.now()
   });

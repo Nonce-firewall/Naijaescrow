@@ -130,6 +130,10 @@ export default function AdminCMS({
   const [disputeResponseText, setDisputeResponseText] = useState('');
   const [isResolvingDispute, setIsResolvingDispute] = useState(false);
 
+  // Lookup tab state
+  const [lookupQuery, setLookupQuery] = useState('');
+  const [lookupSearched, setLookupSearched] = useState('');
+
   // Calculate quick metrics for Analytics view
   const totalBuyVolumeUsdt = orders
     .filter((o) => o.type === 'buy' && o.status === 'completed')
@@ -641,6 +645,18 @@ export default function AdminCMS({
               </span>
             )}
           </button>
+
+          <button
+            onClick={() => setActiveTab('lookup' as any)}
+            className={`w-full text-left px-5 py-3.5 rounded-2xl text-xs font-bold uppercase tracking-wider flex items-center gap-3 border transition cursor-pointer ${
+              activeTab === ('lookup' as any)
+                ? 'bg-[#008751] text-white border-[#008751] shadow-sm'
+                : 'bg-white hover:bg-[#F7F9F7] text-gray-700 border-[#E0E7E0] hover:border-gray-400'
+            }`}
+          >
+            <HelpCircle className="w-4 h-4" />
+            Order / Trader Lookup
+          </button>
         </div>
 
         {/* Right column active content panel */}
@@ -1132,6 +1148,196 @@ export default function AdminCMS({
 
             </div>
           )}
+
+          {/* TAB: LOOKUP */}
+          {(activeTab as string) === 'lookup' && (() => {
+            const q = lookupSearched.trim().toLowerCase();
+            const matchedOrders = q
+              ? orders.filter(o =>
+                  o.id.toLowerCase().includes(q) ||
+                  o.userEmail.toLowerCase().includes(q)
+                )
+              : [];
+            const matchedTraders = q
+              ? kycUsers.filter(u =>
+                  u.email.toLowerCase().includes(q) ||
+                  u.uid.toLowerCase().includes(q)
+                )
+              : [];
+            const hasResults = matchedOrders.length > 0 || matchedTraders.length > 0;
+
+            return (
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-lg font-bold text-slate-900 tracking-tight">Order / Trader Lookup</h3>
+                  <p className="text-xs text-slate-500">Search by Order ID, trader email, or user ID to locate a transaction or account.</p>
+                </div>
+
+                {/* Search input */}
+                <form
+                  onSubmit={(e) => { e.preventDefault(); setLookupSearched(lookupQuery); }}
+                  className="flex gap-2"
+                >
+                  <input
+                    type="text"
+                    value={lookupQuery}
+                    onChange={(e) => setLookupQuery(e.target.value)}
+                    placeholder="Paste Order ID or enter trader email..."
+                    className="flex-1 px-4 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#008751]/30 font-mono"
+                  />
+                  <button
+                    type="submit"
+                    className="bg-slate-900 hover:bg-[#008751] text-white px-5 py-3 rounded-xl text-sm font-bold transition cursor-pointer"
+                  >
+                    Search
+                  </button>
+                  {lookupSearched && (
+                    <button
+                      type="button"
+                      onClick={() => { setLookupQuery(''); setLookupSearched(''); }}
+                      className="px-3 py-3 border border-slate-200 rounded-xl text-slate-500 hover:text-slate-800 cursor-pointer transition"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
+                </form>
+
+                {lookupSearched && !hasResults && (
+                  <div className="text-center py-12 text-slate-400">
+                    <HelpCircle className="w-10 h-10 mx-auto mb-3 opacity-30" />
+                    <p className="text-sm font-medium">No results for "{lookupSearched}"</p>
+                    <p className="text-xs mt-1">Try the full Order ID or an exact email address.</p>
+                  </div>
+                )}
+
+                {/* Matching Traders */}
+                {matchedTraders.length > 0 && (
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <Users className="w-4 h-4 text-slate-500" />
+                      <span className="text-xs font-bold uppercase tracking-wider text-slate-500">{matchedTraders.length} Trader{matchedTraders.length !== 1 ? 's' : ''} found</span>
+                    </div>
+                    <div className="divide-y divide-slate-100 border border-slate-100 rounded-2xl overflow-hidden">
+                      {matchedTraders.map(t => (
+                        <div key={t.uid} className="flex items-center justify-between gap-4 px-5 py-4">
+                          <div className="space-y-0.5">
+                            <div className="font-semibold text-sm text-slate-900">{t.email}</div>
+                            <div className="flex gap-2 flex-wrap">
+                              <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase ${
+                                t.accountStatus === 'active' ? 'bg-emerald-100 text-emerald-700' :
+                                t.accountStatus === 'suspended' ? 'bg-amber-100 text-amber-700' :
+                                'bg-rose-100 text-rose-700'
+                              }`}>{t.accountStatus}</span>
+                              <span className="text-[9px] font-bold px-2 py-0.5 rounded-full uppercase bg-slate-100 text-slate-500">KYC: {t.kycStatus}</span>
+                              {t.kycData && <span className="text-[9px] font-mono text-slate-400">{t.kycData.fullName}</span>}
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => { setSelectedTrader(t); setTraderActionReason(''); }}
+                            className="shrink-0 bg-slate-900 hover:bg-[#008751] text-white px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5"
+                          >
+                            <ChevronRight className="w-3.5 h-3.5" />
+                            Full Profile
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Matching Orders */}
+                {matchedOrders.length > 0 && (
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <Layers className="w-4 h-4 text-slate-500" />
+                      <span className="text-xs font-bold uppercase tracking-wider text-slate-500">{matchedOrders.length} Order{matchedOrders.length !== 1 ? 's' : ''} found</span>
+                    </div>
+                    <div className="space-y-3">
+                      {matchedOrders.map(o => {
+                        const trader = kycUsers.find(u => u.uid === o.userId);
+                        return (
+                          <div key={o.id} className="border border-slate-100 rounded-2xl overflow-hidden">
+                            <div className="bg-slate-50 px-5 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                              <div className="space-y-0.5">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span className="font-mono font-bold text-sm text-slate-900">#{o.id.substring(0,8).toUpperCase()}</span>
+                                  <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase ${
+                                    o.status === 'completed' ? 'bg-emerald-100 text-emerald-700' :
+                                    o.status === 'rejected' ? 'bg-rose-100 text-rose-700' :
+                                    'bg-amber-100 text-amber-700'
+                                  }`}>{o.status}</span>
+                                  <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase ${o.type === 'buy' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'}`}>{o.type}</span>
+                                </div>
+                                <div className="text-xs text-slate-500 font-mono">{new Date(o.createdAt).toLocaleString()}</div>
+                              </div>
+                              <button
+                                onClick={() => setSelectedOrder(o)}
+                                className="shrink-0 bg-slate-900 hover:bg-[#008751] text-white px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer"
+                              >
+                                View Details
+                              </button>
+                            </div>
+                            <div className="px-5 py-4 grid grid-cols-2 gap-x-6 gap-y-3 text-xs">
+                              <div>
+                                <span className="text-slate-400 block text-[10px] uppercase font-mono">Amount</span>
+                                <span className="font-bold text-slate-800">{o.cryptoAmount} USDT</span>
+                              </div>
+                              <div>
+                                <span className="text-slate-400 block text-[10px] uppercase font-mono">NGN Value</span>
+                                <span className="font-bold text-slate-800">₦{o.ngnAmount.toLocaleString()}</span>
+                              </div>
+                              <div>
+                                <span className="text-slate-400 block text-[10px] uppercase font-mono">Rate</span>
+                                <span className="font-bold text-slate-800">₦{o.rate}/USDT</span>
+                              </div>
+                              <div>
+                                <span className="text-slate-400 block text-[10px] uppercase font-mono">Network</span>
+                                <span className="font-bold text-slate-800">{o.network}</span>
+                              </div>
+                              {o.userBankDetails && (
+                                <div className="col-span-2">
+                                  <span className="text-slate-400 block text-[10px] uppercase font-mono">Trader Bank</span>
+                                  <span className="font-bold text-slate-800">{o.userBankDetails.bankName} — {o.userBankDetails.accountNumber} ({o.userBankDetails.accountName})</span>
+                                </div>
+                              )}
+                              {o.blockchainTxId && (
+                                <div className="col-span-2">
+                                  <span className="text-slate-400 block text-[10px] uppercase font-mono">Blockchain TX</span>
+                                  <span className="font-mono text-slate-700 break-all">{o.blockchainTxId}</span>
+                                </div>
+                              )}
+                              {o.rejectionReason && (
+                                <div className="col-span-2">
+                                  <span className="text-slate-400 block text-[10px] uppercase font-mono">Rejection Reason</span>
+                                  <span className="text-rose-700">{o.rejectionReason}</span>
+                                </div>
+                              )}
+                              <div className="col-span-2 pt-1 border-t border-slate-100">
+                                <span className="text-slate-400 block text-[10px] uppercase font-mono mb-1">Trader</span>
+                                <button
+                                  onClick={() => {
+                                    const t = kycUsers.find(u => u.uid === o.userId);
+                                    if (t) { setSelectedTrader(t); setTraderActionReason(''); }
+                                    else addToast('Trader profile not found in current list.', 'info');
+                                  }}
+                                  className="inline-flex items-center gap-1.5 text-[#008751] hover:underline font-semibold cursor-pointer"
+                                >
+                                  <UserCheck className="w-3.5 h-3.5" />
+                                  {o.userEmail}
+                                  {trader?.kycData?.fullName && <span className="text-slate-400 font-normal">({trader.kycData.fullName})</span>}
+                                  <ChevronRight className="w-3 h-3 opacity-50" />
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
 
           {/* TAB: DISPUTES */}
           {activeTab === 'disputes' && (
@@ -1849,14 +2055,14 @@ export default function AdminCMS({
       {/* TRADER PROFILE MODAL */}
       <AnimatePresence>
         {selectedTrader && (
-          <div className="fixed inset-0 bg-slate-900/50 z-50 flex items-center justify-center p-4 overflow-y-auto">
+          <div className="fixed inset-0 bg-slate-900/50 z-50 flex items-start md:items-center justify-center p-3 sm:p-4 overflow-y-auto">
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white rounded-2xl max-w-xl w-full shadow-2xl border border-slate-100 overflow-hidden text-slate-800"
+              className="bg-white rounded-2xl max-w-xl w-full shadow-2xl border border-slate-100 overflow-hidden text-slate-800 flex flex-col my-2 sm:my-4 max-h-[96vh]"
             >
-              <div className="bg-slate-950 text-white p-5 flex justify-between items-center">
+              <div className="bg-slate-950 text-white p-5 flex justify-between items-center shrink-0">
                 <div>
                   <span className="text-[10px] uppercase font-bold tracking-widest text-emerald-400 font-mono">Trader Profile</span>
                   <h3 className="text-base font-extrabold mt-0.5">{selectedTrader.email}</h3>
@@ -1864,7 +2070,7 @@ export default function AdminCMS({
                 <button onClick={() => setSelectedTrader(null)} className="text-slate-400 hover:text-white cursor-pointer"><X className="w-5 h-5" /></button>
               </div>
 
-              <div className="p-6 space-y-5 max-h-[80vh] overflow-y-auto">
+              <div className="p-6 space-y-5 overflow-y-auto flex-1 min-h-0">
                 {/* Account status badge */}
                 <div className="flex gap-3 flex-wrap">
                   <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase ${
