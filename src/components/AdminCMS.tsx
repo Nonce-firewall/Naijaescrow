@@ -2413,6 +2413,136 @@ export default function AdminCMS({
         )}
       </AnimatePresence>
 
+      {/* COMPLIANCE KYC AUDIT MODAL — read-only retained KYC view for deleted/scrubbed accounts */}
+      <AnimatePresence>
+        {complianceViewUser && (
+          <div className="fixed inset-0 bg-slate-900/50 z-50 flex items-center justify-center p-4 overflow-y-auto">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-2xl max-w-lg w-full shadow-2xl border border-slate-100 overflow-hidden text-slate-800 flex flex-col max-h-[96vh]"
+            >
+              <div className="bg-slate-950 text-white p-5 flex justify-between items-center shrink-0">
+                <div>
+                  <span className="text-[10px] uppercase font-bold tracking-widest text-amber-400 font-mono">Compliance Audit — Retained KYC</span>
+                  <h3 className="text-base font-extrabold mt-0.5">{complianceViewUser.email}</h3>
+                </div>
+                <button
+                  onClick={() => setComplianceViewUser(null)}
+                  className="text-slate-400 hover:text-white cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="p-6 space-y-5 overflow-y-auto flex-1 min-h-0">
+
+                {/* Account deletion summary */}
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 space-y-2 text-xs">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-amber-800 font-mono block">Account Scrub Summary</span>
+                  <div className="grid grid-cols-2 gap-3 font-mono">
+                    <div>
+                      <span className="text-amber-600 block text-[9px] uppercase">UID (Retained)</span>
+                      <span className="font-bold text-amber-900 break-all text-[10px]">{complianceViewUser.uid}</span>
+                    </div>
+                    <div>
+                      <span className="text-amber-600 block text-[9px] uppercase">Deleted At</span>
+                      <span className="font-bold text-amber-900">
+                        {complianceViewUser.deletedAt
+                          ? new Date(complianceViewUser.deletedAt).toLocaleString()
+                          : 'Unknown'}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-amber-600 block text-[9px] uppercase">Account Status</span>
+                      <span className="font-bold text-rose-700 uppercase">Scrubbed / Deleted</span>
+                    </div>
+                    <div>
+                      <span className="text-amber-600 block text-[9px] uppercase">KYC Status</span>
+                      <span className={`font-bold uppercase ${
+                        complianceViewUser.kycStatus === 'approved' ? 'text-emerald-700' :
+                        complianceViewUser.kycStatus === 'pending' ? 'text-amber-700' :
+                        complianceViewUser.kycStatus === 'rejected' ? 'text-rose-700' :
+                        'text-slate-500'
+                      }`}>{complianceViewUser.kycStatus}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Retained KYC identity data */}
+                {complianceViewUser.kycData ? (
+                  <>
+                    <div className="grid grid-cols-2 gap-3 text-xs font-mono">
+                      <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                        <span className="text-slate-400 block text-[9px] uppercase">Full Legal Name</span>
+                        <span className="font-bold text-slate-800">{complianceViewUser.kycData.fullName}</span>
+                      </div>
+                      <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                        <span className="text-slate-400 block text-[9px] uppercase">Document Type</span>
+                        <span className="font-bold text-slate-800">
+                          {complianceViewUser.kycData.idType === 'nin_paper' && 'NIN (Paper Slip)'}
+                          {complianceViewUser.kycData.idType === 'nin_plastic' && 'NIN (Plastic Card)'}
+                          {complianceViewUser.kycData.idType === 'voters_card' && "Voter's Card"}
+                          {complianceViewUser.kycData.idType === 'drivers_license' && "Driver's License"}
+                        </span>
+                      </div>
+                      <div className="col-span-2 p-3 bg-slate-50 rounded-xl border border-slate-100">
+                        <span className="text-slate-400 block text-[9px] uppercase">ID Number</span>
+                        <span className="font-bold text-slate-800 tracking-widest">{complianceViewUser.kycData.idNumber}</span>
+                      </div>
+                      <div className="col-span-2 p-3 bg-slate-50 rounded-xl border border-slate-100">
+                        <span className="text-slate-400 block text-[9px] uppercase">KYC Submitted</span>
+                        <span className="font-bold text-slate-800">
+                          {new Date(complianceViewUser.kycData.submittedAt).toLocaleString()}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* ID document photo */}
+                    {complianceViewUser.kycData.screenshotUrl && (
+                      <div className="space-y-1.5">
+                        <span className="text-[10px] text-slate-400 font-mono uppercase block">ID Document Photo (Retained)</span>
+                        <div className="border border-slate-100 rounded-xl p-2 bg-slate-50 flex justify-center">
+                          <img
+                            src={complianceViewUser.kycData.screenshotUrl}
+                            alt="Retained ID document proof"
+                            className="max-h-52 w-auto object-contain rounded-lg"
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Selfie with ID */}
+                    {complianceViewUser.kycData.holdingIdUrl && (
+                      <div className="space-y-1.5">
+                        <span className="text-[10px] text-slate-400 font-mono uppercase block">Selfie Holding ID (Retained)</span>
+                        <div className="border border-slate-100 rounded-xl p-2 bg-slate-50 flex justify-center">
+                          <img
+                            src={complianceViewUser.kycData.holdingIdUrl}
+                            alt="Retained selfie holding ID"
+                            className="max-h-52 w-auto object-contain rounded-lg"
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="p-6 text-center border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50">
+                    <p className="text-xs text-slate-400 font-medium">No KYC documents were submitted by this account before deletion.</p>
+                  </div>
+                )}
+
+                <div className="bg-slate-100 rounded-xl p-3 text-[10px] text-slate-500 leading-relaxed border border-slate-200">
+                  <strong className="text-slate-700 block mb-1">Compliance Note</strong>
+                  This KYC data is retained per platform disclosure at account deletion time. It is for internal fraud investigation and regulatory compliance only. The user's login credentials and personal profile have been fully scrubbed.
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       {/* DISPUTE RESOLUTION MODAL */}
       <AnimatePresence>
         {selectedDispute && (

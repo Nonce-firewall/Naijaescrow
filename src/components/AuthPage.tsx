@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { getOrCreateUserProfile } from '../lib/dbHelpers';
-import { Lock, Mail, UserPlus, KeyRound, ArrowLeft, Loader2, Sparkles, AlertCircle } from 'lucide-react';
+import { Mail, UserPlus, KeyRound, ArrowLeft, Loader2, Sparkles, AlertCircle } from 'lucide-react';
 
 interface AuthPageProps {
   onBack: () => void;
@@ -124,9 +124,11 @@ export default function AuthPage({ onBack, onAuthSuccess, addToast, initialMode 
 
       <div className="w-full max-w-md mx-auto">
         <div className="flex justify-center mb-6">
-          <div className="w-12 h-12 bg-[#008751] rounded-2xl flex items-center justify-center text-white shadow-sm">
-            <Lock className="w-5 h-5" />
-          </div>
+          <img
+            src="/logo-icon.png"
+            alt="9ija Escrow"
+            className="h-16 w-auto"
+          />
         </div>
         <h2 className="text-center text-2xl sm:text-3xl font-bold text-[#1A1A1A] tracking-tight">
           {isLogin ? 'Sign in to 9ija Escrow' : 'Create a Trader Account'}

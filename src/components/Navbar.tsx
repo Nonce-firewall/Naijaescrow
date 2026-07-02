@@ -42,7 +42,6 @@ interface NavbarProps {
 
 export default function Navbar({ userProfile, isAdminMode, currentPage, onToggleAdminMode, onNavigate, addToast, bulletinCount = 0, onBellClick }: NavbarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [logoError, setLogoError] = useState(false);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showNotifModal, setShowNotifModal] = useState(false);
@@ -82,32 +81,16 @@ export default function Navbar({ userProfile, isAdminMode, currentPage, onToggle
     <nav className="bg-white border-b border-[#E0E7E0] font-sans sticky top-0 z-40">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
 
-        {/* Brand — replace /logo.svg with your own logo file to customise */}
+        {/* Brand */}
         <div
           onClick={() => onNavigate('landing')}
-          className="flex items-center gap-2.5 cursor-pointer hover:opacity-90 transition select-none shrink-0"
+          className="flex items-center cursor-pointer hover:opacity-90 transition select-none shrink-0"
         >
-          {logoError ? (
-            <div className="w-8 h-8 bg-[#008751] rounded-lg flex items-center justify-center text-white shadow-sm shrink-0">
-              <div className="w-3.5 h-3.5 border-2 border-white rounded-sm" />
-            </div>
-          ) : (
-            <img
-              src="/logo.svg"
-              alt="9ija Escrow Logo"
-              className="w-8 h-8 rounded-lg shadow-sm shrink-0"
-              onError={() => setLogoError(true)}
-            />
-          )}
-          <div className="hidden xs:flex flex-col leading-none">
-            <span
-              className="font-extrabold text-[#008751] text-[15px] tracking-tight leading-none"
-              style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-            >
-              9ija Escrow
-            </span>
-            <span className="text-[9px] text-gray-400 font-mono uppercase tracking-wider mt-0.5">P2P Ledger</span>
-          </div>
+          <img
+            src="/logo-main.png"
+            alt="9ija Escrow"
+            className="h-8 w-auto"
+          />
         </div>
 
         {/* Desktop right section */}
