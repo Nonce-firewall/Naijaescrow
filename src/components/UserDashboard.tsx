@@ -447,10 +447,10 @@ export default function UserDashboard({
             <span className="text-4xl sm:text-5xl font-bold tracking-tight italic text-[#00FF85]">
               ₦{settings.usdtRate.toLocaleString()}
             </span>
-            <span className="text-sm text-gray-400 font-mono">/ 1 USDT</span>
+            <span className="text-sm text-gray-400 font-mono">/USDT</span>
           </div>
           <p className="text-xs text-gray-400 max-w-xl">
-            Standard blockchain mining fees covered. Zero additional escrow charges. Verified by 9ija Ledger.
+            Standard blockchain mining fees covered. Zero additional escrow charges. Verified by 9ija Escrow Ledger.
           </p>
         </div>
 
@@ -525,7 +525,7 @@ export default function UserDashboard({
                   </div>
                   <h3 className="text-lg font-bold text-slate-900">Trading Portal Locked</h3>
                   <p className="text-sm text-slate-500 max-w-md mx-auto">
-                    In compliance with NGN local P2P trading regulations, you must verify your identity first. Once verified, Buy and Sell forms unlock instantly.
+                    In compliance with NGN local P2P trading regulations, you must verify your identity first. Once verified, Buy and Sell operation unlock instantly.
                   </p>
                   {userProfile.kycStatus === 'none' && (
                     <button
@@ -1134,7 +1134,7 @@ export default function UserDashboard({
           {activeTab === 'kyc' && (
             <div className="bg-white p-6 rounded-3xl border border-[#E0E7E0] shadow-sm space-y-6">
               <div>
-                <h3 className="text-lg font-bold text-[#1A1A1A] tracking-tight">Identity Verification Center</h3>
+                <h3 className="text-lg font-bold text-[#1A1A1A] tracking-tight">Identity Verification</h3>
                 <p className="text-xs text-gray-500">Provide official details to verify account safety.</p>
               </div>
 
@@ -1358,7 +1358,7 @@ export default function UserDashboard({
                               onClick={startCamera}
                               className="bg-white hover:bg-[#F7F9F7] text-[#008751] font-bold px-4 py-2 rounded-xl text-xs border border-[#008751]/20 cursor-pointer transition shadow-sm"
                             >
-                              Activate Camera
+                              Open Camera
                             </button>
                           </div>
                         )}
