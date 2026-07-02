@@ -65,6 +65,7 @@ Deno.serve(async (req: Request) => {
         email: `deleted-${uid}@removed.local`,
         account_status: 'deleted',
         notification_preferences: null,
+        deleted_at: Date.now(),
       })
       .eq('id', uid);
 

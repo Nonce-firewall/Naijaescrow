@@ -135,7 +135,8 @@ export function rowToUserProfile(row: any): UserProfile {
     suspendReason: row.suspend_reason || undefined,
     terminateReason: row.terminate_reason || undefined,
     notificationPreferences: row.notification_preferences || undefined,
-    createdAt: row.created_at
+    createdAt: row.created_at,
+    deletedAt: row.deleted_at || undefined
   };
 }
 

@@ -15,6 +15,7 @@ export interface UserProfile {
   terminateReason?: string;
   notificationPreferences?: NotificationPreferences;
   createdAt: number;
+  deletedAt?: number;
 }
 
 export interface KYCData {

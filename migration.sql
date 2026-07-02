@@ -75,3 +75,17 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS notification_preferences JSONB;
 
 GRANT SELECT, UPDATE ON TABLE users TO anon;
 GRANT SELECT, UPDATE ON TABLE users TO authenticated;
+
+-- ============================================================
+-- ADDENDUM: Account deletion audit trail
+-- Run this if you already ran the migration above previously.
+-- Safe to run multiple times (idempotent).
+-- Records when an account was deleted/scrubbed (via the
+-- delete-account Edge Function) so admins can audit retained
+-- KYC records for compliance review.
+-- ============================================================
+
+ALTER TABLE users ADD COLUMN IF NOT EXISTS deleted_at BIGINT;
+
+GRANT SELECT, UPDATE ON TABLE users TO anon;
+GRANT SELECT, UPDATE ON TABLE users TO authenticated;

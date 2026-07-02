@@ -24,11 +24,15 @@ create table if not exists public.users (
                               check (kyc_status in ('none', 'pending', 'approved', 'rejected')),
   kyc_data      jsonb,
   notification_preferences jsonb,
+  deleted_at    bigint,
   created_at    bigint      not null default (extract(epoch from now()) * 1000)::bigint
 );
 
 -- Notification preferences column for existing installs (safe idempotent)
 alter table public.users add column if not exists notification_preferences jsonb;
+
+-- Account deletion audit trail (when account was scrubbed via delete-account Edge Function)
+alter table public.users add column if not exists deleted_at bigint;
 
 -- Settings (single-row admin config, id = 'admin_settings')
 create table if not exists public.settings (
