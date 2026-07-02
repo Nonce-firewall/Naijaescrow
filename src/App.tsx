@@ -306,6 +306,10 @@ export default function App() {
     addToast('Ledger data synced with backend.', 'success');
   };
 
+  // Mobile bulletin drawer state
+  const [mobileBulletinOpen, setMobileBulletinOpen] = useState(false);
+  const [bulletinCount, setBulletinCount] = useState(0);
+
   const navigateToPage = (page: 'landing' | 'auth' | 'dashboard', extra?: string) => {
     if (page === 'auth') setAuthInitialMode(extra === 'signup' ? 'signup' : 'signin');
     setCurrentPage(page);
@@ -340,6 +344,8 @@ export default function App() {
             onToggleAdminMode={handleToggleAdminView}
             onNavigate={navigateToPage}
             addToast={addToast}
+            bulletinCount={bulletinCount}
+            onBellClick={() => setMobileBulletinOpen(true)}
           />
         )}
 
@@ -386,6 +392,9 @@ export default function App() {
                 disputes={disputes}
                 addToast={addToast}
                 onRefresh={handleDatabaseRefresh}
+                mobileBulletinOpen={mobileBulletinOpen}
+                onCloseMobileBulletin={() => setMobileBulletinOpen(false)}
+                onBulletinCountChange={setBulletinCount}
               />
             )}
           </Suspense>

@@ -40,6 +40,9 @@ interface UserDashboardProps {
   disputes?: Dispute[];
   addToast: (msg: string, type: 'success' | 'error' | 'info') => void;
   onRefresh: () => void;
+  mobileBulletinOpen?: boolean;
+  onCloseMobileBulletin?: () => void;
+  onBulletinCountChange?: (count: number) => void;
 }
 
 export default function UserDashboard({ 
@@ -50,7 +53,10 @@ export default function UserDashboard({
   coins = [],
   disputes = [],
   addToast,
-  onRefresh
+  onRefresh,
+  mobileBulletinOpen = false,
+  onCloseMobileBulletin,
+  onBulletinCountChange,
 }: UserDashboardProps) {
   
   // Tab states: 'trade' | 'history' | 'kyc'
@@ -488,6 +494,11 @@ export default function UserDashboard({
     }
   }, [userProfile]);
 
+  // ── Sync bulletin count up to parent (for Navbar badge) ──────────────────
+  useEffect(() => {
+    onBulletinCountChange?.(localNotifs.length + privateAnnouncements.length);
+  }, [localNotifs.length, privateAnnouncements.length, onBulletinCountChange]);
+
   // Submit KYC Request
   const handleKycSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -548,46 +559,6 @@ export default function UserDashboard({
               </div>
             )}
           </div>
-        </div>
-      )}
-
-      {/* ── Notification Centre ──────────────────────────────────────────── */}
-      {localNotifs.length > 0 && (
-        <div className="mb-6 space-y-2">
-          <div className="flex items-center justify-between mb-1">
-            <span className="flex items-center gap-1.5 text-[11px] font-bold text-[#1A1A1A] uppercase tracking-wider">
-              <Bell className="w-3.5 h-3.5 text-[#008751]" />
-              Notifications
-              <span className="bg-[#008751] text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">{localNotifs.length}</span>
-            </span>
-            <button
-              onClick={() => setLocalNotifs([])}
-              className="text-[10px] text-gray-400 hover:text-gray-600 font-medium cursor-pointer transition"
-            >
-              Clear all
-            </button>
-          </div>
-          {localNotifs.map((n) => (
-            <div
-              key={n.id}
-              className={`flex items-start gap-3 px-4 py-3 rounded-xl border text-xs font-medium ${
-                n.type === 'success'
-                  ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
-                  : n.type === 'error'
-                  ? 'bg-red-50 border-red-200 text-red-900'
-                  : 'bg-blue-50 border-blue-200 text-blue-900'
-              }`}
-            >
-              <span className="flex-1 leading-relaxed">{n.message}</span>
-              <button
-                onClick={() => setLocalNotifs((prev) => prev.filter((x) => x.id !== n.id))}
-                className="shrink-0 opacity-50 hover:opacity-100 cursor-pointer transition mt-0.5"
-                aria-label="Dismiss"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          ))}
         </div>
       )}
 
@@ -1619,35 +1590,84 @@ export default function UserDashboard({
         {/* Right column (Notice board & Guidelines) */}
         <div className="lg:col-span-4 space-y-6">
           
-          {/* User Specific Notice Board */}
+          {/* System Bulletin — combines real-time activity notifs + admin announcements */}
           <div className="bg-white rounded-3xl border border-[#E0E7E0] shadow-sm p-6 space-y-4">
+            {/* Header */}
             <div className="flex items-center gap-2 text-[#1A1A1A] border-b border-[#E0E7E0] pb-3">
               <div className="relative shrink-0">
                 <Bell className="w-4 h-4 text-[#008751]" />
-                {privateAnnouncements.length > 0 && (
-                  <span className="notification-dot absolute -top-1 -right-1 w-2 h-2 bg-rose-500 rounded-full border border-white" />
+                {(localNotifs.length + privateAnnouncements.length) > 0 && (
+                  <span className="absolute -top-1 -right-1 w-2 h-2 bg-rose-500 rounded-full border border-white" />
                 )}
               </div>
               <h4 className="font-bold text-xs uppercase tracking-wider">System Bulletin</h4>
-              {privateAnnouncements.length > 0 && (
+              {(localNotifs.length + privateAnnouncements.length) > 0 && (
                 <span className="ml-auto shrink-0 bg-rose-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full leading-none">
-                  {privateAnnouncements.length}
+                  {localNotifs.length + privateAnnouncements.length}
                 </span>
               )}
             </div>
 
-            {privateAnnouncements.length === 0 ? (
-              <p className="text-xs text-gray-400">No official platform bulletins currently active.</p>
+            {localNotifs.length === 0 && privateAnnouncements.length === 0 ? (
+              <p className="text-xs text-gray-400">No notifications or platform bulletins right now.</p>
             ) : (
-              <div className="space-y-2 max-h-[340px] overflow-y-auto">
+              <div className="space-y-2 max-h-[420px] overflow-y-auto">
+
+                {/* ── Activity notifications (real-time) ── */}
+                {localNotifs.length > 0 && (
+                  <>
+                    <div className="flex items-center justify-between pb-1">
+                      <span className="text-[9px] font-bold uppercase tracking-wider text-gray-400">Activity</span>
+                      <button
+                        onClick={() => setLocalNotifs([])}
+                        className="text-[9px] text-gray-400 hover:text-rose-500 font-bold transition cursor-pointer"
+                      >
+                        Clear all
+                      </button>
+                    </div>
+                    {localNotifs.map((n) => (
+                      <div
+                        key={n.id}
+                        className={`flex items-start gap-2 px-3 py-2.5 rounded-xl border text-[11px] font-medium leading-relaxed ${
+                          n.type === 'success'
+                            ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
+                            : n.type === 'error'
+                            ? 'bg-red-50 border-red-200 text-red-900'
+                            : 'bg-blue-50 border-blue-200 text-blue-900'
+                        }`}
+                      >
+                        <span className="flex-1">{n.message}</span>
+                        <button
+                          onClick={() => setLocalNotifs((prev) => prev.filter((x) => x.id !== n.id))}
+                          className="shrink-0 opacity-40 hover:opacity-100 cursor-pointer transition mt-px"
+                          aria-label="Dismiss"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </>
+                )}
+
+                {/* Divider between sections when both present */}
+                {localNotifs.length > 0 && privateAnnouncements.length > 0 && (
+                  <div className="pt-1 pb-0.5">
+                    <span className="text-[9px] font-bold uppercase tracking-wider text-gray-400">Platform Bulletins</span>
+                  </div>
+                )}
+
+                {/* ── Admin-sent announcements ── */}
                 {privateAnnouncements.map((ann) => {
                   const isExpanded = expandedAnnIds.includes(ann.id);
                   return (
                     <div key={ann.id} className="bg-[#F7F9F7] rounded-2xl border border-[#E0E7E0] overflow-hidden">
-                      {/* Collapsible header row */}
-                      <button
+                      {/* Row: div instead of button to avoid nested-button invalid HTML */}
+                      <div
+                        role="button"
+                        tabIndex={0}
                         onClick={() => toggleAnn(ann.id)}
-                        className="w-full flex items-center gap-2 px-4 py-3 text-left cursor-pointer hover:bg-[#F0F5F1] transition"
+                        onKeyDown={(e) => e.key === 'Enter' && toggleAnn(ann.id)}
+                        className="w-full flex items-center gap-2 px-4 py-3 text-left cursor-pointer hover:bg-[#F0F5F1] transition select-none"
                       >
                         <ChevronRight className={`w-3 h-3 text-[#008751] shrink-0 transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`} />
                         <h5 className="font-bold text-[#1A1A1A] text-xs flex-1 leading-snug">{ann.title}</h5>
@@ -1659,8 +1679,7 @@ export default function UserDashboard({
                         >
                           <XCircle className="w-3.5 h-3.5" />
                         </button>
-                      </button>
-                      {/* Expanded content */}
+                      </div>
                       {isExpanded && (
                         <div className="px-4 pb-3 border-t border-[#E8EFE8]">
                           <p className="text-[11px] text-gray-600 leading-relaxed pt-2">{ann.content}</p>
@@ -1985,6 +2004,136 @@ export default function UserDashboard({
 
             </motion.div>
           </div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Mobile Bulletin Drawer (lg:hidden) ──────────────────────────────── */}
+      <AnimatePresence>
+        {mobileBulletinOpen && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/40 z-50 lg:hidden"
+              onClick={onCloseMobileBulletin}
+            />
+            {/* Sheet slides up from bottom */}
+            <motion.div
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+              className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-white rounded-t-3xl border-t border-[#E0E7E0] shadow-2xl flex flex-col max-h-[80vh]"
+            >
+              {/* Drag handle */}
+              <div className="flex justify-center pt-3 pb-1 shrink-0">
+                <div className="w-10 h-1 bg-gray-300 rounded-full" />
+              </div>
+
+              {/* Sheet header */}
+              <div className="flex items-center justify-between px-6 py-3 border-b border-[#E0E7E0] shrink-0">
+                <div className="flex items-center gap-2">
+                  <Bell className="w-4 h-4 text-[#008751]" />
+                  <h4 className="font-bold text-sm text-[#1A1A1A] uppercase tracking-wider">System Bulletin</h4>
+                  {(localNotifs.length + privateAnnouncements.length) > 0 && (
+                    <span className="bg-rose-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full leading-none">
+                      {localNotifs.length + privateAnnouncements.length}
+                    </span>
+                  )}
+                </div>
+                <button
+                  onClick={onCloseMobileBulletin}
+                  className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 cursor-pointer transition"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Sheet body — scrollable */}
+              <div className="overflow-y-auto flex-1 min-h-0 px-5 py-4 space-y-2">
+                {localNotifs.length === 0 && privateAnnouncements.length === 0 ? (
+                  <p className="text-xs text-gray-400 text-center py-8">No notifications right now.</p>
+                ) : (
+                  <>
+                    {localNotifs.length > 0 && (
+                      <>
+                        <div className="flex items-center justify-between pb-1">
+                          <span className="text-[9px] font-bold uppercase tracking-wider text-gray-400">Activity</span>
+                          <button
+                            onClick={() => setLocalNotifs([])}
+                            className="text-[9px] text-gray-400 hover:text-rose-500 font-bold transition cursor-pointer"
+                          >
+                            Clear all
+                          </button>
+                        </div>
+                        {localNotifs.map((n) => (
+                          <div
+                            key={n.id}
+                            className={`flex items-start gap-2 px-3 py-2.5 rounded-xl border text-[11px] font-medium leading-relaxed ${
+                              n.type === 'success'
+                                ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
+                                : n.type === 'error'
+                                ? 'bg-red-50 border-red-200 text-red-900'
+                                : 'bg-blue-50 border-blue-200 text-blue-900'
+                            }`}
+                          >
+                            <span className="flex-1">{n.message}</span>
+                            <button
+                              onClick={() => setLocalNotifs((prev) => prev.filter((x) => x.id !== n.id))}
+                              className="shrink-0 opacity-40 hover:opacity-100 cursor-pointer transition mt-px"
+                              aria-label="Dismiss"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </div>
+                        ))}
+                      </>
+                    )}
+
+                    {localNotifs.length > 0 && privateAnnouncements.length > 0 && (
+                      <div className="pt-2 pb-0.5">
+                        <span className="text-[9px] font-bold uppercase tracking-wider text-gray-400">Platform Bulletins</span>
+                      </div>
+                    )}
+
+                    {privateAnnouncements.map((ann) => {
+                      const isExpanded = expandedAnnIds.includes(ann.id);
+                      return (
+                        <div key={ann.id} className="bg-[#F7F9F7] rounded-2xl border border-[#E0E7E0] overflow-hidden">
+                          {/* Row: div instead of button to avoid nested-button invalid HTML */}
+                          <div
+                            role="button"
+                            tabIndex={0}
+                            onClick={() => toggleAnn(ann.id)}
+                            onKeyDown={(e) => e.key === 'Enter' && toggleAnn(ann.id)}
+                            className="w-full flex items-center gap-2 px-4 py-3 text-left cursor-pointer hover:bg-[#F0F5F1] transition select-none"
+                          >
+                            <ChevronRight className={`w-3 h-3 text-[#008751] shrink-0 transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`} />
+                            <h5 className="font-bold text-[#1A1A1A] text-xs flex-1 leading-snug">{ann.title}</h5>
+                            <span className="text-[9px] text-gray-400 font-mono shrink-0">{new Date(ann.createdAt).toLocaleDateString()}</span>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); dismissAnnouncement(ann.id); }}
+                              title="Dismiss"
+                              className="shrink-0 text-gray-300 hover:text-rose-400 transition cursor-pointer ml-1"
+                            >
+                              <XCircle className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                          {isExpanded && (
+                            <div className="px-4 pb-3 border-t border-[#E8EFE8]">
+                              <p className="text-[11px] text-gray-600 leading-relaxed pt-2">{ann.content}</p>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </>
+                )}
+              </div>
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
 

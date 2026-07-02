@@ -10,7 +10,8 @@ import {
   ArrowLeftRight,
   Menu,
   X,
-  UserCircle2
+  UserCircle2,
+  Bell
 } from 'lucide-react';
 
 interface NavbarProps {
@@ -20,9 +21,11 @@ interface NavbarProps {
   onToggleAdminMode: () => void;
   onNavigate: (page: 'landing' | 'auth' | 'dashboard') => void;
   addToast: (msg: string, type: 'success' | 'error' | 'info') => void;
+  bulletinCount?: number;
+  onBellClick?: () => void;
 }
 
-export default function Navbar({ userProfile, isAdminMode, currentPage, onToggleAdminMode, onNavigate, addToast }: NavbarProps) {
+export default function Navbar({ userProfile, isAdminMode, currentPage, onToggleAdminMode, onNavigate, addToast, bulletinCount = 0, onBellClick }: NavbarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [logoError, setLogoError] = useState(false);
 
@@ -157,6 +160,21 @@ export default function Navbar({ userProfile, isAdminMode, currentPage, onToggle
                   title={isAdminMode ? 'User View' : 'Admin CMS'}
                 >
                   <ArrowLeftRight className="w-4 h-4" />
+                </button>
+              )}
+              {/* Bell icon — mobile only, not shown in admin mode */}
+              {userProfile && !isAdminMode && (
+                <button
+                  onClick={onBellClick}
+                  className="relative p-2 rounded-lg border border-[#E0E7E0] text-gray-600 hover:bg-[#F7F9F7] cursor-pointer transition"
+                  title="System Bulletin"
+                >
+                  <Bell className="w-4 h-4" />
+                  {bulletinCount > 0 && (
+                    <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-0.5 bg-rose-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center leading-none border border-white">
+                      {bulletinCount > 9 ? '9+' : bulletinCount}
+                    </span>
+                  )}
                 </button>
               )}
               {userProfile && (
