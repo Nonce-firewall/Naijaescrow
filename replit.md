@@ -26,6 +26,17 @@ Run `supabase-schema.sql` in your Supabase project's **SQL Editor** before first
 
 The schema includes a `disputes` table referenced in the app — if that table is missing, apply `migration.sql` as well.
 
+## Account deletion (Supabase Edge Function)
+The "Delete Account" option (Navbar → Account menu) permanently deletes the user's Supabase Auth login while retaining their `kyc_status`/`kyc_data` for fraud/legal purposes. This requires the service-role key, so the actual deletion runs server-side in a Supabase Edge Function — **it will not work until deployed**:
+
+```bash
+supabase login
+supabase link --project-ref <your-project-ref>
+supabase functions deploy delete-account
+```
+
+Function source: `supabase/functions/delete-account/index.ts`. Supabase auto-injects `SUPABASE_URL`/`SUPABASE_SERVICE_ROLE_KEY` into edge functions — no manual secret setup needed.
+
 ## Project structure
 - `src/App.tsx` — root component; auth state, realtime subscriptions, page routing
 - `src/components/` — all UI components (Navbar, LandingPage, AuthPage, UserDashboard, AdminCMS, etc.)

@@ -10,7 +10,7 @@ export interface UserProfile {
   role: 'user' | 'admin';
   kycStatus: 'none' | 'pending' | 'approved' | 'rejected';
   kycData?: KYCData;
-  accountStatus: 'active' | 'suspended' | 'terminated';
+  accountStatus: 'active' | 'suspended' | 'terminated' | 'deleted';
   suspendReason?: string;
   terminateReason?: string;
   notificationPreferences?: NotificationPreferences;

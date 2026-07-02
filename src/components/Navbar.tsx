@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { UserProfile, NotificationPreferences } from '../types';
-import { updateNotificationPreferences, changePassword } from '../lib/dbHelpers';
+import { updateNotificationPreferences, changePassword, deleteAccount } from '../lib/dbHelpers';
 import {
   LogOut,
   UserCheck,
@@ -18,7 +18,9 @@ import {
   KeyRound,
   BellRing,
   Eye,
-  EyeOff
+  EyeOff,
+  Trash2,
+  AlertTriangle
 } from 'lucide-react';
 
 const DEFAULT_NOTIF_PREFS: NotificationPreferences = {
@@ -44,6 +46,7 @@ export default function Navbar({ userProfile, isAdminMode, currentPage, onToggle
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showNotifModal, setShowNotifModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const accountMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -177,6 +180,14 @@ export default function Navbar({ userProfile, isAdminMode, currentPage, onToggle
                         <LogOut className="w-3.5 h-3.5 shrink-0" />
                         Log Out
                       </button>
+                      <div className="my-1.5 border-t border-[#E0E7E0]" />
+                      <button
+                        onClick={() => { setShowDeleteModal(true); setAccountMenuOpen(false); }}
+                        className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-bold text-rose-600 hover:bg-rose-50 transition cursor-pointer"
+                      >
+                        <Trash2 className="w-3.5 h-3.5 shrink-0" />
+                        Delete Account
+                      </button>
                     </div>
                   )}
                 </div>
@@ -281,6 +292,13 @@ export default function Navbar({ userProfile, isAdminMode, currentPage, onToggle
             <LogOut className="w-4 h-4" />
             Log Out
           </button>
+          <button
+            onClick={() => { setShowDeleteModal(true); setMenuOpen(false); }}
+            className="w-full flex items-center justify-center gap-2 border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-600 py-2.5 rounded-xl text-sm font-bold transition cursor-pointer"
+          >
+            <Trash2 className="w-4 h-4" />
+            Delete Account
+          </button>
         </div>
       )}
 
@@ -293,6 +311,17 @@ export default function Navbar({ userProfile, isAdminMode, currentPage, onToggle
           userProfile={userProfile}
           onClose={() => setShowNotifModal(false)}
           addToast={addToast}
+        />
+      )}
+
+      {showDeleteModal && (
+        <DeleteAccountModal
+          onClose={() => setShowDeleteModal(false)}
+          addToast={addToast}
+          onDeleted={() => {
+            setShowDeleteModal(false);
+            onNavigate('landing');
+          }}
         />
       )}
     </nav>
@@ -473,6 +502,87 @@ function NotificationPreferencesModal({
           className="w-full mt-4 shrink-0 bg-[#008751] hover:bg-[#007043] disabled:opacity-60 text-white py-2.5 rounded-xl text-sm font-bold transition cursor-pointer"
         >
           {saving ? 'Saving...' : 'Save Preferences'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function DeleteAccountModal({
+  onClose,
+  addToast,
+  onDeleted
+}: {
+  onClose: () => void;
+  addToast: (msg: string, type: 'success' | 'error' | 'info') => void;
+  onDeleted: () => void;
+}) {
+  const [confirmText, setConfirmText] = useState('');
+  const [deleting, setDeleting] = useState(false);
+  const canDelete = confirmText.trim().toUpperCase() === 'DELETE';
+
+  const handleDelete = async () => {
+    if (!canDelete || deleting) return;
+    setDeleting(true);
+    try {
+      await deleteAccount();
+      await supabase.auth.signOut();
+      addToast('Your account has been permanently deleted.', 'info');
+      onDeleted();
+    } catch (err: any) {
+      addToast(err.message || 'Failed to delete account.', 'error');
+      setDeleting(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={onClose}>
+      <div
+        className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 flex flex-col max-h-[90vh]"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between mb-4 shrink-0">
+          <h3 className="text-base font-bold text-rose-600 flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4" />
+            Delete Account
+          </h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-700 cursor-pointer">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        <div className="space-y-3 overflow-y-auto flex-1 min-h-0">
+          <p className="text-xs text-gray-600 leading-relaxed">
+            This will <span className="font-bold text-rose-600">permanently delete</span> your login and profile.
+            This action cannot be undone.
+          </p>
+          <div className="bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5">
+            <p className="text-[11px] text-amber-800 leading-relaxed">
+              For fraud and legal compliance purposes, your KYC verification records will be retained
+              even after deletion, as required by regulation.
+            </p>
+          </div>
+          <div>
+            <label className="text-xs font-bold text-gray-500 block mb-1.5">
+              Type <span className="font-mono text-rose-600">DELETE</span> to confirm
+            </label>
+            <input
+              type="text"
+              value={confirmText}
+              onChange={(e) => setConfirmText(e.target.value)}
+              className="w-full border border-[#E0E7E0] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500/30"
+              placeholder="DELETE"
+              autoComplete="off"
+            />
+          </div>
+        </div>
+
+        <button
+          onClick={handleDelete}
+          disabled={!canDelete || deleting}
+          className="w-full mt-4 shrink-0 bg-rose-600 hover:bg-rose-700 disabled:opacity-50 disabled:cursor-not-allowed text-white py-2.5 rounded-xl text-sm font-bold transition cursor-pointer"
+        >
+          {deleting ? 'Deleting...' : 'Permanently Delete My Account'}
         </button>
       </div>
     </div>
