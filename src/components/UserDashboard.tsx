@@ -1546,7 +1546,9 @@ export default function UserDashboard({
 
                   <div className="pt-2 border-t border-[#E0E7E0]">
                     <div className="flex justify-between items-center mb-1">
-                      <span className="text-gray-400 font-mono uppercase text-[9px]">BLOCKCHAIN TRANSACTION ID:</span>
+                      <span className="text-gray-400 font-mono uppercase text-[9px]">
+                        {viewReceipt.status === 'rejected' ? 'ORDER STATUS:' : 'BLOCKCHAIN TRANSACTION ID:'}
+                      </span>
                       {viewReceipt.status === 'completed' && (
                         <span className="text-[#008751] font-bold text-[9px] uppercase">COMPLETED</span>
                       )}
@@ -1568,8 +1570,14 @@ export default function UserDashboard({
                       </div>
                     )}
                     {viewReceipt.status === 'rejected' && (
-                      <div className="bg-red-50 border border-red-200 text-red-700 p-2.5 rounded-lg text-[10px] font-mono">
-                        This order was rejected by the admin. Please contact support if you believe this is an error.
+                      <div className="bg-red-50 border border-red-200 text-red-700 p-2.5 rounded-lg text-[10px] font-mono space-y-1">
+                        <div>This order was rejected by the admin.</div>
+                        {viewReceipt.rejectionReason && (
+                          <div className="pt-1 border-t border-red-200">
+                            <span className="font-bold uppercase text-[9px] text-red-500 block mb-0.5">Admin Reason:</span>
+                            {viewReceipt.rejectionReason}
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
