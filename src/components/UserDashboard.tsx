@@ -68,6 +68,14 @@ export default function UserDashboard({
   const swipeLockedRef = useRef<'horizontal' | 'vertical' | null>(null);
 
   const handleTabTouchStart = (e: React.TouchEvent) => {
+    // Ignore swipe tracking if the touch starts inside a horizontally
+    // scrollable region (e.g. the order history table) so users can still
+    // scroll it sideways without triggering a tab switch.
+    if ((e.target as HTMLElement).closest('[data-horizontal-scroll]')) {
+      touchStartRef.current = null;
+      swipeLockedRef.current = null;
+      return;
+    }
     const t = e.touches[0];
     touchStartRef.current = { x: t.clientX, y: t.clientY };
     swipeLockedRef.current = null;
@@ -1331,7 +1339,7 @@ export default function UserDashboard({
                   </p>
                 </div>
               ) : (
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto" data-horizontal-scroll>
                   <table className="w-full text-left border-collapse">
                     <thead>
                       <tr className="bg-slate-50 text-[10px] text-slate-400 uppercase tracking-wider font-mono border-b border-slate-100">
