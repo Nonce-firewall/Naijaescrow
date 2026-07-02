@@ -527,7 +527,7 @@ export default function UserDashboard({
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 font-sans">
+    <div className="max-w-7xl mx-auto px-3 sm:px-6 py-4 sm:py-8 font-sans">
 
       {/* Suspended account banner */}
       {userProfile.accountStatus === 'suspended' && (
@@ -562,37 +562,35 @@ export default function UserDashboard({
         </div>
       )}
 
-      {/* Real-time exchange rate banner styled as a Bento Grid Rates Card */}
-      <div className="bg-[#1A1A1A] text-white rounded-3xl p-6 shadow-sm border border-[#E0E7E0]/10 flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 relative overflow-hidden">
-        <div className="relative z-10 space-y-2">
-          <span className="text-[10px] uppercase font-bold tracking-wider text-[#00FF85] bg-[#E6F4EA]/10 border border-[#E6F4EA]/20 px-3 py-1 rounded-full">
+      {/* Real-time exchange rate banner */}
+      <div className="bg-[#1A1A1A] text-white rounded-2xl sm:rounded-3xl px-4 py-4 sm:p-6 shadow-sm border border-[#E0E7E0]/10 flex items-center justify-between gap-4 mb-5 sm:mb-8 relative overflow-hidden">
+        <div className="relative z-10 space-y-1 sm:space-y-2">
+          <span className="text-[9px] sm:text-[10px] uppercase font-bold tracking-wider text-[#00FF85] bg-[#E6F4EA]/10 border border-[#E6F4EA]/20 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full inline-block">
             Live Exchange Rate
           </span>
-          <div className="flex items-baseline gap-2 mt-2">
-            <span className="text-4xl sm:text-5xl font-bold tracking-tight italic text-[#00FF85]">
+          <div className="flex items-baseline gap-1.5 sm:gap-2">
+            <span className="text-3xl sm:text-5xl font-bold tracking-tight italic text-[#00FF85]">
               ₦{settings.usdtRate.toLocaleString()}
             </span>
-            <span className="text-sm text-gray-400 font-mono">/USDT</span>
+            <span className="text-xs sm:text-sm text-gray-400 font-mono">/USDT</span>
           </div>
-          <p className="text-xs text-gray-400 max-w-xl">
+          <p className="hidden sm:block text-xs text-gray-400 max-w-xl">
             Standard blockchain mining fees covered. Zero additional escrow charges. Verified by 9ija Escrow Ledger.
           </p>
         </div>
 
-        <div className="flex items-center gap-4 border-t border-white/10 md:border-t-0 pt-4 md:pt-0 relative z-10">
-          <div className="text-right">
-            <span className="text-[9px] text-gray-400 font-mono block uppercase tracking-wider">Trader</span>
-            <span className="text-sm font-bold text-white mt-0.5 block">{displayName}</span>
-            <span className={`text-xs font-bold flex items-center gap-1.5 mt-0.5 justify-end ${
-              userProfile.kycStatus === 'approved' ? 'text-[#00FF85]' : 'text-amber-400'
-            }`}>
-              {userProfile.kycStatus === 'approved' && <CheckCircle2 className="w-3.5 h-3.5 text-[#00FF85]" />}
-              {userProfile.kycStatus === 'pending' && <Clock className="w-3.5 h-3.5 text-amber-400" />}
-              {userProfile.kycStatus === 'rejected' && <XCircle className="w-3.5 h-3.5 text-rose-400" />}
-              {userProfile.kycStatus === 'none' && <AlertCircle className="w-3.5 h-3.5 text-amber-400" />}
-              KYC {userProfile.kycStatus.toUpperCase()}
-            </span>
-          </div>
+        <div className="relative z-10 text-right shrink-0">
+          <span className="text-[9px] text-gray-400 font-mono block uppercase tracking-wider">Trader</span>
+          <span className="text-sm font-bold text-white mt-0.5 block truncate max-w-[120px] sm:max-w-none">{displayName}</span>
+          <span className={`text-[11px] font-bold flex items-center gap-1 mt-0.5 justify-end ${
+            userProfile.kycStatus === 'approved' ? 'text-[#00FF85]' : 'text-amber-400'
+          }`}>
+            {userProfile.kycStatus === 'approved' && <CheckCircle2 className="w-3 h-3 text-[#00FF85]" />}
+            {userProfile.kycStatus === 'pending' && <Clock className="w-3 h-3 text-amber-400" />}
+            {userProfile.kycStatus === 'rejected' && <XCircle className="w-3 h-3 text-rose-400" />}
+            {userProfile.kycStatus === 'none' && <AlertCircle className="w-3 h-3 text-amber-400" />}
+            <span className="hidden sm:inline">KYC </span>{userProfile.kycStatus.toUpperCase()}
+          </span>
         </div>
 
         <div className="absolute -right-12 -bottom-12 opacity-[0.03]">
@@ -606,43 +604,84 @@ export default function UserDashboard({
         {/* Left column (Tabs & Active Form) */}
         <div className="lg:col-span-8 space-y-6">
           
-          {/* Navigation Tabs */}
-          <div className="flex border-b border-[#E0E7E0] gap-2">
+          {/* Navigation Tabs — pill card grid */}
+          <div className="grid grid-cols-3 gap-2 sm:gap-3">
+            {/* Tab: Start Order */}
             <button
               onClick={() => setActiveTab('trade')}
-              className={`pb-4 px-5 text-sm font-bold border-b-2 cursor-pointer transition ${
-                activeTab === 'trade' 
-                  ? 'border-[#008751] text-[#008751] font-extrabold' 
-                  : 'border-transparent text-gray-500 hover:text-[#1A1A1A]'
+              className={`flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 py-3 sm:py-3.5 px-1 sm:px-4 rounded-2xl font-bold transition cursor-pointer ${
+                activeTab === 'trade'
+                  ? 'bg-[#008751] text-white shadow-md shadow-[#008751]/20'
+                  : 'bg-white border border-[#E0E7E0] text-gray-500 hover:border-[#008751]/40 hover:text-[#008751]'
               }`}
             >
-              Start Order
+              <TrendingUp className="w-4 h-4 sm:w-3.5 sm:h-3.5 shrink-0" />
+              <span className="text-[10px] sm:text-xs text-center leading-tight">
+                <span className="sm:hidden">Start<br />Order</span>
+                <span className="hidden sm:inline">Start Order</span>
+              </span>
             </button>
+
+            {/* Tab: Order History */}
             <button
               onClick={() => setActiveTab('history')}
-              className={`pb-4 px-5 text-sm font-bold border-b-2 cursor-pointer transition ${
-                activeTab === 'history' 
-                  ? 'border-[#008751] text-[#008751] font-extrabold' 
-                  : 'border-transparent text-gray-500 hover:text-[#1A1A1A]'
+              className={`relative flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 py-3 sm:py-3.5 px-1 sm:px-4 rounded-2xl font-bold transition cursor-pointer ${
+                activeTab === 'history'
+                  ? 'bg-[#008751] text-white shadow-md shadow-[#008751]/20'
+                  : 'bg-white border border-[#E0E7E0] text-gray-500 hover:border-[#008751]/40 hover:text-[#008751]'
               }`}
             >
-              Order History ({orders.length})
+              <Receipt className="w-4 h-4 sm:w-3.5 sm:h-3.5 shrink-0" />
+              <span className="text-[10px] sm:text-xs text-center leading-tight">
+                <span className="sm:hidden">Order<br />History</span>
+                <span className="hidden sm:inline">Order History</span>
+              </span>
+              {orders.length > 0 && (
+                <span className={`absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 text-[9px] font-bold rounded-full flex items-center justify-center leading-none border-2 border-[#F7F9F7] ${
+                  activeTab === 'history' ? 'bg-white text-[#008751]' : 'bg-[#008751] text-white'
+                }`}>
+                  {orders.length}
+                </span>
+              )}
             </button>
+
+            {/* Tab: KYC */}
             <button
               onClick={() => setActiveTab('kyc')}
-              className={`pb-4 px-5 text-sm font-bold border-b-2 cursor-pointer transition ${
-                activeTab === 'kyc' 
-                  ? 'border-[#008751] text-[#008751] font-extrabold' 
-                  : 'border-transparent text-gray-500 hover:text-[#1A1A1A]'
+              className={`relative flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 py-3 sm:py-3.5 px-1 sm:px-4 rounded-2xl font-bold transition cursor-pointer ${
+                activeTab === 'kyc'
+                  ? 'bg-[#008751] text-white shadow-md shadow-[#008751]/20'
+                  : 'bg-white border border-[#E0E7E0] text-gray-500 hover:border-[#008751]/40 hover:text-[#008751]'
               }`}
             >
-              Identity Verification (KYC)
+              <UserCheck className="w-4 h-4 sm:w-3.5 sm:h-3.5 shrink-0" />
+              <span className="text-[10px] sm:text-xs text-center leading-tight">
+                <span className="sm:hidden">KYC<br />Verify</span>
+                <span className="hidden sm:inline">Identity (KYC)</span>
+              </span>
+              {userProfile.kycStatus === 'approved' && (
+                <span className={`absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full flex items-center justify-center border-2 border-[#F7F9F7] ${
+                  activeTab === 'kyc' ? 'bg-white' : 'bg-emerald-500'
+                }`}>
+                  <Check className={`w-2.5 h-2.5 ${activeTab === 'kyc' ? 'text-[#008751]' : 'text-white'}`} />
+                </span>
+              )}
+              {userProfile.kycStatus === 'pending' && (
+                <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-amber-400 border-2 border-[#F7F9F7] flex items-center justify-center">
+                  <Clock className="w-2.5 h-2.5 text-white" />
+                </span>
+              )}
+              {userProfile.kycStatus === 'rejected' && (
+                <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-rose-500 border-2 border-[#F7F9F7] flex items-center justify-center">
+                  <X className="w-2.5 h-2.5 text-white" />
+                </span>
+              )}
             </button>
           </div>
 
           {/* TAB 1: Start Order (Trade) */}
           {activeTab === 'trade' && (
-            <div className="bg-white p-6 rounded-3xl border border-[#E0E7E0] shadow-sm">
+            <div className="bg-white p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-[#E0E7E0] shadow-sm">
               {userProfile.kycStatus !== 'approved' ? (
                 <div className="text-center py-12 px-4 space-y-4">
                   <div className="w-16 h-16 bg-amber-50 border border-amber-200 text-amber-600 rounded-2xl flex items-center justify-center mx-auto">

@@ -164,8 +164,8 @@ export default function LandingPage({ announcements, settings, onNavigate }: Lan
       )}
 
       {/* Hero */}
-      <header className="bg-[#1A1A1A] text-white py-14 sm:py-20 px-4 sm:px-6 rounded-b-[2rem]">
-        <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
+      <header className="bg-[#1A1A1A] text-white py-10 sm:py-20 px-4 sm:px-6 rounded-b-[2rem]">
+        <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10 items-center">
 
           <div className="space-y-5">
             <div className="inline-flex items-center gap-2 bg-[#008751]/20 border border-[#008751]/30 px-3 py-1.5 rounded-full text-[#00FF85] text-[11px] font-bold uppercase tracking-wider">
