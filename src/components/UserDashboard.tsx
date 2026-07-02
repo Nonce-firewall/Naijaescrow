@@ -1547,15 +1547,29 @@ export default function UserDashboard({
                   <div className="pt-2 border-t border-[#E0E7E0]">
                     <div className="flex justify-between items-center mb-1">
                       <span className="text-gray-400 font-mono uppercase text-[9px]">BLOCKCHAIN TRANSACTION ID:</span>
-                      <span className="text-[#008751] font-bold text-[9px] uppercase">VERIFIED</span>
+                      {viewReceipt.status === 'completed' && (
+                        <span className="text-[#008751] font-bold text-[9px] uppercase">COMPLETED</span>
+                      )}
+                      {viewReceipt.status === 'pending' && (
+                        <span className="text-amber-600 font-bold text-[9px] uppercase">PROCESSING...</span>
+                      )}
+                      {viewReceipt.status === 'rejected' && (
+                        <span className="text-red-500 font-bold text-[9px] uppercase">REJECTED</span>
+                      )}
                     </div>
-                    {viewReceipt.blockchainTxId ? (
+                    {viewReceipt.status === 'completed' && viewReceipt.blockchainTxId && (
                       <div className="bg-[#F0F7F2] border border-[#D1E6D8] text-emerald-800 p-2.5 rounded-lg text-[10px] font-mono break-all font-bold">
                         {viewReceipt.blockchainTxId}
                       </div>
-                    ) : (
+                    )}
+                    {viewReceipt.status === 'pending' && (
                       <div className="bg-amber-50 text-amber-800 p-2.5 rounded-lg text-[10px] font-mono">
                         Awaiting blockchain mining confirmations & Admin validation.
+                      </div>
+                    )}
+                    {viewReceipt.status === 'rejected' && (
+                      <div className="bg-red-50 border border-red-200 text-red-700 p-2.5 rounded-lg text-[10px] font-mono">
+                        This order was rejected by the admin. Please contact support if you believe this is an error.
                       </div>
                     )}
                   </div>
