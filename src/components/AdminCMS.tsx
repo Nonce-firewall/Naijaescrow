@@ -534,157 +534,161 @@ export default function AdminCMS({
       </div>
 
       {/* Grid: Nav Tabs and Content Panel */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        
-        {/* Left column navigation */}
-        <div className="lg:col-span-3 space-y-2">
-          <button
-            onClick={() => setActiveTab('analytics')}
-            className={`w-full text-left px-5 py-3.5 rounded-2xl text-xs font-bold uppercase tracking-wider flex items-center gap-3 border transition cursor-pointer ${
-              activeTab === 'analytics'
-                ? 'bg-[#008751] text-white border-[#008751] shadow-sm'
-                : 'bg-white hover:bg-[#F7F9F7] text-gray-700 border-[#E0E7E0] hover:border-gray-400'
-            }`}
-          >
-            <TrendingUp className="w-4 h-4" />
-            Control Analytics
-          </button>
-          
-          <button
-            onClick={() => setActiveTab('orders')}
-            className={`w-full text-left px-5 py-3.5 rounded-2xl text-xs font-bold uppercase tracking-wider flex items-center justify-between border transition cursor-pointer ${
-              activeTab === 'orders'
-                ? 'bg-[#008751] text-white border-[#008751] shadow-sm'
-                : 'bg-white hover:bg-[#F7F9F7] text-gray-700 border-[#E0E7E0] hover:border-gray-400'
-            }`}
-          >
-            <span className="flex items-center gap-3">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
+
+        {/* Tab navigation — horizontal scroll strip on mobile, vertical sidebar on desktop */}
+        <div className="lg:col-span-3">
+
+          {/* ── Mobile chip strip (hidden on lg+) ── */}
+          <div className="flex lg:hidden overflow-x-auto gap-2 pb-2 [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: 'none' }}>
+
+            {/* Analytics */}
+            <button onClick={() => setActiveTab('analytics')} className={`flex-shrink-0 flex flex-col items-center gap-1.5 px-3.5 py-2.5 rounded-xl border font-bold transition cursor-pointer min-w-[72px] ${activeTab === 'analytics' ? 'bg-[#008751] text-white border-[#008751] shadow-sm' : 'bg-white text-gray-600 border-[#E0E7E0]'}`}>
+              <TrendingUp className="w-4 h-4" />
+              <span className="text-[9px] uppercase tracking-wide leading-tight text-center">Analytics</span>
+            </button>
+
+            {/* Orders */}
+            <button onClick={() => setActiveTab('orders')} className={`relative flex-shrink-0 flex flex-col items-center gap-1.5 px-3.5 py-2.5 rounded-xl border font-bold transition cursor-pointer min-w-[72px] ${activeTab === 'orders' ? 'bg-[#008751] text-white border-[#008751] shadow-sm' : 'bg-white text-gray-600 border-[#E0E7E0]'}`}>
+              {pendingOrdersCount > 0 && <span className="absolute -top-1.5 -right-1.5 w-4 h-4 flex items-center justify-center rounded-full text-[8px] font-extrabold bg-amber-400 text-slate-900">{pendingOrdersCount}</span>}
               <Layers className="w-4 h-4" />
-              Order Queue
-            </span>
-            {pendingOrdersCount > 0 && (
-              <span className="bg-amber-400 text-slate-950 font-extrabold px-2 py-0.5 rounded-full text-[10px]">
-                {pendingOrdersCount}
-              </span>
-            )}
-          </button>
+              <span className="text-[9px] uppercase tracking-wide leading-tight text-center">Orders</span>
+            </button>
 
-          <button
-            onClick={() => setActiveTab('kyc')}
-            className={`w-full text-left px-5 py-3.5 rounded-2xl text-xs font-bold uppercase tracking-wider flex items-center justify-between border transition cursor-pointer ${
-              activeTab === 'kyc'
-                ? 'bg-[#008751] text-white border-[#008751] shadow-sm'
-                : 'bg-white hover:bg-[#F7F9F7] text-gray-700 border-[#E0E7E0] hover:border-gray-400'
-            }`}
-          >
-            <span className="flex items-center gap-3">
+            {/* KYC */}
+            <button onClick={() => setActiveTab('kyc')} className={`relative flex-shrink-0 flex flex-col items-center gap-1.5 px-3.5 py-2.5 rounded-xl border font-bold transition cursor-pointer min-w-[72px] ${activeTab === 'kyc' ? 'bg-[#008751] text-white border-[#008751] shadow-sm' : 'bg-white text-gray-600 border-[#E0E7E0]'}`}>
+              {pendingKycCount > 0 && <span className="absolute -top-1.5 -right-1.5 w-4 h-4 flex items-center justify-center rounded-full text-[8px] font-extrabold bg-amber-400 text-slate-900">{pendingKycCount}</span>}
               <FileCheck className="w-4 h-4" />
-              KYC Audits
-            </span>
-            {pendingKycCount > 0 && (
-              <span className="bg-amber-400 text-slate-950 font-extrabold px-2 py-0.5 rounded-full text-[10px]">
-                {pendingKycCount}
-              </span>
-            )}
-          </button>
+              <span className="text-[9px] uppercase tracking-wide leading-tight text-center">KYC</span>
+            </button>
 
-          <button
-            onClick={() => setActiveTab('accounts')}
-            className={`w-full text-left px-5 py-3.5 rounded-2xl text-xs font-bold uppercase tracking-wider flex items-center gap-3 border transition cursor-pointer ${
-              activeTab === 'accounts'
-                ? 'bg-[#008751] text-white border-[#008751] shadow-sm'
-                : 'bg-white hover:bg-[#F7F9F7] text-gray-700 border-[#E0E7E0] hover:border-gray-400'
-            }`}
-          >
-            <Users className="w-4 h-4" />
-            Traders Directory ({kycUsers?.filter(u => u.role !== 'admin').length || 0})
-          </button>
+            {/* Traders */}
+            <button onClick={() => setActiveTab('accounts')} className={`flex-shrink-0 flex flex-col items-center gap-1.5 px-3.5 py-2.5 rounded-xl border font-bold transition cursor-pointer min-w-[72px] ${activeTab === 'accounts' ? 'bg-[#008751] text-white border-[#008751] shadow-sm' : 'bg-white text-gray-600 border-[#E0E7E0]'}`}>
+              <Users className="w-4 h-4" />
+              <span className="text-[9px] uppercase tracking-wide leading-tight text-center">Traders</span>
+            </button>
 
-          <button
-            onClick={() => setActiveTab('compliance')}
-            className={`w-full text-left px-5 py-3.5 rounded-2xl text-xs font-bold uppercase tracking-wider flex items-center justify-between border transition cursor-pointer ${
-              activeTab === 'compliance'
-                ? 'bg-[#008751] text-white border-[#008751] shadow-sm'
-                : 'bg-white hover:bg-[#F7F9F7] text-gray-700 border-[#E0E7E0] hover:border-gray-400'
-            }`}
-          >
-            <span className="flex items-center gap-3">
+            {/* Compliance */}
+            <button onClick={() => setActiveTab('compliance')} className={`relative flex-shrink-0 flex flex-col items-center gap-1.5 px-3.5 py-2.5 rounded-xl border font-bold transition cursor-pointer min-w-[72px] ${activeTab === 'compliance' ? 'bg-[#008751] text-white border-[#008751] shadow-sm' : 'bg-white text-gray-600 border-[#E0E7E0]'}`}>
+              {kycUsers.filter(u => u.accountStatus === 'deleted').length > 0 && <span className="absolute -top-1.5 -right-1.5 w-4 h-4 flex items-center justify-center rounded-full text-[8px] font-extrabold bg-slate-700 text-white">{kycUsers.filter(u => u.accountStatus === 'deleted').length}</span>}
               <Lock className="w-4 h-4" />
-              Compliance Audit
-            </span>
-            {kycUsers.filter(u => u.accountStatus === 'deleted').length > 0 && (
-              <span className="bg-slate-700 text-white font-extrabold px-2 py-0.5 rounded-full text-[10px]">
-                {kycUsers.filter(u => u.accountStatus === 'deleted').length}
-              </span>
-            )}
-          </button>
+              <span className="text-[9px] uppercase tracking-wide leading-tight text-center">Compliance</span>
+            </button>
 
-          <button
-            onClick={() => setActiveTab('settings')}
-            className={`w-full text-left px-5 py-3.5 rounded-2xl text-xs font-bold uppercase tracking-wider flex items-center gap-3 border transition cursor-pointer ${
-              activeTab === 'settings'
-                ? 'bg-[#008751] text-white border-[#008751] shadow-sm'
-                : 'bg-white hover:bg-[#F7F9F7] text-gray-700 border-[#E0E7E0] hover:border-gray-400'
-            }`}
-          >
-            <Settings className="w-4 h-4" />
-            Configurations
-          </button>
+            {/* Config */}
+            <button onClick={() => setActiveTab('settings')} className={`flex-shrink-0 flex flex-col items-center gap-1.5 px-3.5 py-2.5 rounded-xl border font-bold transition cursor-pointer min-w-[72px] ${activeTab === 'settings' ? 'bg-[#008751] text-white border-[#008751] shadow-sm' : 'bg-white text-gray-600 border-[#E0E7E0]'}`}>
+              <Settings className="w-4 h-4" />
+              <span className="text-[9px] uppercase tracking-wide leading-tight text-center">Config</span>
+            </button>
 
-          <button
-            onClick={() => setActiveTab('bulletins')}
-            className={`w-full text-left px-5 py-3.5 rounded-2xl text-xs font-bold uppercase tracking-wider flex items-center gap-3 border transition cursor-pointer ${
-              activeTab === 'bulletins'
-                ? 'bg-[#008751] text-white border-[#008751] shadow-sm'
-                : 'bg-white hover:bg-[#F7F9F7] text-gray-700 border-[#E0E7E0] hover:border-gray-400'
-            }`}
-          >
-            <Bell className="w-4 h-4" />
-            Announcements CMS
-          </button>
+            {/* Bulletins */}
+            <button onClick={() => setActiveTab('bulletins')} className={`flex-shrink-0 flex flex-col items-center gap-1.5 px-3.5 py-2.5 rounded-xl border font-bold transition cursor-pointer min-w-[72px] ${activeTab === 'bulletins' ? 'bg-[#008751] text-white border-[#008751] shadow-sm' : 'bg-white text-gray-600 border-[#E0E7E0]'}`}>
+              <Bell className="w-4 h-4" />
+              <span className="text-[9px] uppercase tracking-wide leading-tight text-center">Posts</span>
+            </button>
 
-          <button
-            onClick={() => setActiveTab('coins')}
-            className={`w-full text-left px-5 py-3.5 rounded-2xl text-xs font-bold uppercase tracking-wider flex items-center gap-3 border transition cursor-pointer ${
-              activeTab === 'coins'
-                ? 'bg-[#008751] text-white border-[#008751] shadow-sm'
-                : 'bg-white hover:bg-[#F7F9F7] text-gray-700 border-[#E0E7E0] hover:border-gray-400'
-            }`}
-          >
-            <Coins className="w-4 h-4" />
-            Coin Listings ({coins?.length || 0})
-          </button>
+            {/* Coins */}
+            <button onClick={() => setActiveTab('coins')} className={`flex-shrink-0 flex flex-col items-center gap-1.5 px-3.5 py-2.5 rounded-xl border font-bold transition cursor-pointer min-w-[72px] ${activeTab === 'coins' ? 'bg-[#008751] text-white border-[#008751] shadow-sm' : 'bg-white text-gray-600 border-[#E0E7E0]'}`}>
+              <Coins className="w-4 h-4" />
+              <span className="text-[9px] uppercase tracking-wide leading-tight text-center">Coins</span>
+            </button>
 
-          <button
-            onClick={() => setActiveTab('disputes')}
-            className={`w-full text-left px-5 py-3.5 rounded-2xl text-xs font-bold uppercase tracking-wider flex items-center justify-between border transition cursor-pointer ${
-              activeTab === 'disputes'
-                ? 'bg-[#008751] text-white border-[#008751] shadow-sm'
-                : 'bg-white hover:bg-[#F7F9F7] text-gray-700 border-[#E0E7E0] hover:border-gray-400'
-            }`}
-          >
-            <span className="flex items-center gap-3">
+            {/* Disputes */}
+            <button onClick={() => setActiveTab('disputes')} className={`relative flex-shrink-0 flex flex-col items-center gap-1.5 px-3.5 py-2.5 rounded-xl border font-bold transition cursor-pointer min-w-[72px] ${activeTab === 'disputes' ? 'bg-[#008751] text-white border-[#008751] shadow-sm' : 'bg-white text-gray-600 border-[#E0E7E0]'}`}>
+              {openDisputeCount > 0 && <span className="absolute -top-1.5 -right-1.5 w-4 h-4 flex items-center justify-center rounded-full text-[8px] font-extrabold bg-rose-500 text-white">{openDisputeCount}</span>}
               <MessageSquare className="w-4 h-4" />
-              Disputes
-            </span>
-            {openDisputeCount > 0 && (
-              <span className="bg-rose-500 text-white font-extrabold px-2 py-0.5 rounded-full text-[10px]">
-                {openDisputeCount}
-              </span>
-            )}
-          </button>
+              <span className="text-[9px] uppercase tracking-wide leading-tight text-center">Disputes</span>
+            </button>
 
-          <button
-            onClick={() => setActiveTab('lookup' as any)}
-            className={`w-full text-left px-5 py-3.5 rounded-2xl text-xs font-bold uppercase tracking-wider flex items-center gap-3 border transition cursor-pointer ${
-              activeTab === ('lookup' as any)
-                ? 'bg-[#008751] text-white border-[#008751] shadow-sm'
-                : 'bg-white hover:bg-[#F7F9F7] text-gray-700 border-[#E0E7E0] hover:border-gray-400'
-            }`}
-          >
-            <HelpCircle className="w-4 h-4" />
-            Order / Trader Lookup
-          </button>
+            {/* Lookup */}
+            <button onClick={() => setActiveTab('lookup' as any)} className={`flex-shrink-0 flex flex-col items-center gap-1.5 px-3.5 py-2.5 rounded-xl border font-bold transition cursor-pointer min-w-[72px] ${activeTab === ('lookup' as any) ? 'bg-[#008751] text-white border-[#008751] shadow-sm' : 'bg-white text-gray-600 border-[#E0E7E0]'}`}>
+              <HelpCircle className="w-4 h-4" />
+              <span className="text-[9px] uppercase tracking-wide leading-tight text-center">Lookup</span>
+            </button>
+          </div>
+
+          {/* ── Desktop vertical sidebar (hidden below lg) ── */}
+          <div className="hidden lg:flex lg:flex-col lg:space-y-2">
+            <button
+              onClick={() => setActiveTab('analytics')}
+              className={`w-full text-left px-5 py-3.5 rounded-2xl text-xs font-bold uppercase tracking-wider flex items-center gap-3 border transition cursor-pointer ${activeTab === 'analytics' ? 'bg-[#008751] text-white border-[#008751] shadow-sm' : 'bg-white hover:bg-[#F7F9F7] text-gray-700 border-[#E0E7E0] hover:border-gray-400'}`}
+            >
+              <TrendingUp className="w-4 h-4" />
+              Control Analytics
+            </button>
+
+            <button
+              onClick={() => setActiveTab('orders')}
+              className={`w-full text-left px-5 py-3.5 rounded-2xl text-xs font-bold uppercase tracking-wider flex items-center justify-between border transition cursor-pointer ${activeTab === 'orders' ? 'bg-[#008751] text-white border-[#008751] shadow-sm' : 'bg-white hover:bg-[#F7F9F7] text-gray-700 border-[#E0E7E0] hover:border-gray-400'}`}
+            >
+              <span className="flex items-center gap-3"><Layers className="w-4 h-4" /> Order Queue</span>
+              {pendingOrdersCount > 0 && <span className="bg-amber-400 text-slate-950 font-extrabold px-2 py-0.5 rounded-full text-[10px]">{pendingOrdersCount}</span>}
+            </button>
+
+            <button
+              onClick={() => setActiveTab('kyc')}
+              className={`w-full text-left px-5 py-3.5 rounded-2xl text-xs font-bold uppercase tracking-wider flex items-center justify-between border transition cursor-pointer ${activeTab === 'kyc' ? 'bg-[#008751] text-white border-[#008751] shadow-sm' : 'bg-white hover:bg-[#F7F9F7] text-gray-700 border-[#E0E7E0] hover:border-gray-400'}`}
+            >
+              <span className="flex items-center gap-3"><FileCheck className="w-4 h-4" /> KYC Audits</span>
+              {pendingKycCount > 0 && <span className="bg-amber-400 text-slate-950 font-extrabold px-2 py-0.5 rounded-full text-[10px]">{pendingKycCount}</span>}
+            </button>
+
+            <button
+              onClick={() => setActiveTab('accounts')}
+              className={`w-full text-left px-5 py-3.5 rounded-2xl text-xs font-bold uppercase tracking-wider flex items-center gap-3 border transition cursor-pointer ${activeTab === 'accounts' ? 'bg-[#008751] text-white border-[#008751] shadow-sm' : 'bg-white hover:bg-[#F7F9F7] text-gray-700 border-[#E0E7E0] hover:border-gray-400'}`}
+            >
+              <Users className="w-4 h-4" />
+              Traders Directory ({kycUsers?.filter(u => u.role !== 'admin').length || 0})
+            </button>
+
+            <button
+              onClick={() => setActiveTab('compliance')}
+              className={`w-full text-left px-5 py-3.5 rounded-2xl text-xs font-bold uppercase tracking-wider flex items-center justify-between border transition cursor-pointer ${activeTab === 'compliance' ? 'bg-[#008751] text-white border-[#008751] shadow-sm' : 'bg-white hover:bg-[#F7F9F7] text-gray-700 border-[#E0E7E0] hover:border-gray-400'}`}
+            >
+              <span className="flex items-center gap-3"><Lock className="w-4 h-4" /> Compliance Audit</span>
+              {kycUsers.filter(u => u.accountStatus === 'deleted').length > 0 && <span className="bg-slate-700 text-white font-extrabold px-2 py-0.5 rounded-full text-[10px]">{kycUsers.filter(u => u.accountStatus === 'deleted').length}</span>}
+            </button>
+
+            <button
+              onClick={() => setActiveTab('settings')}
+              className={`w-full text-left px-5 py-3.5 rounded-2xl text-xs font-bold uppercase tracking-wider flex items-center gap-3 border transition cursor-pointer ${activeTab === 'settings' ? 'bg-[#008751] text-white border-[#008751] shadow-sm' : 'bg-white hover:bg-[#F7F9F7] text-gray-700 border-[#E0E7E0] hover:border-gray-400'}`}
+            >
+              <Settings className="w-4 h-4" />
+              Configurations
+            </button>
+
+            <button
+              onClick={() => setActiveTab('bulletins')}
+              className={`w-full text-left px-5 py-3.5 rounded-2xl text-xs font-bold uppercase tracking-wider flex items-center gap-3 border transition cursor-pointer ${activeTab === 'bulletins' ? 'bg-[#008751] text-white border-[#008751] shadow-sm' : 'bg-white hover:bg-[#F7F9F7] text-gray-700 border-[#E0E7E0] hover:border-gray-400'}`}
+            >
+              <Bell className="w-4 h-4" />
+              Announcements CMS
+            </button>
+
+            <button
+              onClick={() => setActiveTab('coins')}
+              className={`w-full text-left px-5 py-3.5 rounded-2xl text-xs font-bold uppercase tracking-wider flex items-center gap-3 border transition cursor-pointer ${activeTab === 'coins' ? 'bg-[#008751] text-white border-[#008751] shadow-sm' : 'bg-white hover:bg-[#F7F9F7] text-gray-700 border-[#E0E7E0] hover:border-gray-400'}`}
+            >
+              <Coins className="w-4 h-4" />
+              Coin Listings ({coins?.length || 0})
+            </button>
+
+            <button
+              onClick={() => setActiveTab('disputes')}
+              className={`w-full text-left px-5 py-3.5 rounded-2xl text-xs font-bold uppercase tracking-wider flex items-center justify-between border transition cursor-pointer ${activeTab === 'disputes' ? 'bg-[#008751] text-white border-[#008751] shadow-sm' : 'bg-white hover:bg-[#F7F9F7] text-gray-700 border-[#E0E7E0] hover:border-gray-400'}`}
+            >
+              <span className="flex items-center gap-3"><MessageSquare className="w-4 h-4" /> Disputes</span>
+              {openDisputeCount > 0 && <span className="bg-rose-500 text-white font-extrabold px-2 py-0.5 rounded-full text-[10px]">{openDisputeCount}</span>}
+            </button>
+
+            <button
+              onClick={() => setActiveTab('lookup' as any)}
+              className={`w-full text-left px-5 py-3.5 rounded-2xl text-xs font-bold uppercase tracking-wider flex items-center gap-3 border transition cursor-pointer ${activeTab === ('lookup' as any) ? 'bg-[#008751] text-white border-[#008751] shadow-sm' : 'bg-white hover:bg-[#F7F9F7] text-gray-700 border-[#E0E7E0] hover:border-gray-400'}`}
+            >
+              <HelpCircle className="w-4 h-4" />
+              Order / Trader Lookup
+            </button>
+          </div>
         </div>
 
         {/* Right column active content panel */}
