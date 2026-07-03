@@ -262,7 +262,6 @@ export default function UserDashboard({
   const [kycScreenshot, setKycScreenshot] = useState<string>('');
   const [kycHoldingId, setKycHoldingId] = useState<string>('');
   const kycFileInputRef = useRef<HTMLInputElement>(null);
-  const kycHoldingFileInputRef = useRef<HTMLInputElement>(null);
   const [isSubmittingKyc, setIsSubmittingKyc] = useState(false);
 
   // Live Camera states
@@ -383,7 +382,7 @@ export default function UserDashboard({
       }, 150);
     } catch (err: any) {
       console.error('Error accessing camera:', err);
-      addToast('Could not access camera. Please upload an image file instead or ensure browser permissions are allowed.', 'error');
+      addToast('Could not access camera. Please ensure camera permissions are allowed in your browser settings.', 'error');
     }
   };
 
@@ -1728,109 +1727,77 @@ export default function UserDashboard({
                         Selfie Verification: Hold ID beside Face
                       </label>
                       <p className="text-[11px] text-gray-500 leading-relaxed bg-amber-50 border border-amber-200/50 rounded-xl p-3">
-                        👉 <strong>Security Guideline:</strong> Please hold your physical ID card with your <strong>left hand</strong> beside your face. Ensure that both your full face and the details on the ID card are completely clear and legible. You can capture a picture instantly with your camera or upload an existing file.
+                        👉 <strong>Security Guideline:</strong> Please hold your physical ID card with your <strong>left hand</strong> beside your face. Ensure that both your full face and the details on the ID card are completely clear and legible. <strong>Live camera capture is required</strong> — file uploads are not accepted for this step.
                       </p>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      
-                      {/* Live Camera View Card */}
-                      <div className="border border-[#E0E7E0] rounded-3xl p-5 bg-[#F7F9F7]/30 flex flex-col items-center justify-center gap-3 min-h-[220px]">
-                        {isCameraActive ? (
-                          <div className="w-full flex flex-col items-center gap-3">
-                            <div className="relative rounded-2xl overflow-hidden border-2 border-[#008751] w-full max-w-[260px] aspect-[4/3] bg-black">
-                              <video
-                                ref={videoRef}
-                                autoPlay
-                                playsInline
-                                muted
-                                className="w-full h-full object-cover scale-x-[-1]"
-                              />
-                              <span className="absolute bottom-2 left-2 bg-black/60 text-white font-mono text-[9px] px-2 py-0.5 rounded-full uppercase tracking-wider">LIVE CAMERA</span>
-                            </div>
-                            <div className="flex gap-2 w-full max-w-[260px]">
-                              <button
-                                type="button"
-                                onClick={capturePhoto}
-                                className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 rounded-xl text-xs transition cursor-pointer text-center font-sans"
-                              >
-                                Take Photo
-                              </button>
-                              <button
-                                type="button"
-                                onClick={stopCamera}
-                                className="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-4 py-2 rounded-xl text-xs transition cursor-pointer"
-                              >
-                                Cancel
-                              </button>
-                            </div>
+                    {/* Live Camera — only option; file upload intentionally removed for security */}
+                    <div className="border border-[#E0E7E0] rounded-3xl p-5 bg-[#F7F9F7]/30 flex flex-col items-center justify-center gap-3 min-h-[220px]">
+                      {isCameraActive ? (
+                        <div className="w-full flex flex-col items-center gap-3">
+                          <div className="relative rounded-2xl overflow-hidden border-2 border-[#008751] w-full max-w-[360px] aspect-[4/3] bg-black">
+                            <video
+                              ref={videoRef}
+                              autoPlay
+                              playsInline
+                              muted
+                              className="w-full h-full object-cover scale-x-[-1]"
+                            />
+                            <span className="absolute bottom-2 left-2 bg-black/60 text-white font-mono text-[9px] px-2 py-0.5 rounded-full uppercase tracking-wider">LIVE CAMERA</span>
                           </div>
-                        ) : (
-                          <div className="text-center space-y-3">
-                            <div className="w-12 h-12 rounded-full bg-[#008751]/10 flex items-center justify-center mx-auto text-[#008751]">
-                              <Camera className="w-6 h-6" />
-                            </div>
-                            <div className="space-y-1">
-                              <span className="text-xs font-bold text-[#1A1A1A] block">Verify via Live Webcam</span>
-                              <span className="text-[10px] text-gray-400 block">Take a photo instantly on your device</span>
-                            </div>
+                          <div className="flex gap-2 w-full max-w-[360px]">
                             <button
                               type="button"
-                              onClick={startCamera}
-                              className="bg-white hover:bg-[#F7F9F7] text-[#008751] font-bold px-4 py-2 rounded-xl text-xs border border-[#008751]/20 cursor-pointer transition shadow-sm"
+                              onClick={capturePhoto}
+                              className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 rounded-xl text-xs transition cursor-pointer text-center font-sans"
                             >
-                              Open Camera
+                              Take Photo
+                            </button>
+                            <button
+                              type="button"
+                              onClick={stopCamera}
+                              className="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-4 py-2 rounded-xl text-xs transition cursor-pointer"
+                            >
+                              Cancel
                             </button>
                           </div>
-                        )}
-                      </div>
-
-                      {/* File Upload Dropzone */}
-                      <div
-                        onDragOver={handleDragOver}
-                        onDragLeave={handleDragLeave}
-                        onDrop={(e) => handleDrop(e, false, true)}
-                        onClick={() => kycHoldingFileInputRef.current?.click()}
-                        className={`border border-dashed rounded-3xl p-5 text-center cursor-pointer transition flex flex-col items-center justify-center gap-3 min-h-[220px] ${
-                          isDragging 
-                            ? 'border-[#008751] bg-[#F0F7F2]' 
-                            : kycHoldingId 
-                              ? 'border-[#D1E6D8] bg-[#F7F9F7]' 
-                              : 'border-[#E0E7E0] hover:border-gray-400 bg-[#F7F9F7]/50'
-                        }`}
-                      >
-                        <input
-                          type="file"
-                          ref={kycHoldingFileInputRef}
-                          onChange={(e) => handleFileChange(e, false, true)}
-                          accept="image/*"
-                          className="hidden"
-                        />
-                        {kycHoldingId ? (
-                          <div className="relative group max-w-[200px] mx-auto text-center">
-                            <img 
-                              src={kycHoldingId} 
-                              alt="Holding ID selfie proof" 
-                              className="h-28 w-auto object-cover rounded-xl shadow-sm border border-[#E0E7E0] mx-auto" 
+                        </div>
+                      ) : kycHoldingId ? (
+                        <div className="flex flex-col items-center gap-3">
+                          <div className="max-w-[260px] mx-auto text-center">
+                            <img
+                              src={kycHoldingId}
+                              alt="Captured selfie with ID"
+                              className="h-36 w-auto object-cover rounded-xl shadow-sm border border-[#E0E7E0] mx-auto"
                             />
-                            <div className="absolute inset-0 bg-black/40 rounded-xl opacity-0 group-hover:opacity-100 flex items-center justify-center transition">
-                              <span className="text-[10px] text-white font-bold uppercase tracking-wider">Change Photo</span>
-                            </div>
-                            <span className="text-[9px] text-[#008751] font-bold uppercase tracking-wider block mt-2">Selfie Uploaded!</span>
+                            <span className="text-[9px] text-[#008751] font-bold uppercase tracking-wider block mt-2">✅ Photo Captured!</span>
                           </div>
-                        ) : (
-                          <>
-                            <div className="p-3 bg-white rounded-full border border-[#E0E7E0] shadow-sm text-gray-500">
-                              <FileText className="w-5 h-5 text-emerald-600" />
-                            </div>
-                            <div>
-                              <span className="text-xs font-bold text-[#1A1A1A] block">Drag & Drop Selfie image</span>
-                              <span className="text-[10px] text-gray-400 block mt-0.5">Or click to browse files (max 2MB)</span>
-                            </div>
-                          </>
-                        )}
-                      </div>
-
+                          <button
+                            type="button"
+                            onClick={startCamera}
+                            className="bg-white hover:bg-[#F7F9F7] text-[#008751] font-bold px-4 py-2 rounded-xl text-xs border border-[#008751]/20 cursor-pointer transition shadow-sm"
+                          >
+                            Retake Photo
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="text-center space-y-3">
+                          <div className="w-12 h-12 rounded-full bg-[#008751]/10 flex items-center justify-center mx-auto text-[#008751]">
+                            <Camera className="w-6 h-6" />
+                          </div>
+                          <div className="space-y-1">
+                            <span className="text-xs font-bold text-[#1A1A1A] block">Live Camera Capture Required</span>
+                            <span className="text-[10px] text-gray-400 block">File uploads are not accepted for this step</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={startCamera}
+                            className="bg-white hover:bg-[#F7F9F7] text-[#008751] font-bold px-4 py-2 rounded-xl text-xs border border-[#008751]/20 cursor-pointer transition shadow-sm"
+                          >
+                            Open Camera
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
 
