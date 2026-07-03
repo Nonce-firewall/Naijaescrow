@@ -294,28 +294,34 @@ export default function Navbar({ userProfile, isAdminMode, currentPage, onToggle
         )}
       </AnimatePresence>
 
-      {showPasswordModal && (
-        <ChangePasswordModal onClose={() => setShowPasswordModal(false)} addToast={addToast} />
-      )}
+      <AnimatePresence>
+        {showPasswordModal && (
+          <ChangePasswordModal onClose={() => setShowPasswordModal(false)} addToast={addToast} />
+        )}
+      </AnimatePresence>
 
-      {showNotifModal && userProfile && (
-        <NotificationPreferencesModal
-          userProfile={userProfile}
-          onClose={() => setShowNotifModal(false)}
-          addToast={addToast}
-        />
-      )}
+      <AnimatePresence>
+        {showNotifModal && userProfile && (
+          <NotificationPreferencesModal
+            userProfile={userProfile}
+            onClose={() => setShowNotifModal(false)}
+            addToast={addToast}
+          />
+        )}
+      </AnimatePresence>
 
-      {showDeleteModal && (
-        <DeleteAccountModal
-          onClose={() => setShowDeleteModal(false)}
-          addToast={addToast}
-          onDeleted={() => {
-            setShowDeleteModal(false);
-            onNavigate('landing');
-          }}
-        />
-      )}
+      <AnimatePresence>
+        {showDeleteModal && (
+          <DeleteAccountModal
+            onClose={() => setShowDeleteModal(false)}
+            addToast={addToast}
+            onDeleted={() => {
+              setShowDeleteModal(false);
+              onNavigate('landing');
+            }}
+          />
+        )}
+      </AnimatePresence>
     </nav>
   );
 }
@@ -349,9 +355,20 @@ function ChangePasswordModal({ onClose, addToast }: { onClose: () => void; addTo
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={onClose}>
-      <div
+    <motion.div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.2 }}
+      onClick={onClose}
+    >
+      <motion.div
         className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 flex flex-col max-h-[90vh]"
+        initial={{ opacity: 0, scale: 0.93, y: 16 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.93, y: 16 }}
+        transition={{ type: 'spring', stiffness: 380, damping: 30 }}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-4 shrink-0">
@@ -410,8 +427,8 @@ function ChangePasswordModal({ onClose, addToast }: { onClose: () => void; addTo
             {saving ? 'Updating...' : 'Update Password'}
           </button>
         </form>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }
 
@@ -453,9 +470,20 @@ function NotificationPreferencesModal({
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={onClose}>
-      <div
+    <motion.div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.2 }}
+      onClick={onClose}
+    >
+      <motion.div
         className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 flex flex-col max-h-[90vh]"
+        initial={{ opacity: 0, scale: 0.93, y: 16 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.93, y: 16 }}
+        transition={{ type: 'spring', stiffness: 380, damping: 30 }}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-4 shrink-0">
@@ -495,8 +523,8 @@ function NotificationPreferencesModal({
         >
           {saving ? 'Saving...' : 'Save Preferences'}
         </button>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }
 
@@ -528,9 +556,20 @@ function DeleteAccountModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={onClose}>
-      <div
+    <motion.div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.2 }}
+      onClick={onClose}
+    >
+      <motion.div
         className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 flex flex-col max-h-[90vh]"
+        initial={{ opacity: 0, scale: 0.93, y: 16 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.93, y: 16 }}
+        transition={{ type: 'spring', stiffness: 380, damping: 30 }}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-4 shrink-0">
@@ -576,7 +615,7 @@ function DeleteAccountModal({
         >
           {deleting ? 'Deleting...' : 'Permanently Delete My Account'}
         </button>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }
