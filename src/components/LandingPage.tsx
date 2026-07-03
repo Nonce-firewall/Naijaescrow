@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ShieldCheck, TrendingUp, Lock, ArrowRight, Bell, UserCheck, X, Mail, MessageCircle, Zap, ChevronRight } from 'lucide-react';
+import { ShieldCheck, TrendingUp, Lock, ArrowRight, Bell, UserCheck, X, Mail, MessageCircle, Zap, ChevronRight, Activity, BarChart3, Users } from 'lucide-react';
 import { Announcement, AdminSettings } from '../types';
+import { getPublicStats, PublicStats } from '../lib/dbHelpers';
 
 type ModalType = 'privacy' | 'terms' | 'support' | null;
 
@@ -130,6 +131,137 @@ function Modal({ type, onClose }: { type: ModalType; onClose: () => void }) {
     </motion.div>
   );
 }
+
+// ── Animated count-up hook ────────────────────────────────────────────────────
+function useCountUp(target: number, duration = 1200) {
+  const [value, setValue] = useState(0);
+  const raf = useRef<number | null>(null);
+  const prev = useRef(0);
+
+  useEffect(() => {
+    if (target === 0) { setValue(0); return; }
+    const start = performance.now();
+    const from = prev.current;
+    const delta = target - from;
+
+    const tick = (now: number) => {
+      const p = Math.min((now - start) / duration, 1);
+      // ease-out cubic
+      const ease = 1 - Math.pow(1 - p, 3);
+      setValue(Math.round(from + delta * ease));
+      if (p < 1) { raf.current = requestAnimationFrame(tick); }
+      else { prev.current = target; }
+    };
+    raf.current = requestAnimationFrame(tick);
+    return () => { if (raf.current) cancelAnimationFrame(raf.current); };
+  }, [target, duration]);
+
+  return value;
+}
+
+// ── Live stats strip ──────────────────────────────────────────────────────────
+function StatsStrip() {
+  const [stats, setStats]     = useState<PublicStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [lastSec, setLastSec] = useState(0);
+
+  const fetch = async () => {
+    try {
+      const s = await getPublicStats();
+      setStats(s);
+      setLastSec(0);
+    } catch { /* silently ignore on public page */ }
+    finally { setLoading(false); }
+  };
+
+  useEffect(() => {
+    fetch();
+    const poll = setInterval(fetch, 30_000);
+    const tick = setInterval(() => setLastSec((p) => p + 1), 1000);
+    return () => { clearInterval(poll); clearInterval(tick); };
+  }, []);
+
+  const trades  = useCountUp(stats?.tradesCompleted ?? 0);
+  const volume  = useCountUp(stats?.usdtVolume      ?? 0);
+  const traders = useCountUp(stats?.activeTraders   ?? 0);
+
+  const items = [
+    {
+      icon: <Activity className="w-4 h-4" />,
+      label: 'Trades Completed',
+      value: loading ? '—' : trades.toLocaleString(),
+      sub: 'All-time settled orders',
+      color: 'text-emerald-400',
+      border: 'border-emerald-500/20',
+      bg: 'bg-emerald-500/5',
+    },
+    {
+      icon: <BarChart3 className="w-4 h-4" />,
+      label: 'USDT Volume',
+      value: loading ? '—' : volume >= 1000
+        ? `${(volume / 1000).toFixed(1)}K`
+        : volume.toLocaleString(undefined, { maximumFractionDigits: 0 }),
+      sub: 'Total USDT exchanged',
+      color: 'text-sky-400',
+      border: 'border-sky-500/20',
+      bg: 'bg-sky-500/5',
+    },
+    {
+      icon: <Users className="w-4 h-4" />,
+      label: 'Active Traders',
+      value: loading ? '—' : traders.toLocaleString(),
+      sub: 'Verified platform users',
+      color: 'text-violet-400',
+      border: 'border-violet-500/20',
+      bg: 'bg-violet-500/5',
+    },
+  ];
+
+  return (
+    <section className="bg-[#0d1a0f] border-y border-[#008751]/20 py-8 px-4 sm:px-6">
+      <div className="max-w-5xl mx-auto">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-400 font-mono">Live Platform Stats</span>
+          </div>
+          <span className="text-[10px] text-slate-500 font-mono">
+            {loading ? 'Loading…' : `Updated ${lastSec}s ago`}
+          </span>
+        </div>
+
+        {/* Stat cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+          {items.map((item, i) => (
+            <motion.div
+              key={item.label}
+              className={`${item.bg} border ${item.border} rounded-2xl px-5 py-4 flex items-center gap-4`}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.45, delay: i * 0.1, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <div className={`p-2.5 rounded-xl bg-slate-900/60 ${item.color} shrink-0`}>
+                {item.icon}
+              </div>
+              <div className="min-w-0">
+                <div className="text-[10px] text-slate-500 uppercase tracking-wider font-mono mb-0.5">{item.label}</div>
+                <div className={`text-2xl font-bold font-mono ${item.color} leading-none`}>
+                  {loading ? (
+                    <span className="inline-block w-16 h-6 bg-slate-800 rounded animate-pulse" />
+                  ) : item.value}
+                </div>
+                <div className="text-[10px] text-slate-600 mt-1">{item.sub}</div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+// ─────────────────────────────────────────────────────────────────────────────
 
 // ── Interactive demo trading widget ──────────────────────────────────────────
 const NETWORKS = ['BSC', 'Tron', 'Polygon'] as const;
@@ -465,6 +597,9 @@ export default function LandingPage({ announcements, settings, onNavigate }: Lan
 
         </div>
       </header>
+
+      {/* Live stats strip */}
+      <StatsStrip />
 
       {/* Features */}
       <section className="py-14 px-4 sm:px-6 max-w-5xl mx-auto">

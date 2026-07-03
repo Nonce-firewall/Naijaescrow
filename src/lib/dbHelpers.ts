@@ -444,6 +444,28 @@ export async function submitDispute(orderId: string, userId: string, userEmail: 
   if (error) throw new Error(error.message);
 }
 
+export interface PublicStats {
+  tradesCompleted: number;
+  usdtVolume: number;
+  activeTraders: number;
+}
+
+export async function getPublicStats(): Promise<PublicStats> {
+  const { data, error } = await supabase
+    .from('orders')
+    .select('status, crypto_amount, user_id');
+  if (error) throw new Error(error.message);
+  const rows = data || [];
+  const completed = rows.filter((r) => r.status === 'completed');
+  const usdtVolume = completed.reduce((sum: number, r: any) => sum + (r.crypto_amount || 0), 0);
+  const activeTraders = new Set(rows.map((r: any) => r.user_id)).size;
+  return {
+    tradesCompleted: completed.length,
+    usdtVolume,
+    activeTraders,
+  };
+}
+
 export async function resolveDispute(disputeId: string, adminResponse: string) {
   const { error } = await supabase.from('disputes').update({
     status: 'resolved',
