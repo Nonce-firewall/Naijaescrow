@@ -141,7 +141,7 @@ const STEPS = [
     desc: 'Sign up with your email in under 60 seconds. No initial deposit or fee required.',
     color: 'emerald',
     accent: 'bg-emerald-500/10 border-emerald-500/25 text-emerald-400',
-    numColor: 'text-emerald-500/30',
+    numColor: 'text-emerald-600',
     dot: 'bg-emerald-400',
   },
   {
@@ -151,7 +151,7 @@ const STEPS = [
     desc: 'Submit a government-issued ID (NIN, Voter\'s Card, or Driver\'s License). Manually reviewed by our team.',
     color: 'sky',
     accent: 'bg-sky-500/10 border-sky-500/25 text-sky-400',
-    numColor: 'text-sky-500/30',
+    numColor: 'text-sky-600',
     dot: 'bg-sky-400',
   },
   {
@@ -161,7 +161,7 @@ const STEPS = [
     desc: 'Choose BUY or SELL, enter your amount and network, then upload your bank payment proof.',
     color: 'violet',
     accent: 'bg-violet-500/10 border-violet-500/25 text-violet-400',
-    numColor: 'text-violet-500/30',
+    numColor: 'text-violet-600',
     dot: 'bg-violet-400',
   },
   {
@@ -171,7 +171,7 @@ const STEPS = [
     desc: 'Admin verifies payment and releases your USDT or NGN directly to your wallet or bank account.',
     color: 'amber',
     accent: 'bg-amber-500/10 border-amber-500/25 text-amber-400',
-    numColor: 'text-amber-500/30',
+    numColor: 'text-amber-600',
     dot: 'bg-amber-400',
   },
 ];
@@ -229,7 +229,7 @@ function HowItWorks({ onNavigate }: { onNavigate: () => void }) {
                 </div>
 
                 <h3 className="text-sm font-bold text-[#1A1A1A] mb-2 leading-snug">{step.title}</h3>
-                <p className="text-[12px] text-gray-500 leading-relaxed">{step.desc}</p>
+                <p className="text-[12px] text-gray-700 leading-relaxed">{step.desc}</p>
               </motion.div>
             ))}
           </div>
@@ -263,7 +263,7 @@ function HowItWorks({ onNavigate }: { onNavigate: () => void }) {
                       <h3 className="text-sm font-bold text-[#1A1A1A] leading-tight">{step.title}</h3>
                     </div>
                   </div>
-                  <p className="text-[12px] text-gray-500 leading-relaxed">{step.desc}</p>
+                  <p className="text-[12px] text-gray-700 leading-relaxed">{step.desc}</p>
                 </div>
               </motion.div>
             ))}
