@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ShieldCheck, TrendingUp, Lock, ArrowRight, Bell, UserCheck, X, Mail, MessageCircle, Zap, ChevronRight, Activity, BarChart3, Users } from 'lucide-react';
+import { ShieldCheck, TrendingUp, Lock, ArrowRight, Bell, UserCheck, X, Mail, MessageCircle, Zap, ChevronRight, Activity, BarChart3, Users, UserPlus, ScanFace, ReceiptText, Banknote } from 'lucide-react';
 import { Announcement, AdminSettings } from '../types';
 import { getPublicStats, PublicStats } from '../lib/dbHelpers';
 
@@ -131,6 +131,170 @@ function Modal({ type, onClose }: { type: ModalType; onClose: () => void }) {
     </motion.div>
   );
 }
+
+// ── How It Works section ──────────────────────────────────────────────────────
+const STEPS = [
+  {
+    num: '01',
+    icon: <UserPlus className="w-5 h-5" />,
+    title: 'Create Free Account',
+    desc: 'Sign up with your email in under 60 seconds. No initial deposit or fee required.',
+    color: 'emerald',
+    accent: 'bg-emerald-500/10 border-emerald-500/25 text-emerald-400',
+    numColor: 'text-emerald-500/30',
+    dot: 'bg-emerald-400',
+  },
+  {
+    num: '02',
+    icon: <ScanFace className="w-5 h-5" />,
+    title: 'Complete KYC',
+    desc: 'Submit a government-issued ID (NIN, Voter\'s Card, or Driver\'s License). Manually reviewed by our team.',
+    color: 'sky',
+    accent: 'bg-sky-500/10 border-sky-500/25 text-sky-400',
+    numColor: 'text-sky-500/30',
+    dot: 'bg-sky-400',
+  },
+  {
+    num: '03',
+    icon: <ReceiptText className="w-5 h-5" />,
+    title: 'Place Your Order',
+    desc: 'Choose BUY or SELL, enter your amount and network, then upload your bank payment proof.',
+    color: 'violet',
+    accent: 'bg-violet-500/10 border-violet-500/25 text-violet-400',
+    numColor: 'text-violet-500/30',
+    dot: 'bg-violet-400',
+  },
+  {
+    num: '04',
+    icon: <Banknote className="w-5 h-5" />,
+    title: 'Receive Your Funds',
+    desc: 'Admin verifies payment and releases your USDT or NGN directly to your wallet or bank account.',
+    color: 'amber',
+    accent: 'bg-amber-500/10 border-amber-500/25 text-amber-400',
+    numColor: 'text-amber-500/30',
+    dot: 'bg-amber-400',
+  },
+];
+
+function HowItWorks({ onNavigate }: { onNavigate: () => void }) {
+  return (
+    <section className="py-16 sm:py-20 px-4 sm:px-6 bg-[#F7F9F7]">
+      <div className="max-w-5xl mx-auto">
+
+        {/* Heading */}
+        <motion.div
+          className="text-center mb-12 sm:mb-14"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-60px' }}
+          transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
+        >
+          <span className="inline-block text-[10px] font-bold uppercase tracking-widest text-[#008751] bg-[#E6F4EA] border border-[#C5DFC9] px-3 py-1.5 rounded-full mb-4 font-mono">
+            Simple · Secure · Fast
+          </span>
+          <h2 className="text-2xl sm:text-3xl font-bold text-[#1A1A1A] tracking-tight">
+            Trade in 4 Simple Steps
+          </h2>
+          <p className="text-gray-500 max-w-lg mx-auto text-sm mt-3 leading-relaxed">
+            From account creation to receiving funds — the whole process is transparent, guided, and admin-verified at every stage.
+          </p>
+        </motion.div>
+
+        {/* Desktop: horizontal steps with connecting line */}
+        <div className="hidden sm:block relative">
+          {/* Connecting line behind cards */}
+          <div className="absolute top-[44px] left-[12.5%] right-[12.5%] h-px bg-gradient-to-r from-emerald-500/20 via-violet-500/20 to-amber-500/20 z-0" />
+
+          <div className="grid grid-cols-4 gap-4 relative z-10">
+            {STEPS.map((step, i) => (
+              <motion.div
+                key={step.num}
+                initial={{ opacity: 0, y: 28 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: '-40px' }}
+                transition={{ duration: 0.5, delay: i * 0.12, ease: [0.16, 1, 0.3, 1] }}
+                className="flex flex-col items-center text-center group"
+              >
+                {/* Icon circle */}
+                <motion.div
+                  className={`w-[52px] h-[52px] rounded-2xl border ${step.accent} flex items-center justify-center mb-5 shadow-sm group-hover:scale-110 transition-transform duration-300 bg-white`}
+                  whileHover={{ rotate: [0, -8, 8, 0], transition: { duration: 0.4 } }}
+                >
+                  {step.icon}
+                </motion.div>
+
+                {/* Step number */}
+                <div className={`text-[10px] font-black font-mono tracking-widest ${step.numColor} mb-1.5 select-none`}>
+                  STEP {step.num}
+                </div>
+
+                <h3 className="text-sm font-bold text-[#1A1A1A] mb-2 leading-snug">{step.title}</h3>
+                <p className="text-[12px] text-gray-500 leading-relaxed">{step.desc}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+
+        {/* Mobile: vertical steps with left timeline */}
+        <div className="sm:hidden relative pl-10">
+          {/* Vertical line */}
+          <div className="absolute left-4 top-3 bottom-3 w-px bg-gradient-to-b from-emerald-400/40 via-violet-400/40 to-amber-400/40" />
+
+          <div className="space-y-8">
+            {STEPS.map((step, i) => (
+              <motion.div
+                key={step.num}
+                initial={{ opacity: 0, x: -20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true, margin: '-30px' }}
+                transition={{ duration: 0.45, delay: i * 0.1, ease: [0.16, 1, 0.3, 1] }}
+                className="relative"
+              >
+                {/* Timeline dot */}
+                <div className={`absolute -left-[26px] top-3 w-3 h-3 rounded-full border-2 border-[#F7F9F7] ${step.dot} shadow-sm`} />
+
+                <div className={`bg-white border rounded-2xl p-4 shadow-sm border-gray-100`}>
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className={`p-2 rounded-xl border ${step.accent} shrink-0`}>
+                      {step.icon}
+                    </div>
+                    <div>
+                      <div className={`text-[9px] font-black font-mono tracking-widest ${step.numColor}`}>STEP {step.num}</div>
+                      <h3 className="text-sm font-bold text-[#1A1A1A] leading-tight">{step.title}</h3>
+                    </div>
+                  </div>
+                  <p className="text-[12px] text-gray-500 leading-relaxed">{step.desc}</p>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+
+        {/* CTA row */}
+        <motion.div
+          className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-12"
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, delay: 0.4 }}
+        >
+          <motion.button
+            onClick={onNavigate}
+            className="inline-flex items-center gap-2 bg-[#008751] hover:bg-[#007043] text-white font-bold px-7 py-3.5 rounded-xl transition text-sm cursor-pointer shadow-lg shadow-emerald-900/20"
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
+          >
+            Get Started — It's Free
+            <ArrowRight className="w-4 h-4" />
+          </motion.button>
+          <span className="text-xs text-gray-400">No credit card · KYC in minutes</span>
+        </motion.div>
+
+      </div>
+    </section>
+  );
+}
+// ─────────────────────────────────────────────────────────────────────────────
 
 // ── Animated count-up hook ────────────────────────────────────────────────────
 function useCountUp(target: number, duration = 1200) {
@@ -600,6 +764,9 @@ export default function LandingPage({ announcements, settings, onNavigate }: Lan
 
       {/* Live stats strip */}
       <StatsStrip />
+
+      {/* How It Works */}
+      <HowItWorks onNavigate={() => onNavigate('auth', 'signup')} />
 
       {/* Features */}
       <section className="py-14 px-4 sm:px-6 max-w-5xl mx-auto">
