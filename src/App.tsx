@@ -28,6 +28,11 @@ export default function App() {
   const [currentPage, setCurrentPage] = useState<'landing' | 'auth' | 'dashboard'>('landing');
   const [authInitialMode, setAuthInitialMode] = useState<'signin' | 'signup'>('signin');
 
+  // Detect email-verification redirect before Supabase clears the URL hash
+  const isEmailVerificationRef = useRef(
+    typeof window !== 'undefined' && window.location.hash.includes('type=signup')
+  );
+
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   // Keep a non-stale ref so realtime callbacks can compare old vs new profile without stale closures
@@ -93,6 +98,10 @@ export default function App() {
           setUserProfile(profile);
           setIsAdminMode(profile.role === 'admin');
           setCurrentPage('dashboard');
+          if (isEmailVerificationRef.current) {
+            isEmailVerificationRef.current = false;
+            addToast('✅ Email verified! Welcome to 9ijaEscrow.', 'success');
+          }
         } catch (err) {
           console.error('Error fetching profile:', err);
           addToast('Could not load user profile.', 'error');

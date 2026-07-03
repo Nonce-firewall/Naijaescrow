@@ -233,7 +233,13 @@ export async function getOrCreateUserProfile(uid: string, email: string): Promis
   };
 
   const { data: inserted } = await supabase.from('users').insert(newRow).select().single();
-  return rowToUserProfile(inserted);
+  if (inserted) return rowToUserProfile(inserted);
+
+  // Insert may have lost a race (concurrent call already inserted) — try fetching once more
+  const { data: retried } = await supabase.from('users').select('*').eq('id', uid).single();
+  if (retried) return rowToUserProfile(retried);
+
+  throw new Error('Failed to create or retrieve user profile');
 }
 
 export async function submitKYC(uid: string, kycData: Omit<KYCData, 'submittedAt'>) {
