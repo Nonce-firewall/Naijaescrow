@@ -826,7 +826,7 @@ export default function LandingPage({ announcements, settings, onNavigate }: Lan
                 <span className="text-lg font-bold tracking-wider">9IJA ESCROW</span>
               </div>
               <p className="text-sm leading-relaxed">
-                Secure peer-to-peer crypto settlement. Seamless local bank transfers (NGN) for USDT with guaranteed dispute resolution.
+                Secure peer-to-peer crypto settlement. Seamless local bank transfers of Naira for USDT with guaranteed dispute resolution.
               </p>
             </div>
 
