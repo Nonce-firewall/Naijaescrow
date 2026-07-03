@@ -79,7 +79,7 @@ export default function Navbar({ userProfile, isAdminMode, currentPage, onToggle
   const isLanding = currentPage === 'landing';
 
   return (
-    <nav className="bg-grey border-b border-[#E0E7E0] font-sans sticky top-0 z-40">
+    <nav className="bg-gray-300 border-b border-[#E0E7E0] font-sans sticky top-0 z-40">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
 
         {/* Brand */}
