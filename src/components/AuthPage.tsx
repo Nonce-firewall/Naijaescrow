@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { supabase } from '../lib/supabase';
 import { getOrCreateUserProfile } from '../lib/dbHelpers';
-import { Mail, UserPlus, KeyRound, ArrowLeft, Loader2, Sparkles, AlertCircle } from 'lucide-react';
+import { Mail, UserPlus, KeyRound, ArrowLeft, Loader2, AlertCircle } from 'lucide-react';
 
 interface AuthPageProps {
   onBack: () => void;
@@ -73,43 +73,6 @@ export default function AuthPage({ onBack, onAuthSuccess, addToast, initialMode 
     }
   };
 
-
-  const handleTestAccount = async (role: 'admin' | 'user') => {
-    const testEmail = role === 'admin' ? 'cryptogangstar247@gmail.com' : 'local_trader@9ija.com';
-    const testPassword = role === 'admin' ? 'admin123' : 'trader123';
-    setEmail(testEmail);
-    setPassword(testPassword);
-    setIsLogin(true);
-    setIsLoading(true);
-    setAuthErrorAlert(null);
-
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({ email: testEmail, password: testPassword });
-      if (error) {
-        if (error.message?.includes('Invalid login credentials')) {
-          addToast(`Provisioning sandbox ${role} account...`, 'info');
-          const { data: signUpData, error: signUpError } = await supabase.auth.signUp({ email: testEmail, password: testPassword });
-          if (signUpError) throw signUpError;
-          if (signUpData.user) {
-            await getOrCreateUserProfile(signUpData.user.id, signUpData.user.email || '');
-            addToast(`Sandbox ${role} account created & logged in!`, 'success');
-            onAuthSuccess();
-          }
-        } else {
-          throw error;
-        }
-      } else if (data.user) {
-        await getOrCreateUserProfile(data.user.id, data.user.email || '');
-        addToast(`Signed in as sandbox ${role}!`, 'success');
-        onAuthSuccess();
-      }
-    } catch (err: any) {
-      console.error(err);
-      addToast(`Failed to initialize sandbox ${role}: ${err.message}`, 'error');
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-[#F7F9F7] flex flex-col justify-center py-10 px-4 font-sans text-[#1A1A1A]">
@@ -251,32 +214,6 @@ export default function AuthPage({ onBack, onAuthSuccess, addToast, initialMode 
             </button>
           </form>
 
-          <div className="mt-6 pt-5 border-t border-[#E0E7E0]">
-            <div className="text-center mb-3">
-              <span className="bg-[#E6F4EA] border border-[#D1E6D8] text-[#008751] text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider inline-flex items-center gap-1">
-                <Sparkles className="w-3 h-3" /> Sandbox Mode
-              </span>
-              <p className="text-xs text-gray-500 mt-2">Quick test access — auto-fills credentials:</p>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                onClick={() => handleTestAccount('admin')}
-                disabled={isLoading}
-                className="p-3 bg-[#F7F9F7] hover:bg-[#E6F4EA] border border-[#E0E7E0] hover:border-[#008751] text-gray-700 hover:text-[#008751] rounded-2xl text-xs font-bold cursor-pointer transition text-center disabled:opacity-50"
-              >
-                Admin (Owner)
-                <span className="block text-[10px] text-gray-400 font-mono mt-1 font-normal truncate">cryptogangstar247</span>
-              </button>
-              <button
-                onClick={() => handleTestAccount('user')}
-                disabled={isLoading}
-                className="p-3 bg-[#F7F9F7] hover:bg-[#E6F4EA] border border-[#E0E7E0] hover:border-[#008751] text-gray-700 hover:text-[#008751] rounded-2xl text-xs font-bold cursor-pointer transition text-center disabled:opacity-50"
-              >
-                User (Trader)
-                <span className="block text-[10px] text-gray-400 font-mono mt-1 font-normal truncate">local_trader</span>
-              </button>
-            </div>
-          </div>
         </div>
       </motion.div>
     </div>
