@@ -669,7 +669,7 @@ export default function LandingPage({ announcements, settings, onNavigate }: Lan
 
       {/* Hero */}
       <header className="bg-[#1A1A1A] text-white py-10 sm:py-20 px-4 sm:px-6 rounded-b-[2rem]">
-        <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10 items-center">
+        <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-10 items-center">
 
           <div className="space-y-5">
             <motion.div
@@ -683,7 +683,7 @@ export default function LandingPage({ announcements, settings, onNavigate }: Lan
             </motion.div>
 
             <motion.h1
-              className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight leading-tight"
+              className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight leading-tight"
               initial={{ opacity: 0, y: 22 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
@@ -748,7 +748,7 @@ export default function LandingPage({ announcements, settings, onNavigate }: Lan
 
           {/* Interactive trading widget */}
           <motion.div
-            className="w-full max-w-sm mx-auto lg:max-w-none"
+            className="w-full max-w-sm mx-auto md:max-w-none"
             initial={{ opacity: 0, x: 40 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.65, delay: 0.22, ease: [0.16, 1, 0.3, 1] }}
