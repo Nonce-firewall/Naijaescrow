@@ -638,7 +638,7 @@ export default function LandingPage({ announcements, settings, onNavigate }: Lan
   return (
     <div className="bg-[#F7F9F7] min-h-screen font-sans text-[#1A1A1A]">
       <AnimatePresence>
-        {activeModal && <Modal key={activeModal} type={activeModal} onClose={() => setActiveModal(null)} />}
+        {activeModal && <Modal type={activeModal} onClose={() => setActiveModal(null)} />}
       </AnimatePresence>
 
       {/* Scrolling Announcement Ticker */}
