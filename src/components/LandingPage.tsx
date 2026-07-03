@@ -728,7 +728,7 @@ export default function LandingPage({ announcements, settings, onNavigate }: Lan
             >
               <motion.button
                 onClick={() => onNavigate('auth', 'signup')}
-                className="inline-flex items-center justify-center gap-2 bg-[#008751] hover:bg-[#007043] text-white font-bold px-5 py-2 md:py-3 rounded-xl transition cursor-pointer text-sm"
+                className="inline-flex items-center justify-center gap-2 bg-[#008751] hover:bg-[#007043] text-white font-bold px-4 py-2 md:py-2 rounded-xl transition cursor-pointer text-sm"
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.97 }}
               >
@@ -737,7 +737,7 @@ export default function LandingPage({ announcements, settings, onNavigate }: Lan
               </motion.button>
               <motion.button
                 onClick={() => onNavigate('auth', 'signin')}
-                className="inline-flex items-center justify-center border border-gray-700 hover:border-gray-500 text-white font-semibold px-5 py-2 md:py-3 rounded-xl transition cursor-pointer text-sm"
+                className="inline-flex items-center justify-center border border-gray-700 hover:border-gray-500 text-white font-semibold px-4 py-2 md:py-2 rounded-xl transition cursor-pointer text-sm"
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.97 }}
               >
