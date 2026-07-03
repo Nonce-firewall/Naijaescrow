@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ShieldCheck, TrendingUp, Lock, ArrowRight, Bell, UserCheck, X, Mail, MessageCircle } from 'lucide-react';
+import { ShieldCheck, TrendingUp, Lock, ArrowRight, Bell, UserCheck, X, Mail, MessageCircle, Zap, ChevronRight } from 'lucide-react';
 import { Announcement, AdminSettings } from '../types';
 
 type ModalType = 'privacy' | 'terms' | 'support' | null;
@@ -131,6 +131,201 @@ function Modal({ type, onClose }: { type: ModalType; onClose: () => void }) {
   );
 }
 
+// ── Interactive demo trading widget ──────────────────────────────────────────
+const NETWORKS = ['BSC', 'Tron', 'Polygon'] as const;
+type Network = typeof NETWORKS[number];
+
+function TradingWidget({
+  rate,
+  onCtaClick,
+}: {
+  rate: number;
+  onCtaClick: () => void;
+}) {
+  const [tab, setTab] = useState<'buy' | 'sell'>('buy');
+  const [amount, setAmount] = useState('');
+  const [network, setNetwork] = useState<Network>('BSC');
+  const [pulse, setPulse] = useState(false);
+
+  // Pulse the rate every 6s to feel "live"
+  useEffect(() => {
+    const id = setInterval(() => {
+      setPulse(true);
+      setTimeout(() => setPulse(false), 700);
+    }, 6000);
+    return () => clearInterval(id);
+  }, []);
+
+  const numAmount = parseFloat(amount) || 0;
+  const usdtAmt  = tab === 'buy'  ? numAmount : numAmount / rate;
+  const ngnAmt   = tab === 'buy'  ? numAmount * rate : numAmount;
+  const hasAmt   = numAmount > 0;
+
+  const handleInput = (v: string) => {
+    if (/^\d*\.?\d*$/.test(v)) setAmount(v);
+  };
+
+  return (
+    <div className="bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden shadow-2xl">
+
+      {/* Browser chrome */}
+      <div className="flex items-center gap-1.5 px-3 py-2.5 border-b border-slate-800 bg-slate-950">
+        <span className="w-2.5 h-2.5 rounded-full bg-rose-500/80" />
+        <span className="w-2.5 h-2.5 rounded-full bg-amber-500/80" />
+        <span className="w-2.5 h-2.5 rounded-full bg-emerald-500/80" />
+        <div className="mx-auto text-[10px] text-slate-500 font-mono bg-slate-900 px-3 py-0.5 rounded-full border border-slate-800">
+          9ijaescrow.com/dashboard
+        </div>
+      </div>
+
+      {/* Widget body */}
+      <div className="p-4 space-y-3 font-mono text-xs">
+
+        {/* Header row */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="text-emerald-400 text-[10px] font-bold">9ija Escrow Web</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="text-[9px] text-slate-400 uppercase tracking-wider">Demo Mode</span>
+            <span className="text-[9px] text-amber-400 font-bold uppercase border border-amber-400/30 bg-amber-400/10 px-1.5 py-0.5 rounded">GUEST</span>
+          </div>
+        </div>
+
+        {/* Rate strip */}
+        <div className="bg-slate-950 rounded-xl px-3 py-2 flex items-center justify-between border border-slate-800">
+          <div>
+            <div className="text-[9px] text-slate-500 uppercase tracking-wider mb-0.5">Live Rate</div>
+            <motion.div
+              key={pulse ? 'a' : 'b'}
+              animate={pulse ? { color: ['#4ade80', '#00FF85', '#4ade80'] } : {}}
+              transition={{ duration: 0.7 }}
+              className="text-emerald-400 font-bold text-base"
+            >
+              ₦{rate.toLocaleString()}<span className="text-slate-500 text-[10px] font-normal"> / USDT</span>
+            </motion.div>
+          </div>
+          <div className="flex items-center gap-1 text-[9px] font-bold px-2 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
+            <Zap className="w-2.5 h-2.5" />
+            LIVE
+          </div>
+        </div>
+
+        {/* BUY / SELL tabs */}
+        <div className="relative flex bg-slate-950 rounded-xl p-0.5 border border-slate-800">
+          {(['buy', 'sell'] as const).map((t) => (
+            <button
+              key={t}
+              onClick={() => { setTab(t); setAmount(''); }}
+              className="relative flex-1 py-2 text-[11px] font-bold uppercase tracking-wider z-10 transition-colors cursor-pointer rounded-lg"
+              style={{ color: tab === t ? (t === 'buy' ? '#4ade80' : '#f87171') : '#64748b' }}
+            >
+              {t === 'buy' ? '▲ Buy USDT' : '▼ Sell USDT'}
+              {tab === t && (
+                <motion.div
+                  layoutId="tab-pill"
+                  className={`absolute inset-0 rounded-[10px] ${t === 'buy' ? 'bg-emerald-500/10 border border-emerald-500/20' : 'bg-rose-500/10 border border-rose-500/20'}`}
+                  transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                />
+              )}
+            </button>
+          ))}
+        </div>
+
+        {/* Amount input */}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={tab}
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.18 }}
+            className="space-y-2"
+          >
+            <div className="bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 flex items-center gap-2 focus-within:border-emerald-500/50 transition-colors">
+              <span className="text-slate-500 text-[10px] uppercase tracking-wider shrink-0">
+                {tab === 'buy' ? 'USDT' : 'NGN'}
+              </span>
+              <input
+                type="text"
+                inputMode="decimal"
+                value={amount}
+                onChange={(e) => handleInput(e.target.value)}
+                placeholder={tab === 'buy' ? '0.00' : '0'}
+                className="flex-1 bg-transparent outline-none text-white font-bold text-sm placeholder-slate-600 w-0"
+              />
+              <span className="text-[9px] text-slate-600 shrink-0">
+                {tab === 'buy' ? 'amount' : 'amount'}
+              </span>
+            </div>
+
+            {/* Live conversion result */}
+            <AnimatePresence>
+              {hasAmt && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="overflow-hidden"
+                >
+                  <div className="bg-emerald-950/40 border border-emerald-800/30 rounded-xl px-3 py-2 flex items-center justify-between">
+                    <span className="text-slate-400 text-[9px]">You {tab === 'buy' ? 'pay' : 'receive'}</span>
+                    <span className="text-emerald-400 font-bold text-[11px]">
+                      {tab === 'buy'
+                        ? `₦${ngnAmt.toLocaleString(undefined, { maximumFractionDigits: 2 })}`
+                        : `${usdtAmt.toFixed(4)} USDT`}
+                    </span>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
+        </AnimatePresence>
+
+        {/* Network selector */}
+        <div>
+          <div className="text-[9px] text-slate-500 uppercase tracking-wider mb-1.5">Network</div>
+          <div className="flex gap-1.5">
+            {NETWORKS.map((n) => (
+              <button
+                key={n}
+                onClick={() => setNetwork(n)}
+                className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold transition-all cursor-pointer border ${
+                  network === n
+                    ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-400'
+                    : 'bg-slate-950 border-slate-800 text-slate-500 hover:border-slate-600 hover:text-slate-300'
+                }`}
+              >
+                {n}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* CTA button */}
+        <motion.button
+          onClick={onCtaClick}
+          className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-[11px] uppercase tracking-wider cursor-pointer transition-colors bg-emerald-600 hover:bg-emerald-500 text-white"
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.97 }}
+        >
+          Initiate Order
+          <ChevronRight className="w-3.5 h-3.5" />
+        </motion.button>
+
+        {/* KYC notice */}
+        <div className="flex items-center gap-1.5 px-2">
+          <UserCheck className="w-3 h-3 text-slate-500 shrink-0" />
+          <span className="text-[9px] text-slate-500">KYC verification required to trade · Free account</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 interface LandingPageProps {
   announcements: Announcement[];
   settings: AdminSettings;
@@ -255,54 +450,17 @@ export default function LandingPage({ announcements, settings, onNavigate }: Lan
             </motion.div>
           </div>
 
-          {/* Dashboard mockup */}
+          {/* Interactive trading widget */}
           <motion.div
             className="w-full max-w-sm mx-auto lg:max-w-none"
             initial={{ opacity: 0, x: 40 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.65, delay: 0.22, ease: [0.16, 1, 0.3, 1] }}
           >
-            <div className="bg-slate-900 rounded-xl border border-slate-800 p-3">
-              <div className="flex items-center gap-1.5 pb-2 px-1 border-b border-slate-800">
-                <span className="w-2 h-2 rounded-full bg-rose-500"></span>
-                <span className="w-2 h-2 rounded-full bg-amber-500"></span>
-                <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                <div className="mx-auto text-[10px] text-slate-500 font-mono bg-slate-950 px-3 py-0.5 rounded-full">
-                  9ijaescrow.com/dashboard
-                </div>
-              </div>
-              <div className="bg-slate-950 text-white font-mono p-3 rounded-b-lg text-xs space-y-3 select-none">
-                <div className="flex items-center justify-between border-b border-emerald-950/50 pb-2">
-                  <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
-                    <span className="font-bold text-emerald-400 text-[10px]">9ija Escrow Web</span>
-                  </div>
-                  <span className="text-[9px] text-slate-400">KYC APPROVED</span>
-                </div>
-                <div className="grid grid-cols-3 gap-2">
-                  {[['RATE', `₦${settings.usdtRate}/$`], ['BUY ORDERS', '124 (2 pending)'], ['SELL ORDERS', '89 (0 pending)']].map(([label, val]) => (
-                    <div key={label} className="bg-slate-900 p-2 rounded border border-slate-800">
-                      <div className="text-[9px] text-slate-400">{label}</div>
-                      <div className="text-[10px] font-bold text-emerald-400 mt-0.5">{val}</div>
-                    </div>
-                  ))}
-                </div>
-                <div className="bg-slate-900 p-2.5 rounded border border-emerald-900/30">
-                  <div className="flex justify-between text-[9px] mb-1">
-                    <span className="font-bold text-emerald-400">ACTIVE ORDER #0248</span>
-                    <span className="text-amber-400 animate-pulse">AWAITING APPROVAL</span>
-                  </div>
-                  <div className="text-[9px] text-slate-300">BUY USDT · 500 USDT · Zenith Bank ✓</div>
-                </div>
-                <div className="flex items-center gap-2 bg-emerald-950 p-2 rounded border border-emerald-800/40">
-                  <UserCheck className="w-3 h-3 text-emerald-400 shrink-0" />
-                  <div>
-                    <div className="text-[9px] font-bold text-emerald-400">KYC Verified</div>
-                    <div className="text-[8px] text-slate-400">Driver's license approved.</div>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <TradingWidget
+              rate={settings.usdtRate}
+              onCtaClick={() => onNavigate('auth', 'signup')}
+            />
           </motion.div>
 
         </div>
