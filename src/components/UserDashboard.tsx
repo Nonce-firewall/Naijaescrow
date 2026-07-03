@@ -744,27 +744,29 @@ export default function UserDashboard({
           <div className="sm:hidden flex items-center bg-white border border-[#E0E7E0] rounded-full p-1 gap-0.5">
             <button
               onClick={() => setActiveTab('trade')}
-              className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-full text-[11px] font-bold will-change-[background-color] ${
-                activeTab === 'trade'
-                  ? 'bg-[#008751] text-white'
-                  : 'text-gray-500'
+              className={`relative flex-1 flex items-center justify-center gap-1 py-2 rounded-full text-[11px] font-bold ${
+                activeTab === 'trade' ? 'text-white' : 'text-gray-500'
               }`}
             >
-              <TrendingUp className="w-3.5 h-3.5 shrink-0" />
-              Trade
+              {activeTab === 'trade' && (
+                <motion.div layoutId="mobile-tab-indicator" className="absolute inset-0 bg-[#008751] rounded-full" transition={{ type: 'spring', bounce: 0.2, duration: 0.4 }} />
+              )}
+              <TrendingUp className="relative z-10 w-3.5 h-3.5 shrink-0" />
+              <span className="relative z-10">Trade</span>
             </button>
             <button
               onClick={() => setActiveTab('history')}
-              className={`relative flex-1 flex items-center justify-center gap-1 py-2 rounded-full text-[11px] font-bold will-change-[background-color] ${
-                activeTab === 'history'
-                  ? 'bg-[#008751] text-white'
-                  : 'text-gray-500'
+              className={`relative flex-1 flex items-center justify-center gap-1 py-2 rounded-full text-[11px] font-bold ${
+                activeTab === 'history' ? 'text-white' : 'text-gray-500'
               }`}
             >
-              <Receipt className="w-3.5 h-3.5 shrink-0" />
-              History
+              {activeTab === 'history' && (
+                <motion.div layoutId="mobile-tab-indicator" className="absolute inset-0 bg-[#008751] rounded-full" transition={{ type: 'spring', bounce: 0.2, duration: 0.4 }} />
+              )}
+              <Receipt className="relative z-10 w-3.5 h-3.5 shrink-0" />
+              <span className="relative z-10">History</span>
               {orders.length > 0 && (
-                <span className={`absolute -top-1 right-1 min-w-[14px] h-[14px] px-0.5 text-[8px] font-bold rounded-full flex items-center justify-center leading-none ${
+                <span className={`absolute -top-1 right-1 z-20 min-w-[14px] h-[14px] px-0.5 text-[8px] font-bold rounded-full flex items-center justify-center leading-none ${
                   activeTab === 'history' ? 'bg-white text-[#008751]' : 'bg-[#008751] text-white'
                 }`}>
                   {orders.length}
@@ -773,28 +775,29 @@ export default function UserDashboard({
             </button>
             <button
               onClick={() => setActiveTab('kyc')}
-              className={`relative flex-1 flex items-center justify-center gap-1 py-2 rounded-full text-[11px] font-bold will-change-[background-color] ${
-                activeTab === 'kyc'
-                  ? 'bg-[#008751] text-white'
-                  : 'text-gray-500'
+              className={`relative flex-1 flex items-center justify-center gap-1 py-2 rounded-full text-[11px] font-bold ${
+                activeTab === 'kyc' ? 'text-white' : 'text-gray-500'
               }`}
             >
-              <UserCheck className="w-3.5 h-3.5 shrink-0" />
-              KYC
+              {activeTab === 'kyc' && (
+                <motion.div layoutId="mobile-tab-indicator" className="absolute inset-0 bg-[#008751] rounded-full" transition={{ type: 'spring', bounce: 0.2, duration: 0.4 }} />
+              )}
+              <UserCheck className="relative z-10 w-3.5 h-3.5 shrink-0" />
+              <span className="relative z-10">KYC</span>
               {userProfile.kycStatus === 'approved' && (
-                <span className={`absolute -top-1 right-1 w-3 h-3 rounded-full flex items-center justify-center ${
+                <span className={`absolute -top-1 right-1 z-20 w-3 h-3 rounded-full flex items-center justify-center ${
                   activeTab === 'kyc' ? 'bg-white' : 'bg-emerald-500'
                 }`}>
                   <Check className={`w-2 h-2 ${activeTab === 'kyc' ? 'text-[#008751]' : 'text-white'}`} />
                 </span>
               )}
               {userProfile.kycStatus === 'pending' && (
-                <span className="absolute -top-1 right-1 w-3 h-3 rounded-full bg-amber-400 flex items-center justify-center">
+                <span className="absolute -top-1 right-1 z-20 w-3 h-3 rounded-full bg-amber-400 flex items-center justify-center">
                   <Clock className="w-2 h-2 text-white" />
                 </span>
               )}
               {userProfile.kycStatus === 'rejected' && (
-                <span className="absolute -top-1 right-1 w-3 h-3 rounded-full bg-rose-500 flex items-center justify-center">
+                <span className="absolute -top-1 right-1 z-20 w-3 h-3 rounded-full bg-rose-500 flex items-center justify-center">
                   <X className="w-2 h-2 text-white" />
                 </span>
               )}
@@ -806,29 +809,35 @@ export default function UserDashboard({
             {/* Tab: Start Order */}
             <button
               onClick={() => setActiveTab('trade')}
-              className={`flex flex-row items-center justify-center gap-2 py-3.5 px-4 rounded-2xl font-bold transition cursor-pointer ${
+              className={`relative flex flex-row items-center justify-center gap-2 py-3.5 px-4 rounded-2xl font-bold cursor-pointer ${
                 activeTab === 'trade'
-                  ? 'bg-[#008751] text-white shadow-md shadow-[#008751]/20'
+                  ? 'text-white'
                   : 'bg-white border border-[#E0E7E0] text-gray-500 hover:border-[#008751]/40 hover:text-[#008751]'
               }`}
             >
-              <TrendingUp className="w-3.5 h-3.5 shrink-0" />
-              <span className="text-xs text-center leading-tight">Start Order</span>
+              {activeTab === 'trade' && (
+                <motion.div layoutId="desktop-tab-indicator" className="absolute inset-0 bg-[#008751] rounded-2xl shadow-md shadow-[#008751]/20" transition={{ type: 'spring', bounce: 0.2, duration: 0.4 }} />
+              )}
+              <TrendingUp className="relative z-10 w-3.5 h-3.5 shrink-0" />
+              <span className="relative z-10 text-xs text-center leading-tight">Start Order</span>
             </button>
 
             {/* Tab: Order History */}
             <button
               onClick={() => setActiveTab('history')}
-              className={`relative flex flex-row items-center justify-center gap-2 py-3.5 px-4 rounded-2xl font-bold transition cursor-pointer ${
+              className={`relative flex flex-row items-center justify-center gap-2 py-3.5 px-4 rounded-2xl font-bold cursor-pointer ${
                 activeTab === 'history'
-                  ? 'bg-[#008751] text-white shadow-md shadow-[#008751]/20'
+                  ? 'text-white'
                   : 'bg-white border border-[#E0E7E0] text-gray-500 hover:border-[#008751]/40 hover:text-[#008751]'
               }`}
             >
-              <Receipt className="w-3.5 h-3.5 shrink-0" />
-              <span className="text-xs text-center leading-tight">Order History</span>
+              {activeTab === 'history' && (
+                <motion.div layoutId="desktop-tab-indicator" className="absolute inset-0 bg-[#008751] rounded-2xl shadow-md shadow-[#008751]/20" transition={{ type: 'spring', bounce: 0.2, duration: 0.4 }} />
+              )}
+              <Receipt className="relative z-10 w-3.5 h-3.5 shrink-0" />
+              <span className="relative z-10 text-xs text-center leading-tight">Order History</span>
               {orders.length > 0 && (
-                <span className={`absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 text-[9px] font-bold rounded-full flex items-center justify-center leading-none border-2 border-[#F7F9F7] ${
+                <span className={`absolute -top-1.5 -right-1.5 z-20 min-w-[18px] h-[18px] px-1 text-[9px] font-bold rounded-full flex items-center justify-center leading-none border-2 border-[#F7F9F7] ${
                   activeTab === 'history' ? 'bg-white text-[#008751]' : 'bg-[#008751] text-white'
                 }`}>
                   {orders.length}
@@ -839,28 +848,31 @@ export default function UserDashboard({
             {/* Tab: KYC */}
             <button
               onClick={() => setActiveTab('kyc')}
-              className={`relative flex flex-row items-center justify-center gap-2 py-3.5 px-4 rounded-2xl font-bold transition cursor-pointer ${
+              className={`relative flex flex-row items-center justify-center gap-2 py-3.5 px-4 rounded-2xl font-bold cursor-pointer ${
                 activeTab === 'kyc'
-                  ? 'bg-[#008751] text-white shadow-md shadow-[#008751]/20'
+                  ? 'text-white'
                   : 'bg-white border border-[#E0E7E0] text-gray-500 hover:border-[#008751]/40 hover:text-[#008751]'
               }`}
             >
-              <UserCheck className="w-3.5 h-3.5 shrink-0" />
-              <span className="text-xs text-center leading-tight">Identity (KYC)</span>
+              {activeTab === 'kyc' && (
+                <motion.div layoutId="desktop-tab-indicator" className="absolute inset-0 bg-[#008751] rounded-2xl shadow-md shadow-[#008751]/20" transition={{ type: 'spring', bounce: 0.2, duration: 0.4 }} />
+              )}
+              <UserCheck className="relative z-10 w-3.5 h-3.5 shrink-0" />
+              <span className="relative z-10 text-xs text-center leading-tight">Identity (KYC)</span>
               {userProfile.kycStatus === 'approved' && (
-                <span className={`absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full flex items-center justify-center border-2 border-[#F7F9F7] ${
+                <span className={`absolute -top-1.5 -right-1.5 z-20 w-4 h-4 rounded-full flex items-center justify-center border-2 border-[#F7F9F7] ${
                   activeTab === 'kyc' ? 'bg-white' : 'bg-emerald-500'
                 }`}>
                   <Check className={`w-2.5 h-2.5 ${activeTab === 'kyc' ? 'text-[#008751]' : 'text-white'}`} />
                 </span>
               )}
               {userProfile.kycStatus === 'pending' && (
-                <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-amber-400 border-2 border-[#F7F9F7] flex items-center justify-center">
+                <span className="absolute -top-1.5 -right-1.5 z-20 w-4 h-4 rounded-full bg-amber-400 border-2 border-[#F7F9F7] flex items-center justify-center">
                   <Clock className="w-2.5 h-2.5 text-white" />
                 </span>
               )}
               {userProfile.kycStatus === 'rejected' && (
-                <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-rose-500 border-2 border-[#F7F9F7] flex items-center justify-center">
+                <span className="absolute -top-1.5 -right-1.5 z-20 w-4 h-4 rounded-full bg-rose-500 border-2 border-[#F7F9F7] flex items-center justify-center">
                   <X className="w-2.5 h-2.5 text-white" />
                 </span>
               )}
@@ -937,14 +949,15 @@ export default function UserDashboard({
                         setTradeType('buy');
                         setScreenshot('');
                       }}
-                      className={`py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2 cursor-pointer transition ${
-                        tradeType === 'buy'
-                          ? 'bg-[#008751] text-white shadow-sm'
-                          : 'text-gray-500 hover:text-[#1A1A1A]'
+                      className={`relative py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2 cursor-pointer ${
+                        tradeType === 'buy' ? 'text-white' : 'text-gray-500 hover:text-[#1A1A1A]'
                       }`}
                     >
-                      <ArrowDownLeft className="w-4 h-4" />
-                      Buy USDT
+                      {tradeType === 'buy' && (
+                        <motion.div layoutId="trade-type-indicator" className="absolute inset-0 bg-[#008751] rounded-xl shadow-sm" transition={{ type: 'spring', bounce: 0.2, duration: 0.4 }} />
+                      )}
+                      <ArrowDownLeft className="relative z-10 w-4 h-4" />
+                      <span className="relative z-10">Buy USDT</span>
                     </button>
                     <button
                       type="button"
@@ -952,14 +965,15 @@ export default function UserDashboard({
                         setTradeType('sell');
                         setScreenshot('');
                       }}
-                      className={`py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2 cursor-pointer transition ${
-                        tradeType === 'sell'
-                          ? 'bg-rose-600 text-white shadow-sm'
-                          : 'text-gray-500 hover:text-[#1A1A1A]'
+                      className={`relative py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2 cursor-pointer ${
+                        tradeType === 'sell' ? 'text-white' : 'text-gray-500 hover:text-[#1A1A1A]'
                       }`}
                     >
-                      <ArrowUpRight className="w-4 h-4" />
-                      Sell USDT
+                      {tradeType === 'sell' && (
+                        <motion.div layoutId="trade-type-indicator" className="absolute inset-0 bg-rose-600 rounded-xl shadow-sm" transition={{ type: 'spring', bounce: 0.2, duration: 0.4 }} />
+                      )}
+                      <ArrowUpRight className="relative z-10 w-4 h-4" />
+                      <span className="relative z-10">Sell USDT</span>
                     </button>
                   </div>
 

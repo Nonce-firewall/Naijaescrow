@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { supabase } from '../lib/supabase';
 import { UserProfile, NotificationPreferences } from '../types';
 import { updateNotificationPreferences, changePassword, deleteAccount } from '../lib/dbHelpers';
@@ -232,58 +233,66 @@ export default function Navbar({ userProfile, isAdminMode, currentPage, onToggle
         </div>
       </div>
 
-      {/* Mobile dropdown menu — dashboard pages only */}
-      {menuOpen && userProfile && !isLanding && (
-        <div className="sm:hidden border-t border-[#E0E7E0] bg-white px-4 py-4 space-y-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <span className="text-xs font-bold text-[#1A1A1A] truncate max-w-[200px] block">
-                {userProfile.kycStatus === 'approved' && userProfile.kycData?.fullName
-                  ? userProfile.kycData.fullName.trim().split(/\s+/).slice(0, 2).join(' ')
-                  : userProfile.email}
+      {/* Mobile dropdown menu — dashboard pages only, floats over content */}
+      <AnimatePresence>
+        {menuOpen && userProfile && !isLanding && (
+          <motion.div
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+            className="sm:hidden absolute top-full left-0 right-0 border-t border-[#E0E7E0] bg-white shadow-lg px-4 py-4 space-y-3 z-50"
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <span className="text-xs font-bold text-[#1A1A1A] truncate max-w-[200px] block">
+                  {userProfile.kycStatus === 'approved' && userProfile.kycData?.fullName
+                    ? userProfile.kycData.fullName.trim().split(/\s+/).slice(0, 2).join(' ')
+                    : userProfile.email}
+                </span>
+                {userProfile.kycStatus === 'approved' && userProfile.kycData?.fullName && (
+                  <span className="text-[10px] text-gray-400 font-mono block truncate max-w-[200px]">{userProfile.email}</span>
+                )}
+              </div>
+              <span className={`text-[10px] font-bold flex items-center gap-1 ${kycColor}`}>
+                {userProfile.kycStatus === 'approved' && <UserCheck className="w-3 h-3" />}
+                {userProfile.kycStatus === 'pending' && <Clock className="w-3 h-3" />}
+                {userProfile.kycStatus === 'rejected' && <XCircle className="w-3 h-3" />}
+                {userProfile.kycStatus === 'none' && <AlertCircle className="w-3 h-3" />}
+                KYC {userProfile.kycStatus.toUpperCase()}
               </span>
-              {userProfile.kycStatus === 'approved' && userProfile.kycData?.fullName && (
-                <span className="text-[10px] text-gray-400 font-mono block truncate max-w-[200px]">{userProfile.email}</span>
-              )}
             </div>
-            <span className={`text-[10px] font-bold flex items-center gap-1 ${kycColor}`}>
-              {userProfile.kycStatus === 'approved' && <UserCheck className="w-3 h-3" />}
-              {userProfile.kycStatus === 'pending' && <Clock className="w-3 h-3" />}
-              {userProfile.kycStatus === 'rejected' && <XCircle className="w-3 h-3" />}
-              {userProfile.kycStatus === 'none' && <AlertCircle className="w-3 h-3" />}
-              KYC {userProfile.kycStatus.toUpperCase()}
-            </span>
-          </div>
-          <button
-            onClick={() => { setShowPasswordModal(true); setMenuOpen(false); }}
-            className="w-full flex items-center justify-center gap-2 border border-[#E0E7E0] hover:bg-[#F7F9F7] text-gray-600 py-2.5 rounded-xl text-sm font-bold transition cursor-pointer"
-          >
-            <KeyRound className="w-4 h-4" />
-            Change Password
-          </button>
-          <button
-            onClick={() => { setShowNotifModal(true); setMenuOpen(false); }}
-            className="w-full flex items-center justify-center gap-2 border border-[#E0E7E0] hover:bg-[#F7F9F7] text-gray-600 py-2.5 rounded-xl text-sm font-bold transition cursor-pointer"
-          >
-            <BellRing className="w-4 h-4" />
-            Notification Preferences
-          </button>
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center justify-center gap-2 border border-[#E0E7E0] hover:bg-rose-50 hover:border-rose-200 hover:text-rose-700 text-gray-600 py-2.5 rounded-xl text-sm font-bold transition cursor-pointer"
-          >
-            <LogOut className="w-4 h-4" />
-            Log Out
-          </button>
-          <button
-            onClick={() => { setShowDeleteModal(true); setMenuOpen(false); }}
-            className="w-full flex items-center justify-center gap-2 border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-600 py-2.5 rounded-xl text-sm font-bold transition cursor-pointer"
-          >
-            <Trash2 className="w-4 h-4" />
-            Delete Account
-          </button>
-        </div>
-      )}
+            <button
+              onClick={() => { setShowPasswordModal(true); setMenuOpen(false); }}
+              className="w-full flex items-center justify-center gap-2 border border-[#E0E7E0] hover:bg-[#F7F9F7] text-gray-600 py-2.5 rounded-xl text-sm font-bold transition cursor-pointer"
+            >
+              <KeyRound className="w-4 h-4" />
+              Change Password
+            </button>
+            <button
+              onClick={() => { setShowNotifModal(true); setMenuOpen(false); }}
+              className="w-full flex items-center justify-center gap-2 border border-[#E0E7E0] hover:bg-[#F7F9F7] text-gray-600 py-2.5 rounded-xl text-sm font-bold transition cursor-pointer"
+            >
+              <BellRing className="w-4 h-4" />
+              Notification Preferences
+            </button>
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center justify-center gap-2 border border-[#E0E7E0] hover:bg-rose-50 hover:border-rose-200 hover:text-rose-700 text-gray-600 py-2.5 rounded-xl text-sm font-bold transition cursor-pointer"
+            >
+              <LogOut className="w-4 h-4" />
+              Log Out
+            </button>
+            <button
+              onClick={() => { setShowDeleteModal(true); setMenuOpen(false); }}
+              className="w-full flex items-center justify-center gap-2 border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-600 py-2.5 rounded-xl text-sm font-bold transition cursor-pointer"
+            >
+              <Trash2 className="w-4 h-4" />
+              Delete Account
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {showPasswordModal && (
         <ChangePasswordModal onClose={() => setShowPasswordModal(false)} addToast={addToast} />
