@@ -83,6 +83,11 @@ export default function App() {
           setUserProfile(profile);
           setIsAdminMode(profile.role === 'admin');
           setCurrentPage('dashboard');
+          // Show verification toast if the page loaded via an email-verification redirect
+          if (isEmailVerificationRef.current) {
+            isEmailVerificationRef.current = false;
+            addToast('✅ Email verified! Welcome to 9ijaEscrow.', 'success');
+          }
         } catch (err) {
           console.error('Error fetching profile:', err);
         }

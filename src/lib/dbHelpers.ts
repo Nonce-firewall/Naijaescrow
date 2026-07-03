@@ -232,14 +232,20 @@ export async function getOrCreateUserProfile(uid: string, email: string): Promis
     created_at: Date.now()
   };
 
-  const { data: inserted } = await supabase.from('users').insert(newRow).select().single();
+  const { data: inserted, error: insertError } = await supabase.from('users').insert(newRow).select().single();
   if (inserted) return rowToUserProfile(inserted);
 
-  // Insert may have lost a race (concurrent call already inserted) — try fetching once more
-  const { data: retried } = await supabase.from('users').select('*').eq('id', uid).single();
+  // PostgreSQL unique-violation (23505) means a concurrent call already inserted the row — safe to fetch.
+  // Any other error code is a real failure (RLS denied, schema mismatch, network) — surface it.
+  if (insertError && insertError.code !== '23505') {
+    throw new Error(`Could not create user profile: ${insertError.message}`);
+  }
+
+  // Race-condition retry: the concurrent insert won, so the row must now exist.
+  const { data: retried, error: retryError } = await supabase.from('users').select('*').eq('id', uid).single();
   if (retried) return rowToUserProfile(retried);
 
-  throw new Error('Failed to create or retrieve user profile');
+  throw new Error(`Failed to retrieve user profile after insert race: ${retryError?.message ?? 'unknown'}`);
 }
 
 export async function submitKYC(uid: string, kycData: Omit<KYCData, 'submittedAt'>) {

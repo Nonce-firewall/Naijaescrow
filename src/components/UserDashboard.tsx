@@ -246,6 +246,9 @@ export default function UserDashboard({
   }
   const [localNotifs, setLocalNotifs] = useState<LocalNotif[]>([]);
   const prevOrdersRef = useRef<Order[] | null>(null);
+  // Tracks whether the initial orders fetch has completed for this mount.
+  // Until hydrated, any change to `orders` is initial hydration, not a real update.
+  const ordersHydratedRef = useRef(false);
   const prevProfileRef = useRef<UserProfile | null>(null);
   
   // Upload drag state
@@ -512,11 +515,16 @@ export default function UserDashboard({
 
   // ── Notification tracking: orders ────────────────────────────────────────
   useEffect(() => {
-    // Skip on first render (null) OR when prev was empty — this handles the
-    // race where orders = [] on mount and then loads, which would otherwise
-    // flag every existing order as "new" on re-login.
-    if (prevOrdersRef.current === null || prevOrdersRef.current.length === 0) {
+    if (prevOrdersRef.current === null) {
+      // First render: sync snapshot, not hydrated yet.
       prevOrdersRef.current = orders;
+      return;
+    }
+    if (!ordersHydratedRef.current) {
+      // Second render is the initial fetch completing (empty or populated).
+      // Sync silently — we don't know yet which orders are "genuinely new".
+      prevOrdersRef.current = orders;
+      ordersHydratedRef.current = true;
       return;
     }
     const prev = prevOrdersRef.current;
