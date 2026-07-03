@@ -762,11 +762,11 @@ export default function LandingPage({ announcements, settings, onNavigate }: Lan
         </div>
       </header>
 
-      {/* Live stats strip */}
-      <StatsStrip />
-
       {/* How It Works */}
       <HowItWorks onNavigate={() => onNavigate('auth', 'signup')} />
+
+      {/* Live stats strip */}
+      <StatsStrip />
 
       {/* Features */}
       <section className="py-14 px-4 sm:px-6 max-w-5xl mx-auto">
