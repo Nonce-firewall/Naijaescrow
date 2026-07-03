@@ -268,6 +268,7 @@ export default function UserDashboard({
   const [isCameraActive, setIsCameraActive] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
+  const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
 
   // Active receipt for popup
   const [viewReceipt, setViewReceipt] = useState<Order | null>(null);
@@ -367,12 +368,13 @@ export default function UserDashboard({
   };
 
   // Live Webcam Camera Handlers
-  const startCamera = async () => {
+  const startCamera = async (mode?: 'user' | 'environment') => {
+    const targetMode = mode ?? facingMode;
     try {
       if (cameraStream) {
         cameraStream.getTracks().forEach(track => track.stop());
       }
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: 640, height: 480 } });
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: targetMode, width: 640, height: 480 } });
       setCameraStream(stream);
       setIsCameraActive(true);
       setTimeout(() => {
@@ -384,6 +386,13 @@ export default function UserDashboard({
       console.error('Error accessing camera:', err);
       addToast('Could not access camera. Please ensure camera permissions are allowed in your browser settings.', 'error');
     }
+  };
+
+  // Toggle between front and back camera while the live feed is active
+  const switchCamera = async () => {
+    const newMode = facingMode === 'user' ? 'environment' : 'user';
+    setFacingMode(newMode);
+    await startCamera(newMode);
   };
 
   const stopCamera = () => {
@@ -402,9 +411,11 @@ export default function UserDashboard({
         canvas.height = 480;
         const ctx = canvas.getContext('2d');
         if (ctx) {
-          // Flip horizontally for natural mirror image view
-          ctx.translate(canvas.width, 0);
-          ctx.scale(-1, 1);
+          if (facingMode === 'user') {
+            // Front camera: un-mirror the display flip so text reads correctly in the capture
+            ctx.translate(canvas.width, 0);
+            ctx.scale(-1, 1);
+          }
           ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
           const raw = canvas.toDataURL('image/jpeg', 0.85);
           const base64 = await compressImage(raw, 250);
@@ -1741,9 +1752,21 @@ export default function UserDashboard({
                               autoPlay
                               playsInline
                               muted
-                              className="w-full h-full object-cover scale-x-[-1]"
+                              className={`w-full h-full object-cover ${facingMode === 'user' ? 'scale-x-[-1]' : ''}`}
                             />
-                            <span className="absolute bottom-2 left-2 bg-black/60 text-white font-mono text-[9px] px-2 py-0.5 rounded-full uppercase tracking-wider">LIVE CAMERA</span>
+                            {/* Camera mode badge */}
+                            <span className="absolute bottom-2 left-2 bg-black/60 text-white font-mono text-[9px] px-2 py-0.5 rounded-full uppercase tracking-wider">
+                              {facingMode === 'user' ? 'Front Camera' : 'Back Camera'}
+                            </span>
+                            {/* Switch camera button */}
+                            <button
+                              type="button"
+                              onClick={switchCamera}
+                              title="Switch Camera"
+                              className="absolute top-2 right-2 bg-black/50 hover:bg-black/75 text-white rounded-full p-2 transition cursor-pointer"
+                            >
+                              <RotateCw className="w-4 h-4" />
+                            </button>
                           </div>
                           <div className="flex gap-2 w-full max-w-[360px]">
                             <button
