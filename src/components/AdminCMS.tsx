@@ -517,18 +517,18 @@ export default function AdminCMS({
           </p>
         </div>
 
-        <div className="flex gap-4 border-t border-[#E0E7E0]/10 lg:border-t-0 pt-4 lg:pt-0 w-full lg:w-auto overflow-x-auto">
-          <div className="bg-white/10 px-4 py-2.5 rounded-2xl border border-white/10 text-center min-w-[100px]">
-            <span className="text-[9px] text-gray-400 font-mono block">PENDING ORDERS</span>
-            <span className="text-lg font-bold text-amber-400">{pendingOrdersCount}</span>
+        <div className="grid grid-cols-3 gap-2 lg:flex lg:gap-4 border-t border-[#E0E7E0]/10 lg:border-t-0 pt-4 lg:pt-0 w-full lg:w-auto">
+          <div className="bg-white/10 px-2.5 lg:px-4 py-2 lg:py-2.5 rounded-xl lg:rounded-2xl border border-white/10 text-center">
+            <span className="text-[8px] lg:text-[9px] text-gray-400 font-mono block leading-tight">PENDING<br className="lg:hidden" />{' '}ORDERS</span>
+            <span className="text-base lg:text-lg font-bold text-amber-400">{pendingOrdersCount}</span>
           </div>
-          <div className="bg-white/10 px-4 py-2.5 rounded-2xl border border-white/10 text-center min-w-[100px]">
-            <span className="text-[9px] text-gray-400 font-mono block">KYC REQUESTS</span>
-            <span className="text-lg font-bold text-amber-400">{pendingKycCount}</span>
+          <div className="bg-white/10 px-2.5 lg:px-4 py-2 lg:py-2.5 rounded-xl lg:rounded-2xl border border-white/10 text-center">
+            <span className="text-[8px] lg:text-[9px] text-gray-400 font-mono block leading-tight">KYC<br className="lg:hidden" />{' '}REQUESTS</span>
+            <span className="text-base lg:text-lg font-bold text-amber-400">{pendingKycCount}</span>
           </div>
-          <div className="bg-white/10 px-4 py-2.5 rounded-2xl border border-white/10 text-center min-w-[100px]">
-            <span className="text-[9px] text-gray-400 font-mono block">USDT RATE</span>
-            <span className="text-lg font-bold text-[#00FF85]">₦{settings.usdtRate}</span>
+          <div className="bg-white/10 px-2.5 lg:px-4 py-2 lg:py-2.5 rounded-xl lg:rounded-2xl border border-white/10 text-center">
+            <span className="text-[8px] lg:text-[9px] text-gray-400 font-mono block leading-tight">USDT<br className="lg:hidden" />{' '}RATE</span>
+            <span className="text-base lg:text-lg font-bold text-[#00FF85]">₦{settings.usdtRate}</span>
           </div>
         </div>
       </div>
@@ -692,8 +692,16 @@ export default function AdminCMS({
         </div>
 
         {/* Right column active content panel */}
-        <div className="lg:col-span-9 bg-white rounded-3xl border border-[#E0E7E0] shadow-sm p-8">
-          
+        <div className="lg:col-span-9 bg-white rounded-3xl border border-[#E0E7E0] shadow-sm p-5 lg:p-8 overflow-hidden">
+          <AnimatePresence mode="wait" initial={false}>
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.18, ease: 'easeOut' }}
+          >
+
           {/* TAB 1: ANALYTICS PANEL */}
           {activeTab === 'analytics' && (
             <div className="space-y-6">
@@ -1923,6 +1931,8 @@ export default function AdminCMS({
             </div>
           )}
 
+          </motion.div>
+          </AnimatePresence>
         </div>
 
       </div>

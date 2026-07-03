@@ -269,6 +269,8 @@ export default function UserDashboard({
 
   // Active receipt for popup
   const [viewReceipt, setViewReceipt] = useState<Order | null>(null);
+  const [disputeShowAll, setDisputeShowAll] = useState(false);
+  const [expandedDisputeIds, setExpandedDisputeIds] = useState<Set<string>>(new Set());
   const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
 
   // Dispute state
@@ -2116,50 +2118,114 @@ export default function UserDashboard({
                   return (
                     <div className="border-t border-[#E0E7E0] pt-4 space-y-4">
 
-                      {/* Past dispute history */}
+                      {/* Past dispute history — collapsible cards, load more if >5 */}
                       {orderDisputes.length > 0 && (
                         <div className="space-y-2">
-                          <div className="flex items-center gap-2">
-                            <MessageSquare className="w-4 h-4 text-[#008751]" />
-                            <span className="text-xs font-bold text-[#1A1A1A]">
-                              Dispute History ({orderDisputes.length})
-                            </span>
-                          </div>
-                          {orderDisputes.map((d, i) => (
-                            <div key={d.id} className="bg-[#F7F9F7] border border-[#E0E7E0] rounded-xl p-3 space-y-2 text-[11px]">
-                              <div className="flex items-center justify-between">
-                                <span className="text-[9px] text-gray-400 font-mono">
-                                  Dispute #{i + 1} · {formatNGT(d.createdAt)}
-                                </span>
-                                <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase ${
-                                  d.status === 'open' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'
-                                }`}>{d.status}</span>
-                              </div>
-                              <p className="text-gray-700 leading-relaxed">{d.message}</p>
-                              {d.imageUrls && d.imageUrls.length > 0 && (
-                                <div className="flex gap-2 flex-wrap">
-                                  {d.imageUrls.map((url, idx) => (
-                                    <a key={idx} href={url} target="_blank" rel="noreferrer">
-                                      <img src={url} alt={`proof ${idx + 1}`} className="h-16 w-20 object-cover rounded-lg border border-[#E0E7E0] hover:opacity-80 transition" />
-                                    </a>
-                                  ))}
-                                </div>
-                              )}
-                              {d.adminResponse ? (
-                                <div className="bg-emerald-50 border border-emerald-200 p-2.5 rounded-lg">
-                                  <span className="text-[9px] font-bold text-emerald-700 uppercase tracking-wider block mb-1">✅ Admin Response</span>
-                                  <p className="text-emerald-900 leading-relaxed">{d.adminResponse}</p>
-                                  {d.resolvedAt && (
-                                    <span className="text-[9px] text-emerald-500 font-mono block mt-1">
-                                      Resolved {formatNGT(d.resolvedAt)}
-                                    </span>
-                                  )}
-                                </div>
-                              ) : (
-                                <div className="text-[9px] text-amber-600 font-mono">⏳ Awaiting admin review…</div>
-                              )}
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <MessageSquare className="w-4 h-4 text-[#008751]" />
+                              <span className="text-xs font-bold text-[#1A1A1A]">
+                                Dispute History ({orderDisputes.length})
+                              </span>
                             </div>
-                          ))}
+                            {orderDisputes.length > 1 && (
+                              <button
+                                onClick={() => {
+                                  if (expandedDisputeIds.size === orderDisputes.length) {
+                                    setExpandedDisputeIds(new Set());
+                                  } else {
+                                    setExpandedDisputeIds(new Set(orderDisputes.map(d => d.id)));
+                                  }
+                                }}
+                                className="text-[9px] text-[#008751] font-bold uppercase tracking-wide cursor-pointer hover:underline"
+                              >
+                                {expandedDisputeIds.size === orderDisputes.length ? 'Collapse all' : 'Expand all'}
+                              </button>
+                            )}
+                          </div>
+                          {(disputeShowAll ? orderDisputes : orderDisputes.slice(0, 5)).map((d, i) => {
+                            const isExpanded = expandedDisputeIds.has(d.id);
+                            const toggleExpand = () => setExpandedDisputeIds(prev => {
+                              const next = new Set(prev);
+                              if (next.has(d.id)) next.delete(d.id); else next.add(d.id);
+                              return next;
+                            });
+                            return (
+                              <div key={d.id} className="bg-[#F7F9F7] border border-[#E0E7E0] rounded-xl overflow-hidden text-[11px]">
+                                {/* Header — always visible, click to expand */}
+                                <button
+                                  onClick={toggleExpand}
+                                  className="w-full flex items-center justify-between px-3 py-2.5 text-left cursor-pointer hover:bg-[#F0F5F1] transition"
+                                >
+                                  <span className="text-[9px] text-gray-400 font-mono">
+                                    Dispute #{i + 1} · {formatNGT(d.createdAt)}
+                                  </span>
+                                  <div className="flex items-center gap-1.5">
+                                    <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase ${
+                                      d.status === 'open' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'
+                                    }`}>{d.status}</span>
+                                    <ChevronRight className={`w-3 h-3 text-gray-400 transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`} />
+                                  </div>
+                                </button>
+                                {/* Collapsible body */}
+                                <AnimatePresence initial={false}>
+                                  {isExpanded && (
+                                    <motion.div
+                                      key="body"
+                                      initial={{ height: 0, opacity: 0 }}
+                                      animate={{ height: 'auto', opacity: 1 }}
+                                      exit={{ height: 0, opacity: 0 }}
+                                      transition={{ duration: 0.2, ease: 'easeInOut' }}
+                                      className="overflow-hidden"
+                                    >
+                                      <div className="px-3 pb-3 space-y-2 border-t border-[#E0E7E0]">
+                                        <p className="text-gray-700 leading-relaxed pt-2">{d.message}</p>
+                                        {d.imageUrls && d.imageUrls.length > 0 && (
+                                          <div className="flex gap-2 flex-wrap">
+                                            {d.imageUrls.map((url, idx) => (
+                                              <a key={idx} href={url} target="_blank" rel="noreferrer">
+                                                <img src={url} alt={`proof ${idx + 1}`} className="h-16 w-20 object-cover rounded-lg border border-[#E0E7E0] hover:opacity-80 transition" />
+                                              </a>
+                                            ))}
+                                          </div>
+                                        )}
+                                        {d.adminResponse ? (
+                                          <div className="bg-emerald-50 border border-emerald-200 p-2.5 rounded-lg">
+                                            <span className="text-[9px] font-bold text-emerald-700 uppercase tracking-wider block mb-1">✅ Admin Response</span>
+                                            <p className="text-emerald-900 leading-relaxed">{d.adminResponse}</p>
+                                            {d.resolvedAt && (
+                                              <span className="text-[9px] text-emerald-500 font-mono block mt-1">
+                                                Resolved {formatNGT(d.resolvedAt)}
+                                              </span>
+                                            )}
+                                          </div>
+                                        ) : (
+                                          <div className="text-[9px] text-amber-600 font-mono">⏳ Awaiting admin review…</div>
+                                        )}
+                                      </div>
+                                    </motion.div>
+                                  )}
+                                </AnimatePresence>
+                              </div>
+                            );
+                          })}
+                          {/* Load more button */}
+                          {orderDisputes.length > 5 && !disputeShowAll && (
+                            <button
+                              onClick={() => setDisputeShowAll(true)}
+                              className="w-full py-2 text-[10px] font-bold text-[#008751] border border-[#008751]/30 rounded-xl hover:bg-[#F0F7F2] transition cursor-pointer uppercase tracking-wide"
+                            >
+                              Load {orderDisputes.length - 5} more dispute{orderDisputes.length - 5 > 1 ? 's' : ''}
+                            </button>
+                          )}
+                          {disputeShowAll && orderDisputes.length > 5 && (
+                            <button
+                              onClick={() => setDisputeShowAll(false)}
+                              className="w-full py-2 text-[10px] font-bold text-gray-400 border border-gray-200 rounded-xl hover:bg-gray-50 transition cursor-pointer uppercase tracking-wide"
+                            >
+                              Show fewer
+                            </button>
+                          )}
                         </div>
                       )}
 
