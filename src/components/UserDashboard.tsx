@@ -512,7 +512,10 @@ export default function UserDashboard({
 
   // ── Notification tracking: orders ────────────────────────────────────────
   useEffect(() => {
-    if (prevOrdersRef.current === null) {
+    // Skip on first render (null) OR when prev was empty — this handles the
+    // race where orders = [] on mount and then loads, which would otherwise
+    // flag every existing order as "new" on re-login.
+    if (prevOrdersRef.current === null || prevOrdersRef.current.length === 0) {
       prevOrdersRef.current = orders;
       return;
     }

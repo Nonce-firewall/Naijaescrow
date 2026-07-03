@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { supabase } from '../lib/supabase';
 import { getOrCreateUserProfile } from '../lib/dbHelpers';
-import { Mail, UserPlus, KeyRound, ArrowLeft, Loader2, AlertCircle } from 'lucide-react';
+import { Mail, UserPlus, KeyRound, ArrowLeft, Loader2, AlertCircle, MailCheck } from 'lucide-react';
 
 interface AuthPageProps {
   onBack: () => void;
@@ -18,6 +18,8 @@ export default function AuthPage({ onBack, onAuthSuccess, addToast, initialMode 
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [authErrorAlert, setAuthErrorAlert] = useState<string | null>(null);
+  const [verificationPending, setVerificationPending] = useState(false);
+  const [verificationEmail, setVerificationEmail] = useState('');
 
   // Admin-reserved emails must only be provisioned via the Supabase dashboard, not the signup form
   const ADMIN_EMAILS = ['cryptogangstar247@gmail.com'];
@@ -51,14 +53,23 @@ export default function AuthPage({ onBack, onAuthSuccess, addToast, initialMode 
         addToast('Sign in successful!', 'success');
         onAuthSuccess();
       } else {
-        const { data, error } = await supabase.auth.signUp({ email, password });
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: { emailRedirectTo: window.location.origin },
+        });
         if (error) throw error;
-        if (data.user) {
-          await getOrCreateUserProfile(data.user.id, data.user.email || '');
+        if (data.session) {
+          // Email confirmation is disabled in Supabase — user is immediately active
+          await getOrCreateUserProfile(data.user!.id, data.user!.email || '');
           addToast('Account created successfully!', 'success');
           onAuthSuccess();
+        } else if (data.user) {
+          // Email confirmation required — show pending screen, don't navigate
+          setVerificationEmail(email);
+          setVerificationPending(true);
         } else {
-          addToast('Check your email to confirm your account.', 'info');
+          addToast('Something went wrong. Please try again.', 'error');
         }
       }
     } catch (err: any) {
@@ -73,6 +84,50 @@ export default function AuthPage({ onBack, onAuthSuccess, addToast, initialMode 
     }
   };
 
+
+  // ── Email verification pending screen ────────────────────────────────────
+  if (verificationPending) {
+    return (
+      <div className="min-h-screen bg-[#F7F9F7] flex flex-col justify-center py-10 px-4 font-sans text-[#1A1A1A]">
+        <motion.div
+          className="w-full max-w-md mx-auto"
+          initial={{ opacity: 0, y: 28 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+        >
+          <div className="bg-white py-10 px-6 sm:px-10 shadow-sm rounded-3xl border border-[#E0E7E0] text-center space-y-5">
+            <div className="flex justify-center">
+              <div className="w-16 h-16 rounded-2xl bg-[#E6F4EA] border border-[#C5DFC9] flex items-center justify-center">
+                <MailCheck className="w-8 h-8 text-[#008751]" />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <h2 className="text-xl font-bold text-[#1A1A1A]">Check your email</h2>
+              <p className="text-sm text-gray-500 leading-relaxed">
+                We sent a verification link to{' '}
+                <span className="font-semibold text-[#1A1A1A]">{verificationEmail}</span>.
+                Click the link to activate your account, then come back and sign in.
+              </p>
+            </div>
+            <div className="pt-2 space-y-3">
+              <button
+                onClick={() => { setVerificationPending(false); setIsLogin(true); setPassword(''); setConfirmPassword(''); }}
+                className="w-full py-3 rounded-xl bg-[#008751] hover:bg-[#007043] text-white font-bold text-sm transition cursor-pointer"
+              >
+                Back to Sign In
+              </button>
+              <button
+                onClick={onBack}
+                className="w-full py-3 rounded-xl border border-[#E0E7E0] text-gray-500 hover:text-[#008751] font-semibold text-sm transition cursor-pointer"
+              >
+                Go to Home
+              </button>
+            </div>
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#F7F9F7] flex flex-col justify-center py-10 px-4 font-sans text-[#1A1A1A]">
