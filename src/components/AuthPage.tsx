@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { supabase } from '../lib/supabase';
 import { getOrCreateUserProfile } from '../lib/dbHelpers';
 import { Mail, UserPlus, KeyRound, ArrowLeft, Loader2, Sparkles, AlertCircle } from 'lucide-react';
@@ -122,12 +123,20 @@ export default function AuthPage({ onBack, onAuthSuccess, addToast, initialMode 
         </button>
       </div>
 
-      <div className="w-full max-w-md mx-auto">
+      <motion.div
+        className="w-full max-w-md mx-auto"
+        initial={{ opacity: 0, y: 28 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+      >
         <div className="flex justify-center mb-6">
-          <img
+          <motion.img
             src="/logo-icon.png"
             alt="9ija Escrow"
             className="h-16 w-auto"
+            initial={{ opacity: 0, scale: 0.75 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
           />
         </div>
         <h2 className="text-center text-2xl sm:text-3xl font-bold text-[#1A1A1A] tracking-tight">
@@ -200,26 +209,34 @@ export default function AuthPage({ onBack, onAuthSuccess, addToast, initialMode 
               </div>
             </div>
 
-            {!isLogin && (
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-[#1A1A1A] mb-1.5">
-                  Confirm Password
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
-                    <UserPlus className="w-4 h-4" />
+            <AnimatePresence>
+              {!isLogin && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.25, ease: 'easeInOut' }}
+                  style={{ overflow: 'hidden' }}
+                >
+                  <label className="block text-xs font-bold uppercase tracking-wider text-[#1A1A1A] mb-1.5">
+                    Confirm Password
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
+                      <UserPlus className="w-4 h-4" />
+                    </div>
+                    <input
+                      type="password"
+                      required
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      className="block w-full pl-10 pr-3 py-3 border border-[#E0E7E0] rounded-xl bg-[#F7F9F7] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#008751] text-sm text-[#1A1A1A]"
+                      placeholder="Repeat password"
+                    />
                   </div>
-                  <input
-                    type="password"
-                    required
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="block w-full pl-10 pr-3 py-3 border border-[#E0E7E0] rounded-xl bg-[#F7F9F7] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#008751] text-sm text-[#1A1A1A]"
-                    placeholder="Repeat password"
-                  />
-                </div>
-              </div>
-            )}
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             <button
               type="submit"
@@ -261,7 +278,7 @@ export default function AuthPage({ onBack, onAuthSuccess, addToast, initialMode 
             </div>
           </div>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }

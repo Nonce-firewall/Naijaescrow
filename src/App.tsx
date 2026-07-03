@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, lazy, Suspense } from 'react';
+import { motion, AnimatePresence, MotionConfig } from 'motion/react';
 import { supabase } from './lib/supabase';
 import {
   getOrCreateUserProfile,
@@ -327,18 +328,36 @@ export default function App() {
 
   if (isInitializing) {
     return (
-      <div className="min-h-screen bg-[#F7F9F7] flex flex-col justify-center items-center font-sans">
-        <div className="w-12 h-12 bg-[#008751] rounded-xl flex items-center justify-center text-white animate-bounce shadow-sm">
-          <div className="w-6 h-6 border-2 border-white rounded-sm"></div>
-        </div>
-        <p className="text-gray-500 font-bold text-xs uppercase tracking-widest mt-4">
-          Securing Ledger...
-        </p>
+      <div className="min-h-screen bg-[#F7F9F7] flex flex-col justify-center items-center font-sans gap-6">
+        <motion.img
+          src="/logo-icon.png"
+          alt="9ija Escrow"
+          className="h-16 w-auto"
+          initial={{ opacity: 0, scale: 0.7 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+        />
+        <motion.div
+          className="flex items-center gap-1.5"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3, duration: 0.3 }}
+        >
+          {[0, 1, 2].map((i) => (
+            <motion.span
+              key={i}
+              className="w-2 h-2 rounded-full bg-[#008751] block"
+              animate={{ y: [0, -6, 0], opacity: [0.3, 1, 0.3] }}
+              transition={{ duration: 0.9, repeat: Infinity, delay: i * 0.18, ease: 'easeInOut' }}
+            />
+          ))}
+        </motion.div>
       </div>
     );
   }
 
   return (
+    <MotionConfig reducedMotion="user">
     <div className="bg-[#F7F9F7] min-h-screen text-[#1A1A1A] flex flex-col">
       <div className="flex-1">
         {currentPage !== 'auth' && (
@@ -354,59 +373,86 @@ export default function App() {
           />
         )}
 
-        {currentPage === 'landing' && (
-          <LandingPage
-            announcements={announcements}
-            settings={settings}
-            onNavigate={navigateToPage}
-          />
-        )}
-
-        {currentPage === 'auth' && (
-          <Suspense fallback={<div className="min-h-screen bg-[#F7F9F7] flex items-center justify-center"><div className="w-8 h-8 border-4 border-[#008751] border-t-transparent rounded-full animate-spin" /></div>}>
-            <AuthPage
-              onBack={() => setCurrentPage('landing')}
-              onAuthSuccess={() => setCurrentPage('dashboard')}
-              addToast={addToast}
-              initialMode={authInitialMode}
-            />
-          </Suspense>
-        )}
-
-        {currentPage === 'dashboard' && userProfile && (
-          <Suspense fallback={<div className="min-h-screen bg-[#F7F9F7] flex items-center justify-center"><div className="w-8 h-8 border-4 border-[#008751] border-t-transparent rounded-full animate-spin" /></div>}>
-            {isAdminMode && userProfile.role === 'admin' ? (
-              <AdminCMS
-                userProfile={userProfile}
-                orders={orders}
-                kycUsers={kycUsers}
-                settings={settings}
+        <AnimatePresence mode="wait">
+          {currentPage === 'landing' && (
+            <motion.div
+              key="landing"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              <LandingPage
                 announcements={announcements}
-                coins={coins}
-                disputes={disputes}
-                addToast={addToast}
-                onRefresh={handleDatabaseRefresh}
-              />
-            ) : (
-              <UserDashboard
-                userProfile={userProfile}
-                orders={orders}
                 settings={settings}
-                announcements={announcements}
-                coins={coins}
-                disputes={disputes}
-                addToast={addToast}
-                onRefresh={handleDatabaseRefresh}
-                mobileBulletinOpen={mobileBulletinOpen}
-                onCloseMobileBulletin={() => setMobileBulletinOpen(false)}
-                onBulletinCountChange={setBulletinCount}
+                onNavigate={navigateToPage}
               />
-            )}
-          </Suspense>
-        )}
+            </motion.div>
+          )}
+
+          {currentPage === 'auth' && (
+            <motion.div
+              key="auth"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.18 }}
+            >
+              <Suspense fallback={<div className="min-h-screen bg-[#F7F9F7] flex items-center justify-center"><div className="w-8 h-8 border-4 border-[#008751] border-t-transparent rounded-full animate-spin" /></div>}>
+                <AuthPage
+                  onBack={() => setCurrentPage('landing')}
+                  onAuthSuccess={() => setCurrentPage('dashboard')}
+                  addToast={addToast}
+                  initialMode={authInitialMode}
+                />
+              </Suspense>
+            </motion.div>
+          )}
+
+          {currentPage === 'dashboard' && userProfile && (
+            <motion.div
+              key="dashboard"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.18 }}
+            >
+              <Suspense fallback={<div className="min-h-screen bg-[#F7F9F7] flex items-center justify-center"><div className="w-8 h-8 border-4 border-[#008751] border-t-transparent rounded-full animate-spin" /></div>}>
+                {isAdminMode && userProfile.role === 'admin' ? (
+                  <AdminCMS
+                    userProfile={userProfile}
+                    orders={orders}
+                    kycUsers={kycUsers}
+                    settings={settings}
+                    announcements={announcements}
+                    coins={coins}
+                    disputes={disputes}
+                    addToast={addToast}
+                    onRefresh={handleDatabaseRefresh}
+                  />
+                ) : (
+                  <UserDashboard
+                    userProfile={userProfile}
+                    orders={orders}
+                    settings={settings}
+                    announcements={announcements}
+                    coins={coins}
+                    disputes={disputes}
+                    addToast={addToast}
+                    onRefresh={handleDatabaseRefresh}
+                    mobileBulletinOpen={mobileBulletinOpen}
+                    onCloseMobileBulletin={() => setMobileBulletinOpen(false)}
+                    onBulletinCountChange={setBulletinCount}
+                  />
+                )}
+              </Suspense>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       <Notification toasts={toasts} onClose={removeToast} />
     </div>
+    </MotionConfig>
   );
 }

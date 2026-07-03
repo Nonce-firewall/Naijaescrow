@@ -1,16 +1,27 @@
 import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { ShieldCheck, TrendingUp, Lock, ArrowRight, Bell, UserCheck, X, Mail, MessageCircle } from 'lucide-react';
 import { Announcement, AdminSettings } from '../types';
 
 type ModalType = 'privacy' | 'terms' | 'support' | null;
 
 function Modal({ type, onClose }: { type: ModalType; onClose: () => void }) {
-  if (!type) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={onClose}>
-      <div
+    <motion.div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+      onClick={onClose}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.2 }}
+    >
+      <motion.div
         className="bg-white rounded-3xl shadow-2xl w-full max-w-lg max-h-[85vh] flex flex-col overflow-hidden"
         onClick={(e) => e.stopPropagation()}
+        initial={{ scale: 0.95, y: 24, opacity: 0 }}
+        animate={{ scale: 1, y: 0, opacity: 1 }}
+        exit={{ scale: 0.95, y: 12, opacity: 0 }}
+        transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
       >
         <div className="flex items-center justify-between px-6 py-4 border-b border-[#E0E7E0] shrink-0">
           <h2 className="font-bold text-[#1A1A1A] text-base">
@@ -115,8 +126,8 @@ function Modal({ type, onClose }: { type: ModalType; onClose: () => void }) {
             </div>
           )}
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }
 
@@ -135,7 +146,9 @@ export default function LandingPage({ announcements, settings, onNavigate }: Lan
 
   return (
     <div className="bg-[#F7F9F7] min-h-screen font-sans text-[#1A1A1A]">
-      <Modal type={activeModal} onClose={() => setActiveModal(null)} />
+      <AnimatePresence>
+        {activeModal && <Modal key={activeModal} type={activeModal} onClose={() => setActiveModal(null)} />}
+      </AnimatePresence>
 
       {/* Scrolling Announcement Ticker */}
       {publicAnnouncements.length > 0 && (
@@ -168,22 +181,42 @@ export default function LandingPage({ announcements, settings, onNavigate }: Lan
         <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10 items-center">
 
           <div className="space-y-5">
-            <div className="inline-flex items-center gap-2 bg-[#008751]/20 border border-[#008751]/30 px-3 py-1.5 rounded-full text-[#00FF85] text-[11px] font-bold uppercase tracking-wider">
+            <motion.div
+              className="inline-flex items-center gap-2 bg-[#008751]/20 border border-[#008751]/30 px-3 py-1.5 rounded-full text-[#00FF85] text-[11px] font-bold uppercase tracking-wider"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
+            >
               <ShieldCheck className="w-3.5 h-3.5" />
               Direct NGN / USDT P2P Escrow
-            </div>
+            </motion.div>
 
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight leading-tight">
+            <motion.h1
+              className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight leading-tight"
+              initial={{ opacity: 0, y: 22 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
+            >
               Nigeria's Premier<br />
               <span className="text-[#00FF85]">P2P Escrow</span> Ledger
-            </h1>
+            </motion.h1>
 
-            <p className="text-sm sm:text-base text-gray-300 max-w-md leading-relaxed">
+            <motion.p
+              className="text-sm sm:text-base text-gray-300 max-w-md leading-relaxed"
+              initial={{ opacity: 0, y: 18 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.55, delay: 0.16, ease: [0.16, 1, 0.3, 1] }}
+            >
               The safest way to trade NGN for USDT. Decentralized transaction tracking, rigorous KYC, and instant admin approvals.
-            </p>
+            </motion.p>
 
             {/* Rate card */}
-            <div className="bg-[#111] border border-white/10 rounded-2xl p-4 flex items-center justify-between max-w-sm">
+            <motion.div
+              className="bg-[#111] border border-white/10 rounded-2xl p-4 flex items-center justify-between max-w-sm"
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.55, delay: 0.24, ease: [0.16, 1, 0.3, 1] }}
+            >
               <div>
                 <span className="text-gray-400 text-[10px] font-bold uppercase tracking-wider block mb-1">Live Exchange Rate</span>
                 <div className="flex items-end gap-2">
@@ -194,27 +227,41 @@ export default function LandingPage({ announcements, settings, onNavigate }: Lan
               <div className="text-[10px] font-bold px-2.5 py-1 rounded-lg bg-[#008751]/20 border border-[#008751]/30 text-[#00FF85] animate-pulse">
                 LIVE
               </div>
-            </div>
+            </motion.div>
 
-            <div className="flex flex-col sm:flex-row gap-3 pt-1">
-              <button
+            <motion.div
+              className="flex flex-col sm:flex-row gap-3 pt-1"
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.32, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <motion.button
                 onClick={() => onNavigate('auth', 'signup')}
                 className="inline-flex items-center justify-center gap-2 bg-[#008751] hover:bg-[#007043] text-white font-bold px-6 py-3.5 rounded-xl transition cursor-pointer text-sm"
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
               >
                 Create Free Account
                 <ArrowRight className="w-4 h-4" />
-              </button>
-              <button
+              </motion.button>
+              <motion.button
                 onClick={() => onNavigate('auth', 'signin')}
                 className="inline-flex items-center justify-center border border-gray-700 hover:border-gray-500 text-white font-semibold px-6 py-3.5 rounded-xl transition cursor-pointer text-sm"
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
               >
                 Sign In to Trade
-              </button>
-            </div>
+              </motion.button>
+            </motion.div>
           </div>
 
           {/* Dashboard mockup */}
-          <div className="w-full max-w-sm mx-auto lg:max-w-none">
+          <motion.div
+            className="w-full max-w-sm mx-auto lg:max-w-none"
+            initial={{ opacity: 0, x: 40 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.65, delay: 0.22, ease: [0.16, 1, 0.3, 1] }}
+          >
             <div className="bg-slate-900 rounded-xl border border-slate-800 p-3">
               <div className="flex items-center gap-1.5 pb-2 px-1 border-b border-slate-800">
                 <span className="w-2 h-2 rounded-full bg-rose-500"></span>
@@ -256,7 +303,7 @@ export default function LandingPage({ announcements, settings, onNavigate }: Lan
                 </div>
               </div>
             </div>
-          </div>
+          </motion.div>
 
         </div>
       </header>
@@ -289,14 +336,22 @@ export default function LandingPage({ announcements, settings, onNavigate }: Lan
               title: 'Zero Slippage',
               desc: 'The rate locked at order creation is your exact payout rate. Standard network mining fees are covered by 9ija Escrow.'
             }
-          ].map((f) => (
-            <div key={f.title} className="bg-white p-6 rounded-2xl border border-[#E0E7E0] hover:border-[#008751]/30 transition">
+          ].map((f, i) => (
+            <motion.div
+              key={f.title}
+              className="bg-white p-6 rounded-2xl border border-[#E0E7E0] hover:border-[#008751]/30 transition-colors"
+              initial={{ opacity: 0, y: 28 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: '-50px' }}
+              transition={{ duration: 0.5, delay: i * 0.1 }}
+              whileHover={{ y: -4, transition: { duration: 0.2 } }}
+            >
               <div className="p-2.5 bg-[#E6F4EA] text-[#008751] rounded-xl w-fit mb-4">
                 {f.icon}
               </div>
               <h3 className="text-base font-bold mb-2 text-[#1A1A1A]">{f.title}</h3>
               <p className="text-gray-500 leading-relaxed text-sm">{f.desc}</p>
-            </div>
+            </motion.div>
           ))}
         </div>
       </section>

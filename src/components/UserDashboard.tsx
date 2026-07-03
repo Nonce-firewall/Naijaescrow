@@ -652,7 +652,12 @@ export default function UserDashboard({
 
       {/* Suspended account banner */}
       {userProfile.accountStatus === 'suspended' && (
-        <div className="mb-6 bg-amber-50 border border-amber-300 rounded-2xl p-5 flex gap-4 items-start">
+        <motion.div
+          className="mb-6 bg-amber-50 border border-amber-300 rounded-2xl p-5 flex gap-4 items-start"
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+        >
           <ShieldOff className="w-6 h-6 text-amber-600 shrink-0 mt-0.5" />
           <div>
             <div className="font-bold text-amber-900 text-sm">Account Suspended</div>
@@ -664,12 +669,17 @@ export default function UserDashboard({
             )}
             <div className="mt-2 text-xs text-amber-700">Contact support to appeal or resolve the issue.</div>
           </div>
-        </div>
+        </motion.div>
       )}
 
       {/* Terminated account banner */}
       {userProfile.accountStatus === 'terminated' && (
-        <div className="mb-6 bg-red-50 border border-red-300 rounded-2xl p-5 flex gap-4 items-start">
+        <motion.div
+          className="mb-6 bg-red-50 border border-red-300 rounded-2xl p-5 flex gap-4 items-start"
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+        >
           <AlertOctagon className="w-6 h-6 text-red-600 shrink-0 mt-0.5" />
           <div>
             <div className="font-bold text-red-900 text-sm">Account Terminated</div>
@@ -680,11 +690,16 @@ export default function UserDashboard({
               </div>
             )}
           </div>
-        </div>
+        </motion.div>
       )}
 
       {/* Real-time exchange rate banner */}
-      <div className="bg-[#1A1A1A] text-white rounded-2xl sm:rounded-3xl px-4 py-4 sm:p-6 shadow-sm border border-[#E0E7E0]/10 flex items-center justify-between gap-4 mb-5 sm:mb-8 relative overflow-hidden">
+      <motion.div
+        className="bg-[#1A1A1A] text-white rounded-2xl sm:rounded-3xl px-4 py-4 sm:p-6 shadow-sm border border-[#E0E7E0]/10 flex items-center justify-between gap-4 mb-5 sm:mb-8 relative overflow-hidden"
+        initial={{ opacity: 0, y: -16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: 'easeOut' }}
+      >
         <div className="relative z-10 space-y-1 sm:space-y-2">
           <span className="text-[9px] sm:text-[10px] uppercase font-bold tracking-wider text-[#00FF85] bg-[#E6F4EA]/10 border border-[#E6F4EA]/20 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full inline-block">
             Live Exchange Rate
@@ -717,7 +732,7 @@ export default function UserDashboard({
         <div className="absolute -right-12 -bottom-12 opacity-[0.03]">
           <div className="w-44 h-44 border-[24px] border-white rounded-full"></div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Grid: Main Panel (left) & Updates notice (right) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -858,6 +873,14 @@ export default function UserDashboard({
             onTouchStart={handleTabTouchStart}
             onTouchMove={handleTabTouchMove}
             onTouchEnd={handleTabTouchEnd}
+          >
+          <AnimatePresence mode="wait" initial={false}>
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.18, ease: 'easeOut' }}
           >
           {/* TAB 1: Start Order (Trade) */}
           {activeTab === 'trade' && (
@@ -1803,12 +1826,19 @@ export default function UserDashboard({
               )}
             </div>
           )}
+          </motion.div>
+          </AnimatePresence>
           </div>
 
         </div>
 
         {/* Right column (Notice board & Guidelines) */}
-        <div className="lg:col-span-4 space-y-6">
+        <motion.div
+          className="lg:col-span-4 space-y-6"
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.4, delay: 0.15, ease: 'easeOut' }}
+        >
           
           {/* System Bulletin — desktop/large screen only; mobile uses the bell drawer */}
           <div className="hidden lg:block bg-white rounded-3xl border border-[#E0E7E0] shadow-sm p-6 space-y-4">
@@ -1941,7 +1971,7 @@ export default function UserDashboard({
             </ul>
           </div>
 
-        </div>
+        </motion.div>
 
       </div>
 
