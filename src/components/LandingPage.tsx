@@ -388,7 +388,7 @@ function StatsStrip() {
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-2">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-400 font-mono">Live Platform Stats</span>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-400 font-mono">Live Stats</span>
           </div>
           <span className="text-[10px] text-slate-500 font-mono">
             {loading ? 'Loading…' : `Updated ${lastSec}s ago`}
@@ -470,7 +470,7 @@ function TradingWidget({
         <span className="w-2.5 h-2.5 rounded-full bg-amber-500/80" />
         <span className="w-2.5 h-2.5 rounded-full bg-emerald-500/80" />
         <div className="mx-auto text-[10px] text-slate-500 font-mono bg-slate-900 px-3 py-0.5 rounded-full border border-slate-800">
-          9ijaescrow.com/dashboard
+          9ijaescrow.com.ng/dashboard
         </div>
       </div>
 
@@ -481,10 +481,10 @@ function TradingWidget({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-emerald-400 text-[10px] font-bold">9ija Escrow Web</span>
+            <span className="text-emerald-400 text-[10px] font-bold">9ija Escrownian</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="text-[9px] text-slate-400 uppercase tracking-wider">Demo Mode</span>
+            <span className="text-[9px] text-slate-400 uppercase tracking-wider">Mode:</span>
             <span className="text-[9px] text-amber-400 font-bold uppercase border border-amber-400/30 bg-amber-400/10 px-1.5 py-0.5 rounded">GUEST</span>
           </div>
         </div>
@@ -499,7 +499,7 @@ function TradingWidget({
               transition={{ duration: 0.7 }}
               className="text-emerald-400 font-bold text-base"
             >
-              ₦{rate.toLocaleString()}<span className="text-slate-500 text-[10px] font-normal"> / USDT</span>
+              ₦{rate.toLocaleString()}<span className="text-slate-500 text-[10px] font-normal"> /USDT</span>
             </motion.div>
           </div>
           <div className="flex items-center gap-1 text-[9px] font-bold px-2 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
@@ -614,7 +614,7 @@ function TradingWidget({
         {/* KYC notice */}
         <div className="flex items-center gap-1.5 px-2">
           <UserCheck className="w-3 h-3 text-slate-500 shrink-0" />
-          <span className="text-[9px] text-slate-500">KYC verification required to trade · Free account</span>
+          <span className="text-[9px] text-slate-500">KYC verification required to commence trade</span>
         </div>
       </div>
     </div>
@@ -679,7 +679,7 @@ export default function LandingPage({ announcements, settings, onNavigate }: Lan
               transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
             >
               <ShieldCheck className="w-3.5 h-3.5" />
-              Direct NGN / USDT P2P Escrow
+              Direct NGN/USDT P2P Escrow
             </motion.div>
 
             <motion.h1
@@ -698,7 +698,7 @@ export default function LandingPage({ announcements, settings, onNavigate }: Lan
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.55, delay: 0.16, ease: [0.16, 1, 0.3, 1] }}
             >
-              The safest way to trade NGN for USDT. Decentralized transaction tracking, rigorous KYC, and instant admin approvals.
+              The safest way to trade your Naira for USDT & other Cryptocurrencies. Trusted and guaranteed p2p transaction tracking, rigorous KYC, and instant admin approvals.
             </motion.p>
 
             {/* Rate card */}
@@ -712,7 +712,7 @@ export default function LandingPage({ announcements, settings, onNavigate }: Lan
                 <span className="text-gray-400 text-[10px] font-bold uppercase tracking-wider block mb-1">Live Exchange Rate</span>
                 <div className="flex items-end gap-2">
                   <span className="text-2xl sm:text-3xl font-bold text-[#00FF85]">₦{settings.usdtRate.toLocaleString()}</span>
-                  <span className="text-xs text-gray-400 mb-0.5">/ 1 USDT</span>
+                  <span className="text-xs text-gray-400 mb-0.5">/USDT</span>
                 </div>
               </div>
               <div className="text-[10px] font-bold px-2.5 py-1 rounded-lg bg-[#008751]/20 border border-[#008751]/30 text-[#00FF85] animate-pulse">
@@ -728,7 +728,7 @@ export default function LandingPage({ announcements, settings, onNavigate }: Lan
             >
               <motion.button
                 onClick={() => onNavigate('auth', 'signup')}
-                className="inline-flex items-center justify-center gap-2 bg-[#008751] hover:bg-[#007043] text-white font-bold px-6 py-2.5 md:py-3.5 rounded-xl transition cursor-pointer text-sm"
+                className="inline-flex items-center justify-center gap-2 bg-[#008751] hover:bg-[#007043] text-white font-bold px-5 py-2 md:py-3 rounded-xl transition cursor-pointer text-sm"
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.97 }}
               >
@@ -737,7 +737,7 @@ export default function LandingPage({ announcements, settings, onNavigate }: Lan
               </motion.button>
               <motion.button
                 onClick={() => onNavigate('auth', 'signin')}
-                className="inline-flex items-center justify-center border border-gray-700 hover:border-gray-500 text-white font-semibold px-6 py-2.5 md:py-3.5 rounded-xl transition cursor-pointer text-sm"
+                className="inline-flex items-center justify-center border border-gray-700 hover:border-gray-500 text-white font-semibold px-5 py-2 md:py-3 rounded-xl transition cursor-pointer text-sm"
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.97 }}
               >
