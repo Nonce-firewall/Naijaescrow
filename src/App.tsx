@@ -269,7 +269,24 @@ export default function App() {
         filter: `id=eq.${currentUser.id}`
       }, (payload) => {
         if (!payload.new) return;
-        const newProfile = rowToUserProfile(payload.new);
+        // Merge the incoming partial payload with the current profile row so that
+        // fields absent from the realtime event (e.g. kyc_data when only
+        // notification_preferences changed) are preserved rather than dropped.
+        const cur = userProfileRef.current;
+        const baseRow = cur ? {
+          id: cur.uid,
+          email: cur.email,
+          role: cur.role,
+          kyc_status: cur.kycStatus,
+          kyc_data: cur.kycData,
+          account_status: cur.accountStatus,
+          suspend_reason: cur.suspendReason,
+          terminate_reason: cur.terminateReason,
+          notification_preferences: cur.notificationPreferences,
+          created_at: cur.createdAt,
+          deleted_at: cur.deletedAt,
+        } : {};
+        const newProfile = rowToUserProfile({ ...baseRow, ...payload.new });
         const old = userProfileRef.current;
 
         // KYC status notifications
