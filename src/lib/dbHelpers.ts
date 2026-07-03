@@ -451,18 +451,15 @@ export interface PublicStats {
 }
 
 export async function getPublicStats(): Promise<PublicStats> {
-  const { data, error } = await supabase
-    .from('orders')
-    .select('status, crypto_amount, user_id');
+  // Uses a SECURITY DEFINER RPC function so that RLS on the orders table
+  // does not block anonymous visitors — only aggregate totals are returned,
+  // no individual row data is exposed.
+  const { data, error } = await supabase.rpc('get_public_stats');
   if (error) throw new Error(error.message);
-  const rows = data || [];
-  const completed = rows.filter((r) => r.status === 'completed');
-  const usdtVolume = completed.reduce((sum: number, r: any) => sum + (r.crypto_amount || 0), 0);
-  const activeTraders = new Set(rows.map((r: any) => r.user_id)).size;
   return {
-    tradesCompleted: completed.length,
-    usdtVolume,
-    activeTraders,
+    tradesCompleted: data?.trades_completed  ?? 0,
+    usdtVolume:      data?.usdt_volume       ?? 0,
+    activeTraders:   data?.active_traders    ?? 0,
   };
 }
 

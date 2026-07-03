@@ -115,6 +115,30 @@ GRANT SELECT, UPDATE ON TABLE users TO anon;
 GRANT SELECT, UPDATE ON TABLE users TO authenticated;
 
 -- ============================================================
+-- ADDENDUM: Public stats RPC function
+-- Run this if you already ran the migration above previously.
+-- Creates a SECURITY DEFINER function that returns aggregate
+-- platform stats (trade counts, volume, traders) without
+-- exposing individual rows — safe for anonymous/public access.
+-- ============================================================
+
+CREATE OR REPLACE FUNCTION get_public_stats()
+RETURNS JSON
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT json_build_object(
+    'trades_completed', (SELECT COUNT(*)::int          FROM orders WHERE status = 'completed'),
+    'usdt_volume',      (SELECT COALESCE(SUM(crypto_amount),0)::numeric FROM orders WHERE status = 'completed'),
+    'active_traders',   (SELECT COUNT(DISTINCT user_id)::int FROM orders)
+  );
+$$;
+
+-- Allow both anonymous visitors and authenticated users to call this function
+GRANT EXECUTE ON FUNCTION get_public_stats() TO anon, authenticated;
+
+-- ============================================================
 -- ADDENDUM: Account deletion audit trail
 -- Run this if you already ran the migration above previously.
 -- Safe to run multiple times (idempotent).
