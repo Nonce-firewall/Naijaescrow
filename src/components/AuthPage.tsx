@@ -161,9 +161,7 @@ export default function AuthPage({ onBack, onAuthSuccess, addToast, initialMode 
           {isLogin ? 'Sign in to 9ija Escrow' : 'Create a Trader Account'}
         </h2>
         {!isLogin && (
-          <p className="mt-1.5 text-center text-[11px] text-[#008751] font-semibold">
-            Signup is for traders only. Admin accounts are provisioned by the platform.
-          </p>
+          
         )}
         <p className="mt-2 text-center text-sm text-gray-500">
           Or{' '}
@@ -171,7 +169,7 @@ export default function AuthPage({ onBack, onAuthSuccess, addToast, initialMode 
             onClick={() => { setIsLogin(!isLogin); setPassword(''); setConfirmPassword(''); }}
             className="font-bold text-[#008751] hover:text-[#007043] cursor-pointer"
           >
-            {isLogin ? 'create a new trader account' : 'sign in to your existing portal'}
+            {isLogin ? 'create a new trader account' : 'SIGN in to your existing account'}
           </button>
         </p>
 
