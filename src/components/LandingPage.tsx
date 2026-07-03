@@ -280,7 +280,7 @@ function HowItWorks({ onNavigate }: { onNavigate: () => void }) {
         >
           <motion.button
             onClick={onNavigate}
-            className="inline-flex items-center gap-2 bg-[#008751] hover:bg-[#007043] text-white font-bold px-7 py-3.5 rounded-xl transition text-sm cursor-pointer shadow-lg shadow-emerald-900/20"
+            className="inline-flex items-center gap-2 bg-[#008751] hover:bg-[#007043] text-white font-bold px-4 py-2 rounded-xl transition text-sm cursor-pointer shadow-lg shadow-emerald-900/20"
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
           >
@@ -485,7 +485,7 @@ function TradingWidget({
           </div>
           <div className="flex items-center gap-1.5">
             <span className="text-[9px] text-slate-400 uppercase tracking-wider">Mode:</span>
-            <span className="text-[9px] text-amber-400 font-bold uppercase border border-amber-400/30 bg-amber-400/10 px-1.5 py-0.5 rounded">GUEST</span>
+            <span className="text-[9px] text-amber-400 font-bold uppercase border border-amber-400/30 bg-amber-400/10 px-1.5 py-0.5 rounded">DEMO</span>
           </div>
         </div>
 
