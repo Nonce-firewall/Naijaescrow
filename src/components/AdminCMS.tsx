@@ -32,6 +32,7 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { UserProfile, Order, AdminSettings, Announcement, KYCData, CoinListing, Dispute } from '../types';
+import { formatNGT, formatNGTDate } from '../lib/dateUtils';
 import { 
   processOrder, 
   handleKYCReview, 
@@ -784,7 +785,7 @@ export default function AdminCMS({
                             </span>
                           </div>
                           <div className="text-slate-500">
-                            User: <span className="font-mono">{ord.userEmail}</span> • {new Date(ord.createdAt).toLocaleString()}
+                            User: <span className="font-mono">{ord.userEmail}</span> • {formatNGT(ord.createdAt)}
                           </div>
                           <div className="font-bold text-slate-700">
                             {ord.cryptoAmount} USDT at ₦{ord.rate} = <span className="text-emerald-700">₦{ord.ngnAmount.toLocaleString()}</span>
@@ -1155,7 +1156,7 @@ export default function AdminCMS({
                                   {!ann.isActive && <span className="bg-slate-200 text-slate-500 text-[8px] px-1.5 rounded font-mono font-bold">ARCHIVED</span>}
                                 </div>
                                 <p className="text-[11px] text-slate-500 leading-relaxed">{ann.content}</p>
-                                <span className="text-[9px] text-slate-400 font-mono block">Published: {new Date(ann.createdAt).toLocaleDateString()}</span>
+                                <span className="text-[9px] text-slate-400 font-mono block">Published: {formatNGTDate(ann.createdAt)}</span>
                               </div>
                               <div className="flex items-center gap-1.5 shrink-0">
                                 <button
@@ -1305,7 +1306,7 @@ export default function AdminCMS({
                                   }`}>{o.status}</span>
                                   <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase ${o.type === 'buy' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'}`}>{o.type}</span>
                                 </div>
-                                <div className="text-xs text-slate-500 font-mono">{new Date(o.createdAt).toLocaleString()}</div>
+                                <div className="text-xs text-slate-500 font-mono">{formatNGT(o.createdAt)}</div>
                               </div>
                               <button
                                 onClick={() => setSelectedOrder(o)}
@@ -1401,7 +1402,7 @@ export default function AdminCMS({
                           }`}>{d.status}</span>
                         </div>
                         <div className="text-slate-500">
-                          From: <span className="font-mono">{d.userEmail}</span> • {new Date(d.createdAt).toLocaleString()}
+                          From: <span className="font-mono">{d.userEmail}</span> • {formatNGT(d.createdAt)}
                         </div>
                         <div className="text-slate-700 max-w-md line-clamp-2">{d.message}</div>
                         {d.imageUrls && d.imageUrls.length > 0 && (
@@ -1649,7 +1650,7 @@ export default function AdminCMS({
                       ) : (
                         kycUsers.filter(u => u.accountStatus === 'deleted').map((usr) => {
                           const deletedDate = usr.deletedAt
-                            ? new Date(usr.deletedAt).toLocaleString()
+                            ? formatNGT(usr.deletedAt)
                             : 'Unknown';
                           return (
                             <tr key={usr.uid} className="hover:bg-slate-50/50 transition">
@@ -2254,7 +2255,7 @@ export default function AdminCMS({
                 <div className="grid grid-cols-2 gap-3 text-xs font-mono">
                   <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
                     <span className="text-slate-400 block text-[9px] uppercase">Joined</span>
-                    <span className="font-bold text-slate-800">{new Date(selectedTrader.createdAt).toLocaleDateString()}</span>
+                    <span className="font-bold text-slate-800">{formatNGTDate(selectedTrader.createdAt)}</span>
                   </div>
                   <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
                     <span className="text-slate-400 block text-[9px] uppercase">UID</span>
@@ -2450,7 +2451,7 @@ export default function AdminCMS({
                       <span className="text-amber-600 block text-[9px] uppercase">Deleted At</span>
                       <span className="font-bold text-amber-900">
                         {complianceViewUser.deletedAt
-                          ? new Date(complianceViewUser.deletedAt).toLocaleString()
+                          ? formatNGT(complianceViewUser.deletedAt)
                           : 'Unknown'}
                       </span>
                     </div>
@@ -2494,7 +2495,7 @@ export default function AdminCMS({
                       <div className="col-span-2 p-3 bg-slate-50 rounded-xl border border-slate-100">
                         <span className="text-slate-400 block text-[9px] uppercase">KYC Submitted</span>
                         <span className="font-bold text-slate-800">
-                          {new Date(complianceViewUser.kycData.submittedAt).toLocaleString()}
+                          {formatNGT(complianceViewUser.kycData.submittedAt)}
                         </span>
                       </div>
                     </div>
@@ -2564,7 +2565,7 @@ export default function AdminCMS({
                 <div>
                   <span className="text-slate-400 font-mono block text-[9px] uppercase mb-1">From</span>
                   <span className="font-bold text-slate-800">{selectedDispute.userEmail}</span>
-                  <span className="text-slate-400 ml-2">{new Date(selectedDispute.createdAt).toLocaleString()}</span>
+                  <span className="text-slate-400 ml-2">{formatNGT(selectedDispute.createdAt)}</span>
                 </div>
                 <div>
                   <span className="text-slate-400 font-mono block text-[9px] uppercase mb-1">Trader Message</span>

@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { formatNGT, formatNGTDate } from '../lib/dateUtils';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   TrendingUp, 
@@ -1461,7 +1462,7 @@ export default function UserDashboard({
                     <tbody className="divide-y divide-slate-100 text-xs">
                       {orders.slice(0, ordersLimit).map((ord) => {
                         const isBuy = ord.type === 'buy';
-                        const dateStr = new Date(ord.createdAt).toLocaleDateString();
+                        const dateStr = formatNGTDate(ord.createdAt);
 
                         return (
                           <tr key={ord.id} className="hover:bg-slate-50/50">
@@ -1589,7 +1590,7 @@ export default function UserDashboard({
                     <div className="flex justify-between">
                       <span className="text-gray-400 font-mono font-medium">SUBMITTED ON:</span>
                       <span className="font-bold text-gray-800">
-                        {userProfile.kycData?.submittedAt ? new Date(userProfile.kycData.submittedAt).toLocaleString() : 'Just now'}
+                        {userProfile.kycData?.submittedAt ? formatNGT(userProfile.kycData.submittedAt) : 'Just now'}
                       </span>
                     </div>
                   </div>
@@ -1935,7 +1936,7 @@ export default function UserDashboard({
                       >
                         <ChevronRight className={`w-3 h-3 text-[#008751] shrink-0 transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`} />
                         <h5 className="font-bold text-[#1A1A1A] text-xs flex-1 leading-snug">{ann.title}</h5>
-                        <span className="text-[9px] text-gray-400 font-mono shrink-0">{new Date(ann.createdAt).toLocaleDateString()}</span>
+                        <span className="text-[9px] text-gray-400 font-mono shrink-0">{formatNGTDate(ann.createdAt)}</span>
                         <button
                           onClick={(e) => { e.stopPropagation(); dismissAnnouncement(ann.id); }}
                           title="Dismiss permanently"
@@ -2037,12 +2038,12 @@ export default function UserDashboard({
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-400 font-mono">CREATION TIMESTAMP:</span>
-                    <span className="font-mono text-gray-600">{new Date(viewReceipt.createdAt).toLocaleString()}</span>
+                    <span className="font-mono text-gray-600">{formatNGT(viewReceipt.createdAt)}</span>
                   </div>
                   {viewReceipt.processedAt && (
                     <div className="flex justify-between">
                       <span className="text-gray-400 font-mono">PROCESSING TIMESTAMP:</span>
-                      <span className="font-mono text-gray-600">{new Date(viewReceipt.processedAt).toLocaleString()}</span>
+                      <span className="font-mono text-gray-600">{formatNGT(viewReceipt.processedAt)}</span>
                     </div>
                   )}
                   
@@ -2128,7 +2129,7 @@ export default function UserDashboard({
                             <div key={d.id} className="bg-[#F7F9F7] border border-[#E0E7E0] rounded-xl p-3 space-y-2 text-[11px]">
                               <div className="flex items-center justify-between">
                                 <span className="text-[9px] text-gray-400 font-mono">
-                                  Dispute #{i + 1} · {new Date(d.createdAt).toLocaleString()}
+                                  Dispute #{i + 1} · {formatNGT(d.createdAt)}
                                 </span>
                                 <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase ${
                                   d.status === 'open' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'
@@ -2150,7 +2151,7 @@ export default function UserDashboard({
                                   <p className="text-emerald-900 leading-relaxed">{d.adminResponse}</p>
                                   {d.resolvedAt && (
                                     <span className="text-[9px] text-emerald-500 font-mono block mt-1">
-                                      Resolved {new Date(d.resolvedAt).toLocaleString()}
+                                      Resolved {formatNGT(d.resolvedAt)}
                                     </span>
                                   )}
                                 </div>
@@ -2376,7 +2377,7 @@ export default function UserDashboard({
                           >
                             <ChevronRight className={`w-3 h-3 text-[#008751] shrink-0 transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`} />
                             <h5 className="font-bold text-[#1A1A1A] text-xs flex-1 leading-snug">{ann.title}</h5>
-                            <span className="text-[9px] text-gray-400 font-mono shrink-0">{new Date(ann.createdAt).toLocaleDateString()}</span>
+                            <span className="text-[9px] text-gray-400 font-mono shrink-0">{formatNGTDate(ann.createdAt)}</span>
                             <button
                               onClick={(e) => { e.stopPropagation(); dismissAnnouncement(ann.id); }}
                               title="Dismiss"
