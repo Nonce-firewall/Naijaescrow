@@ -160,16 +160,14 @@ export default function AuthPage({ onBack, onAuthSuccess, addToast, initialMode 
         <h2 className="text-center text-2xl sm:text-3xl font-bold text-[#1A1A1A] tracking-tight">
           {isLogin ? 'Sign in to 9ija Escrow' : 'Create a Trader Account'}
         </h2>
-        {!isLogin && (
-          
-        )}
+        
         <p className="mt-2 text-center text-sm text-gray-500">
           Or{' '}
           <button
             onClick={() => { setIsLogin(!isLogin); setPassword(''); setConfirmPassword(''); }}
             className="font-bold text-[#008751] hover:text-[#007043] cursor-pointer"
           >
-            {isLogin ? 'create a new trader account' : 'SIGN in to your existing account'}
+            {isLogin ? 'Create a new trader account' : 'Sign in to your existing account'}
           </button>
         </p>
 
