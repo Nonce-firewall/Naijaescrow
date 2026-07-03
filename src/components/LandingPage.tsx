@@ -284,10 +284,10 @@ function HowItWorks({ onNavigate }: { onNavigate: () => void }) {
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
           >
-            Get Started — It's Free
+            Get Started
             <ArrowRight className="w-4 h-4" />
           </motion.button>
-          <span className="text-xs text-gray-400">No credit card · KYC in minutes</span>
+          <span className="text-xs text-gray-400">KYC in minutes!</span>
         </motion.div>
 
       </div>
