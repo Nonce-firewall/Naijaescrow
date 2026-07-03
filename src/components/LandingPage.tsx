@@ -683,7 +683,7 @@ export default function LandingPage({ announcements, settings, onNavigate }: Lan
             </motion.div>
 
             <motion.h1
-              className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight leading-tight"
+              className="text-2xl sm:text-4xl md:text-3xl font-bold tracking-tight leading-tight"
               initial={{ opacity: 0, y: 22 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
@@ -698,7 +698,7 @@ export default function LandingPage({ announcements, settings, onNavigate }: Lan
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.55, delay: 0.16, ease: [0.16, 1, 0.3, 1] }}
             >
-              The safest way to trade your Naira for USDT & other Cryptocurrencies. Trusted and guaranteed p2p transaction tracking, rigorous KYC, and instant admin approvals.
+              The safest way to trade your Naira & other cryptocurrencies for USDT. Trusted and guaranteed p2p transaction tracking, rigorous KYC, and instant admin approvals.
             </motion.p>
 
             {/* Rate card */}
