@@ -23,6 +23,7 @@ import Notification, { ToastMessage } from './components/Notification';
 const AuthPage = lazy(() => import('./components/AuthPage'));
 const UserDashboard = lazy(() => import('./components/UserDashboard'));
 const AdminCMS = lazy(() => import('./components/AdminCMS'));
+const ResetPasswordPage = lazy(() => import('./components/ResetPasswordPage'));
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState<'landing' | 'auth' | 'dashboard'>('landing');
@@ -32,6 +33,15 @@ export default function App() {
   const isEmailVerificationRef = useRef(
     typeof window !== 'undefined' && window.location.hash.includes('type=signup')
   );
+  // Detect password-recovery redirect (link from reset email)
+  const isPasswordRecoveryRef = useRef(
+    typeof window !== 'undefined' && window.location.hash.includes('type=recovery')
+  );
+
+  // Show the set-new-password screen when a recovery session is active
+  const [showPasswordReset, setShowPasswordReset] = useState<boolean>(false);
+  // Ref mirrors the state so onAuthStateChange closure (created once) never reads a stale value
+  const showPasswordResetRef = useRef<boolean>(false);
 
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
@@ -61,6 +71,8 @@ export default function App() {
 
   // Keep userProfileRef in sync so realtime callbacks can read current value without stale closures
   useEffect(() => { userProfileRef.current = userProfile; }, [userProfile]);
+  // Keep showPasswordResetRef in sync so the onAuthStateChange closure (created once) never reads stale state
+  useEffect(() => { showPasswordResetRef.current = showPasswordReset; }, [showPasswordReset]);
 
   // Seed DB when admin logs in
   useEffect(() => {
@@ -78,6 +90,14 @@ export default function App() {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session?.user) {
         setCurrentUser(session.user);
+        // If this page-load came from a password-reset link, show the reset form
+        // instead of going straight to the dashboard
+        if (isPasswordRecoveryRef.current) {
+          isPasswordRecoveryRef.current = false;
+          setShowPasswordReset(true);
+          setIsInitializing(false);
+          return;
+        }
         try {
           const profile = await getOrCreateUserProfile(session.user.id, session.user.email || '');
           setUserProfile(profile);
@@ -96,7 +116,21 @@ export default function App() {
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        // User clicked the reset link — keep them on the set-new-password screen
+        setShowPasswordReset(true);
+        setIsInitializing(false);
+        return;
+      }
       if (event === 'SIGNED_IN' && session?.user) {
+        // If we're in a password-reset flow, SIGNED_IN fires after updateUser —
+        // the ResetPasswordPage calls onSuccess() which clears showPasswordReset
+        // and navigates to dashboard. Don't intercept here.
+        // Use the ref (not state) to avoid reading a stale closure value.
+        if (showPasswordResetRef.current) {
+          setIsInitializing(false);
+          return;
+        }
         setCurrentUser(session.user);
         try {
           const profile = await getOrCreateUserProfile(session.user.id, session.user.email || '');
@@ -115,6 +149,7 @@ export default function App() {
         setCurrentUser(null);
         setUserProfile(null);
         setIsAdminMode(false);
+        setShowPasswordReset(false);
         setCurrentPage('landing');
       }
       setIsInitializing(false);
@@ -384,6 +419,45 @@ export default function App() {
           ))}
         </motion.div>
       </div>
+    );
+  }
+
+  // ── Password reset screen (shown after user clicks reset link) ────────────
+  if (showPasswordReset) {
+    return (
+      <MotionConfig reducedMotion="user">
+        <Suspense fallback={<div className="min-h-screen bg-[#F7F9F7] flex items-center justify-center"><div className="w-8 h-8 border-4 border-[#008751] border-t-transparent rounded-full animate-spin" /></div>}>
+          <ResetPasswordPage
+            addToast={addToast}
+            onSuccess={async () => {
+              // updateUser already re-logs them in; load profile then go to dashboard
+              try {
+                const { data: { session } } = await supabase.auth.getSession();
+                if (session?.user) {
+                  const profile = await getOrCreateUserProfile(session.user.id, session.user.email || '');
+                  setCurrentUser(session.user);
+                  setUserProfile(profile);
+                  setIsAdminMode(profile.role === 'admin');
+                  // Only navigate to dashboard once the profile is confirmed
+                  setShowPasswordReset(false);
+                  setCurrentPage('dashboard');
+                } else {
+                  // Session unexpectedly gone — send back to sign-in
+                  addToast('Password updated — please sign in.', 'success');
+                  setShowPasswordReset(false);
+                  setCurrentPage('auth');
+                }
+              } catch (err) {
+                console.error('Profile load after reset:', err);
+                addToast('Password updated but profile load failed. Please sign in.', 'error');
+                setShowPasswordReset(false);
+                setCurrentPage('auth');
+              }
+            }}
+          />
+        </Suspense>
+        <Notification toasts={toasts} removeToast={removeToast} />
+      </MotionConfig>
     );
   }
 
