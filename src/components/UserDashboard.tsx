@@ -1077,9 +1077,9 @@ export default function UserDashboard({
                           </div>
                         ) : (
                           <div className="space-y-3">
-                            {/* Coin grid — max-w caps width on large screens */}
-                            <div className="max-w-2xl">
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
+                            {/* Coin grid — max-w-3xl caps runaway width while allowing 3 columns on lg */}
+                            <div className="max-w-3xl">
+                              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
                                 {displayedGroupedCoins.map((group) => {
                                   const isSelected = activeCoin ? (activeCoin.symbol.trim().toUpperCase() === group.symbol.trim().toUpperCase()) : false;
                                   return (
