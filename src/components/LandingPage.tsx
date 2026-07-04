@@ -325,24 +325,24 @@ function useCountUp(target: number, duration = 1200) {
 
 // ── Live stats strip ──────────────────────────────────────────────────────────
 function StatsStrip() {
-  const [stats, setStats]     = useState<PublicStats | null>(null);
+  const [stats, setStats]   = useState<PublicStats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [lastSec, setLastSec] = useState(0);
+  // Only update on each 30-second poll — eliminates the old 1-state-update-per-second timer
+  const [fetchedAt, setFetchedAt] = useState<number | null>(null);
 
-  const fetch = async () => {
+  const doFetch = async () => {
     try {
       const s = await getPublicStats();
       setStats(s);
-      setLastSec(0);
+      setFetchedAt(Date.now());
     } catch { /* silently ignore on public page */ }
     finally { setLoading(false); }
   };
 
   useEffect(() => {
-    fetch();
-    const poll = setInterval(fetch, 30_000);
-    const tick = setInterval(() => setLastSec((p) => p + 1), 1000);
-    return () => { clearInterval(poll); clearInterval(tick); };
+    doFetch();
+    const poll = setInterval(doFetch, 30_000);
+    return () => clearInterval(poll);
   }, []);
 
   const trades  = useCountUp(stats?.tradesCompleted ?? 0);
@@ -391,7 +391,9 @@ function StatsStrip() {
             <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-400 font-mono">Live Stats</span>
           </div>
           <span className="text-[10px] text-slate-500 font-mono">
-            {loading ? 'Loading…' : `Updated ${lastSec}s ago`}
+            {loading ? 'Loading…' : fetchedAt
+              ? `Updated at ${new Date(fetchedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+              : 'Refreshes every 30s'}
           </span>
         </div>
 
@@ -441,16 +443,6 @@ function TradingWidget({
   const [tab, setTab] = useState<'buy' | 'sell'>('buy');
   const [amount, setAmount] = useState('');
   const [network, setNetwork] = useState<Network>('BSC');
-  const [pulse, setPulse] = useState(false);
-
-  // Pulse the rate every 6s to feel "live"
-  useEffect(() => {
-    const id = setInterval(() => {
-      setPulse(true);
-      setTimeout(() => setPulse(false), 700);
-    }, 6000);
-    return () => clearInterval(id);
-  }, []);
 
   const numAmount = parseFloat(amount) || 0;
   const usdtAmt  = tab === 'buy'  ? numAmount : numAmount / rate;
@@ -493,14 +485,9 @@ function TradingWidget({
         <div className="bg-slate-950 rounded-xl px-3 py-2 flex items-center justify-between border border-slate-800">
           <div>
             <div className="text-[9px] text-slate-500 uppercase tracking-wider mb-0.5">Live Rate</div>
-            <motion.div
-              key={pulse ? 'a' : 'b'}
-              animate={pulse ? { color: ['#4ade80', '#00FF85', '#4ade80'] } : {}}
-              transition={{ duration: 0.7 }}
-              className="text-emerald-400 font-bold text-base"
-            >
+            <div className="text-emerald-400 font-bold text-base">
               ₦{rate.toLocaleString()}<span className="text-slate-500 text-[10px] font-normal"> /USDT</span>
-            </motion.div>
+            </div>
           </div>
           <div className="flex items-center gap-1 text-[9px] font-bold px-2 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
             <Zap className="w-2.5 h-2.5" />
@@ -601,15 +588,13 @@ function TradingWidget({
         </div>
 
         {/* CTA button */}
-        <motion.button
+        <button
           onClick={onCtaClick}
-          className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-[11px] uppercase tracking-wider cursor-pointer transition-colors bg-emerald-600 hover:bg-emerald-500 text-white"
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.97 }}
+          className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-[11px] uppercase tracking-wider cursor-pointer bg-emerald-600 hover:bg-emerald-500 active:scale-[0.97] transition-[transform,background-color] duration-150 text-white"
         >
           Initiate Order
           <ChevronRight className="w-3.5 h-3.5" />
-        </motion.button>
+        </button>
 
         {/* KYC notice */}
         <div className="flex items-center gap-1.5 px-2">
@@ -726,32 +711,29 @@ export default function LandingPage({ announcements, settings, onNavigate }: Lan
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.32, ease: [0.16, 1, 0.3, 1] }}
             >
-              <motion.button
+              <button
                 onClick={() => onNavigate('auth', 'signup')}
-                className="inline-flex items-center justify-center gap-2 bg-[#008751] hover:bg-[#007043] text-white font-bold px-4 py-2 md:py-2 rounded-xl transition cursor-pointer text-sm"
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
+                className="inline-flex items-center justify-center gap-2 bg-[#008751] hover:bg-[#007043] text-white font-bold px-4 py-2 md:py-2 rounded-xl cursor-pointer text-sm hover:scale-[1.03] active:scale-[0.97] transition-[transform,background-color] duration-150"
               >
                 Create Free Account
                 <ArrowRight className="w-4 h-4" />
-              </motion.button>
-              <motion.button
+              </button>
+              <button
                 onClick={() => onNavigate('auth', 'signin')}
-                className="inline-flex items-center justify-center border border-gray-700 hover:border-gray-500 text-white font-semibold px-4 py-2 md:py-2 rounded-xl transition cursor-pointer text-sm"
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
+                className="inline-flex items-center justify-center border border-gray-700 hover:border-gray-500 text-white font-semibold px-4 py-2 md:py-2 rounded-xl cursor-pointer text-sm hover:scale-[1.03] active:scale-[0.97] transition-[transform,border-color] duration-150"
               >
                 Sign In to Trade
-              </motion.button>
+              </button>
             </motion.div>
           </div>
 
           {/* Interactive trading widget */}
           <motion.div
             className="w-full max-w-sm mx-auto md:max-w-none"
-            initial={{ opacity: 0, x: 40 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.65, delay: 0.22, ease: [0.16, 1, 0.3, 1] }}
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.22, ease: [0.16, 1, 0.3, 1] }}
+            style={{ willChange: 'transform, opacity' }}
           >
             <TradingWidget
               rate={settings.usdtRate}
@@ -799,12 +781,11 @@ export default function LandingPage({ announcements, settings, onNavigate }: Lan
           ].map((f, i) => (
             <motion.div
               key={f.title}
-              className="bg-white p-6 rounded-2xl border border-[#E0E7E0] hover:border-[#008751]/30 transition-colors"
+              className="bg-white p-6 rounded-2xl border border-[#E0E7E0] hover:border-[#008751]/30 hover:-translate-y-1 transition-[transform,border-color] duration-200"
               initial={{ opacity: 0, y: 28 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: '-50px' }}
               transition={{ duration: 0.5, delay: i * 0.1 }}
-              whileHover={{ y: -4, transition: { duration: 0.2 } }}
             >
               <div className="p-2.5 bg-[#E6F4EA] text-[#008751] rounded-xl w-fit mb-4">
                 {f.icon}
