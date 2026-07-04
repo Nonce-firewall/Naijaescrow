@@ -2,7 +2,18 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { supabase } from '../lib/supabase';
 import { getOrCreateUserProfile } from '../lib/dbHelpers';
-import { Mail, UserPlus, KeyRound, ArrowLeft, Loader2, AlertCircle, MailCheck, Eye, EyeOff } from 'lucide-react';
+import { Mail, UserPlus, KeyRound, ArrowLeft, Loader as Loader2, CircleAlert as AlertCircle, MailCheck, Eye, EyeOff } from 'lucide-react';
+
+function GoogleIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M17.64 9.2045C17.64 8.5663 17.5827 7.9527 17.4764 7.3636H9V10.845H13.8436C13.635 11.97 13.0009 12.9231 12.0477 13.5613V15.8195H14.9564C16.6582 14.2527 17.64 11.9454 17.64 9.2045Z" fill="#4285F4"/>
+      <path d="M9 18C11.43 18 13.4673 17.1941 14.9564 15.8195L12.0477 13.5613C11.2418 14.1013 10.2109 14.4204 9 14.4204C6.65591 14.4204 4.67182 12.8372 3.96409 10.71H0.957275V13.0418C2.43818 15.9831 5.48182 18 9 18Z" fill="#34A853"/>
+      <path d="M3.96409 10.71C3.78409 10.17 3.68182 9.5931 3.68182 9C3.68182 8.4069 3.78409 7.83 3.96409 7.29V4.9582H0.957275C0.347727 6.1731 0 7.5477 0 9C0 10.4523 0.347727 11.8269 0.957275 13.0418L3.96409 10.71Z" fill="#FBBC05"/>
+      <path d="M9 3.5795C10.3214 3.5795 11.5077 4.0336 12.4405 4.9254L15.0218 2.344C13.4632 0.891818 11.4259 0 9 0C5.48182 0 2.43818 2.01682 0.957275 4.9582L3.96409 7.29C4.67182 5.1627 6.65591 3.5795 9 3.5795Z" fill="#EA4335"/>
+    </svg>
+  );
+}
 
 interface AuthPageProps {
   onBack: () => void;
@@ -22,6 +33,8 @@ export default function AuthPage({ onBack, onAuthSuccess, addToast, initialMode 
   const [authErrorAlert, setAuthErrorAlert] = useState<string | null>(null);
   const [verificationPending, setVerificationPending] = useState(false);
   const [verificationEmail, setVerificationEmail] = useState('');
+
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
   // Forgot password flow
   const [forgotMode, setForgotMode] = useState(false);
@@ -44,6 +57,24 @@ export default function AuthPage({ onBack, onAuthSuccess, addToast, initialMode 
       addToast(err.message || 'Could not send reset email. Please try again.', 'error');
     } finally {
       setIsForgotLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setIsGoogleLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: window.location.origin },
+      });
+      if (error) {
+        addToast(error.message || 'Google sign-in failed. Please try again.', 'error');
+        setIsGoogleLoading(false);
+      }
+      // On success the browser navigates away; loading state stays true until redirect
+    } catch (err: any) {
+      addToast(err.message || 'Google sign-in failed. Please try again.', 'error');
+      setIsGoogleLoading(false);
     }
   };
 
@@ -331,6 +362,28 @@ export default function AuthPage({ onBack, onAuthSuccess, addToast, initialMode 
               </div>
             </div>
           )}
+
+          {/* Google SSO */}
+          <button
+            type="button"
+            onClick={handleGoogleSignIn}
+            disabled={isGoogleLoading || isLoading}
+            className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-xl border border-[#E0E7E0] hover:bg-[#F7F9F7] hover:border-gray-300 text-sm font-semibold text-gray-700 transition-[background-color,border-color] duration-150 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed mb-5"
+          >
+            {isGoogleLoading ? (
+              <Loader2 className="w-4 h-4 animate-spin text-gray-500" />
+            ) : (
+              <GoogleIcon />
+            )}
+            {isGoogleLoading ? 'Redirecting to Google…' : 'Continue with Google'}
+          </button>
+
+          {/* Divider */}
+          <div className="relative flex items-center mb-5">
+            <div className="flex-1 border-t border-[#E0E7E0]" />
+            <span className="px-3 text-[11px] text-gray-400 font-medium bg-white">or use email</span>
+            <div className="flex-1 border-t border-[#E0E7E0]" />
+          </div>
 
           <form className="space-y-5" onSubmit={handleSubmit}>
             <div>

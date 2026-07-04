@@ -134,6 +134,13 @@ export default function App() {
         setCurrentUser(session.user);
         try {
           const profile = await getOrCreateUserProfile(session.user.id, session.user.email || '');
+          if (profile.accountStatus === 'terminated') {
+            await supabase.auth.signOut();
+            const reason = profile.terminateReason ? ` Reason: ${profile.terminateReason}` : '';
+            addToast(`Your account has been permanently terminated.${reason}`, 'error');
+            setIsInitializing(false);
+            return;
+          }
           setUserProfile(profile);
           setIsAdminMode(profile.role === 'admin');
           setCurrentPage('dashboard');
