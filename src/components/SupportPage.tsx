@@ -1,6 +1,37 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { LifeBuoy, ArrowLeft, Mail, MessageCircle } from 'lucide-react';
+import { LifeBuoy, ArrowLeft, Mail } from 'lucide-react';
+
+const CHANNELS = [
+  {
+    key: 'whatsapp',
+    label: 'WhatsApp Support',
+    desc: 'Urgent trade issues and real-time status checks',
+    handle: '+234 900 000 0000',
+    href: 'https://wa.me/2349000000000',
+    logo: '/whatsapp-icon.png',
+    ring: 'ring-green-300',
+    bg: 'bg-green-50 hover:bg-green-100/70',
+    border: 'border-green-200',
+    badge: 'bg-green-100 text-green-700',
+    badgeLabel: 'Live',
+    handleColor: 'text-green-700',
+  },
+  {
+    key: 'telegram',
+    label: 'Telegram Support',
+    desc: 'Quick help, announcements & order alerts',
+    handle: '@9ijaescrow',
+    href: 'https://t.me/9ijaescrow',
+    logo: '/telegram-icon.png',
+    ring: 'ring-sky-300',
+    bg: 'bg-sky-50 hover:bg-sky-100/70',
+    border: 'border-sky-200',
+    badge: 'bg-sky-100 text-sky-700',
+    badgeLabel: 'Active',
+    handleColor: 'text-sky-600',
+  },
+] as const;
 
 export default function SupportPage() {
   return (
@@ -42,52 +73,67 @@ export default function SupportPage() {
           </p>
         </div>
 
-        {/* Contact cards */}
-        <div className="space-y-4 mb-6">
+        {/* Social channels */}
+        <div className="space-y-4 mb-4">
+          {CHANNELS.map((ch, i) => (
+            <motion.a
+              key={ch.key}
+              href={ch.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`flex items-center gap-5 rounded-3xl border ${ch.bg} ${ch.border} p-5 shadow-sm hover:shadow-md transition-all group`}
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.35, delay: i * 0.07, ease: [0.16, 1, 0.3, 1] }}
+              whileHover={{ y: -2 }}
+            >
+              <img
+                src={ch.logo}
+                alt={ch.label}
+                loading="lazy"
+                className={`w-16 h-16 rounded-full object-cover shrink-0 ring-2 ${ch.ring} group-hover:scale-105 transition-transform`}
+              />
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="font-bold text-[#1A1A1A]">{ch.label}</span>
+                  <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${ch.badge}`}>{ch.badgeLabel}</span>
+                </div>
+                <p className="text-xs text-gray-500">{ch.desc}</p>
+                <p className={`text-sm font-semibold mt-1.5 ${ch.handleColor}`}>{ch.handle}</p>
+              </div>
+            </motion.a>
+          ))}
+
+          {/* Email */}
           <motion.a
             href="mailto:support@9ijaescrow.com"
-            className="flex items-start gap-4 bg-white rounded-3xl border border-[#E0E7E0] shadow-sm p-5 hover:border-[#008751]/30 hover:shadow-md transition-all group"
+            className="flex items-center gap-5 bg-white rounded-3xl border border-[#E0E7E0] shadow-sm p-5 hover:border-[#008751]/30 hover:shadow-md transition-all group"
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35, delay: 0.14, ease: [0.16, 1, 0.3, 1] }}
             whileHover={{ y: -2 }}
-            transition={{ duration: 0.2 }}
           >
-            <div className="p-3 bg-[#008751]/10 rounded-2xl shrink-0 group-hover:bg-[#008751]/15 transition-colors">
-              <Mail className="w-5 h-5 text-[#008751]" />
+            <div className="w-16 h-16 rounded-full bg-[#E6F4EA] border border-[#C5DFC9] flex items-center justify-center shrink-0 group-hover:bg-[#d4edda] transition-colors">
+              <Mail className="w-6 h-6 text-[#008751]" />
             </div>
-            <div>
-              <div className="font-bold text-[#1A1A1A] mb-0.5">Email Support</div>
-              <div className="text-xs text-gray-500 mb-1.5">For account issues, KYC reviews, and trade disputes</div>
-              <span className="text-[#008751] font-semibold text-sm hover:underline">
-                support@9ijaescrow.com
-              </span>
-            </div>
-          </motion.a>
-
-          <motion.a
-            href="https://wa.me/2349000000000"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-start gap-4 bg-white rounded-3xl border border-[#E0E7E0] shadow-sm p-5 hover:border-[#008751]/30 hover:shadow-md transition-all group"
-            whileHover={{ y: -2 }}
-            transition={{ duration: 0.2 }}
-          >
-            <div className="p-3 bg-[#008751]/10 rounded-2xl shrink-0 group-hover:bg-[#008751]/15 transition-colors">
-              <MessageCircle className="w-5 h-5 text-[#008751]" />
-            </div>
-            <div>
-              <div className="font-bold text-[#1A1A1A] mb-0.5">WhatsApp Support</div>
-              <div className="text-xs text-gray-500 mb-1.5">Urgent trade issues and real-time status checks</div>
-              <span className="text-[#008751] font-semibold text-sm hover:underline">
-                +234 900 000 0000
-              </span>
+            <div className="flex-1 min-w-0">
+              <p className="font-bold text-[#1A1A1A] mb-1">Email Support</p>
+              <p className="text-xs text-gray-500">For account issues, KYC reviews, and trade disputes</p>
+              <p className="text-sm font-semibold text-[#008751] mt-1.5">support@9ijaescrow.com</p>
             </div>
           </motion.a>
         </div>
 
         {/* Tip */}
-        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-sm text-amber-800">
+        <motion.div
+          className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-sm text-amber-800"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.4, delay: 0.22 }}
+        >
           <span className="font-bold block mb-1">Before reaching out</span>
           Please have your order ID or registered email address ready to help us resolve your issue faster.
-        </div>
+        </motion.div>
 
         {/* Footer note */}
         <p className="mt-8 text-center text-xs text-gray-400">

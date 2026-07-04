@@ -94,32 +94,55 @@ function Modal({ type, onClose }: { type: ModalType; onClose: () => void }) {
             </>
           )}
           {type === 'support' && (
-            <div className="space-y-5">
-              <p>Our support team is available Monday–Friday, 9 AM–6 PM WAT. We typically respond within 2–4 business hours.</p>
-              <div className="bg-[#F0F7F2] border border-[#D1E6D8] rounded-2xl p-4 flex items-start gap-3">
-                <div className="p-2 bg-[#008751]/10 rounded-xl shrink-0">
-                  <Mail className="w-4 h-4 text-[#008751]" />
+            <div className="space-y-4">
+              <p className="text-xs text-gray-500">Our support team is available Monday–Friday, 9 AM–6 PM WAT. We typically respond within 2–4 business hours.</p>
+
+              {/* WhatsApp */}
+              <a href="https://wa.me/2349000000000" target="_blank" rel="noopener noreferrer"
+                className="flex items-center gap-3 bg-green-50 border border-green-200 rounded-2xl p-4 hover:bg-green-100/70 transition-colors group"
+              >
+                <img src="/whatsapp-icon.png" alt="WhatsApp" loading="lazy"
+                  className="w-12 h-12 rounded-full object-cover shrink-0 ring-2 ring-green-300 group-hover:ring-green-400 transition" />
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-[#1A1A1A] text-sm">WhatsApp Support</span>
+                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-green-100 text-green-700">Live</span>
+                  </div>
+                  <div className="text-xs text-gray-500 mt-0.5">Urgent trade issues and real-time status checks</div>
+                  <span className="text-green-700 font-semibold text-sm mt-1 block">+234 900 000 0000</span>
+                </div>
+              </a>
+
+              {/* Telegram */}
+              <a href="https://t.me/9ijaescrow" target="_blank" rel="noopener noreferrer"
+                className="flex items-center gap-3 bg-sky-50 border border-sky-200 rounded-2xl p-4 hover:bg-sky-100/70 transition-colors group"
+              >
+                <img src="/telegram-icon.png" alt="Telegram" loading="lazy"
+                  className="w-12 h-12 rounded-full object-cover shrink-0 ring-2 ring-sky-300 group-hover:ring-sky-400 transition" />
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-[#1A1A1A] text-sm">Telegram Support</span>
+                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-sky-100 text-sky-700">Active</span>
+                  </div>
+                  <div className="text-xs text-gray-500 mt-0.5">Quick help, announcements & order alerts</div>
+                  <span className="text-sky-600 font-semibold text-sm mt-1 block">@9ijaescrow</span>
+                </div>
+              </a>
+
+              {/* Email */}
+              <a href="mailto:support@9ijaescrow.com"
+                className="flex items-center gap-3 bg-[#F0F7F2] border border-[#D1E6D8] rounded-2xl p-4 hover:bg-[#e6f4ea] transition-colors"
+              >
+                <div className="w-12 h-12 rounded-full bg-[#E6F4EA] border border-[#C5DFC9] flex items-center justify-center shrink-0">
+                  <Mail className="w-5 h-5 text-[#008751]" />
                 </div>
                 <div>
                   <div className="font-bold text-[#1A1A1A] text-sm mb-0.5">Email Support</div>
                   <div className="text-xs text-gray-500">For account issues, KYC reviews, and trade disputes</div>
-                  <a href="mailto:support@9ijaescrow.com" className="text-[#008751] font-semibold text-sm mt-1 block hover:underline">
-                    support@9ijaescrow.com
-                  </a>
+                  <span className="text-[#008751] font-semibold text-sm mt-1 block hover:underline">support@9ijaescrow.com</span>
                 </div>
-              </div>
-              <div className="bg-[#F0F7F2] border border-[#D1E6D8] rounded-2xl p-4 flex items-start gap-3">
-                <div className="p-2 bg-[#008751]/10 rounded-xl shrink-0">
-                  <MessageCircle className="w-4 h-4 text-[#008751]" />
-                </div>
-                <div>
-                  <div className="font-bold text-[#1A1A1A] text-sm mb-0.5">WhatsApp Support</div>
-                  <div className="text-xs text-gray-500">Urgent trade issues and real-time status checks</div>
-                  <a href="https://wa.me/2349000000000" target="_blank" rel="noopener noreferrer" className="text-[#008751] font-semibold text-sm mt-1 block hover:underline">
-                    +234 900 000 0000
-                  </a>
-                </div>
-              </div>
+              </a>
+
               <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-xs text-amber-800">
                 <span className="font-bold block mb-0.5">Before reaching out</span>
                 Please have your order ID or registered email address ready to help us resolve your issue faster.

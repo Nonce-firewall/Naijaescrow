@@ -21,8 +21,9 @@ import {
   Eye,
   EyeOff,
   Trash2,
-  AlertTriangle
+  AlertTriangle,
 } from 'lucide-react';
+import SupportButton from './SupportButton';
 
 const DEFAULT_NOTIF_PREFS: NotificationPreferences = {
   orderUpdates: true,
@@ -142,6 +143,9 @@ export default function Navbar({ userProfile, isAdminMode, currentPage, onToggle
                   </button>
                 )}
 
+                {/* Support icon — desktop */}
+                {!isAdminMode && <SupportButton />}
+
                 <div className="relative" ref={accountMenuRef}>
                   <button
                     onClick={() => setAccountMenuOpen((v) => !v)}
@@ -236,6 +240,8 @@ export default function Navbar({ userProfile, isAdminMode, currentPage, onToggle
                   )}
                 </button>
               )}
+              {/* Support icon — mobile */}
+              {userProfile && !isAdminMode && <SupportButton />}
               {userProfile && (
                 <button
                   onClick={() => setMenuOpen((v) => !v)}
