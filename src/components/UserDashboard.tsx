@@ -180,6 +180,16 @@ export default function UserDashboard({
   const [coinSearchQuery, setCoinSearchQuery] = useState<string>('');
   const [networkFilter, setNetworkFilter] = useState<string>('all');
 
+  // Screen-size detection for coin display limits (3 mobile / 6 desktop)
+  // Initialize to false (desktop) as a safe default; effect corrects it immediately.
+  const [isSmallScreen, setIsSmallScreen] = useState<boolean>(false);
+  useEffect(() => {
+    const handleResize = () => setIsSmallScreen(window.innerWidth < 640);
+    handleResize(); // sync on mount
+    window.addEventListener('resize', handleResize, { passive: true });
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   // Filter active (published) coins
   const activeCoinsList = (coins || []).filter(c => c.published !== false);
 
@@ -222,6 +232,14 @@ export default function UserDashboard({
       
     return matchesSearch && matchesNetwork;
   });
+
+  // Default display limit: 3 on mobile, 6 on desktop — lifted when user searches
+  const isFilteringActive = coinSearchQuery.trim() !== '' || networkFilter !== 'all';
+  const coinDisplayLimit = isSmallScreen ? 3 : 6;
+  const displayedGroupedCoins = isFilteringActive
+    ? filteredGroupedCoins
+    : filteredGroupedCoins.slice(0, coinDisplayLimit);
+  const hiddenCoinCount = isFilteringActive ? 0 : Math.max(0, filteredGroupedCoins.length - coinDisplayLimit);
 
   // Get active coin details
   const activeCoin = activeCoinsList.length > 0
@@ -1058,67 +1076,78 @@ export default function UserDashboard({
                             </button>
                           </div>
                         ) : (
-                          <div className="space-y-4">
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                              {filteredGroupedCoins.map((group) => {
-                                const isSelected = activeCoin ? (activeCoin.symbol.trim().toUpperCase() === group.symbol.trim().toUpperCase()) : false;
-                                return (
-                                  <button
-                                    key={group.symbol}
-                                    type="button"
-                                    onClick={() => {
-                                      // Default to the first available variant for this token asset
-                                      if (group.variants.length > 0) {
-                                        setSelectedCoinId(group.variants[0].id);
-                                        setNetwork(group.variants[0].network as any);
-                                      }
-                                    }}
-                                    className={`p-3.5 rounded-2xl border text-left cursor-pointer transition-all duration-200 flex items-center gap-3 relative hover:-translate-y-0.5 hover:shadow-sm ${
-                                      isSelected
-                                        ? 'border-[#008751] bg-[#F0F7F2] ring-1 ring-[#008751]'
-                                        : 'border-[#E0E7E0] hover:border-slate-300 bg-white'
-                                    }`}
-                                  >
-                                    <div className="relative">
-                                      {group.logoUrl ? (
-                                        <img 
-                                          src={group.logoUrl} 
-                                          alt={group.name} 
-                                          className="w-11 h-11 rounded-full object-cover border border-[#E0E7E0] bg-white flex-shrink-0" 
-                                          referrerPolicy="no-referrer"
-                                        />
-                                      ) : (
-                                        <div className="w-11 h-11 rounded-full bg-[#008751]/10 flex items-center justify-center text-[#008751] flex-shrink-0 font-bold text-xs border border-[#008751]/20">
-                                          {group.symbol.slice(0, 3).toUpperCase()}
+                          <div className="space-y-3">
+                            {/* Coin grid — max-w caps width on large screens */}
+                            <div className="max-w-2xl">
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
+                                {displayedGroupedCoins.map((group) => {
+                                  const isSelected = activeCoin ? (activeCoin.symbol.trim().toUpperCase() === group.symbol.trim().toUpperCase()) : false;
+                                  return (
+                                    <button
+                                      key={group.symbol}
+                                      type="button"
+                                      onClick={() => {
+                                        // Default to the first available variant for this token asset
+                                        if (group.variants.length > 0) {
+                                          setSelectedCoinId(group.variants[0].id);
+                                          setNetwork(group.variants[0].network as any);
+                                        }
+                                      }}
+                                      className={`p-2.5 sm:p-3.5 rounded-2xl border text-left cursor-pointer transition-[transform,box-shadow,border-color] duration-150 flex items-center gap-2.5 sm:gap-3 relative hover:-translate-y-0.5 hover:shadow-sm ${
+                                        isSelected
+                                          ? 'border-[#008751] bg-[#F0F7F2] ring-1 ring-[#008751]'
+                                          : 'border-[#E0E7E0] hover:border-slate-300 bg-white'
+                                      }`}
+                                    >
+                                      {/* Logo — smaller on mobile */}
+                                      <div className="shrink-0">
+                                        {group.logoUrl ? (
+                                          <img
+                                            src={group.logoUrl}
+                                            alt={group.name}
+                                            className="w-9 h-9 sm:w-11 sm:h-11 rounded-full object-cover border border-[#E0E7E0] bg-white"
+                                            referrerPolicy="no-referrer"
+                                          />
+                                        ) : (
+                                          <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-[#008751]/10 flex items-center justify-center text-[#008751] font-bold text-[10px] sm:text-xs border border-[#008751]/20">
+                                            {group.symbol.slice(0, 3).toUpperCase()}
+                                          </div>
+                                        )}
+                                      </div>
+
+                                      <div className="min-w-0 flex-1 space-y-0.5">
+                                        <span className="block font-extrabold text-[11px] sm:text-[12px] text-slate-900 truncate leading-tight">
+                                          {group.name}
+                                        </span>
+                                        <div className="flex items-center gap-1 flex-wrap">
+                                          <span className="bg-slate-100 text-slate-700 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded-md leading-none uppercase">
+                                            {group.symbol}
+                                          </span>
+                                          <span className="bg-slate-50 text-slate-600 text-[8px] font-semibold px-1.5 py-0.5 rounded-md leading-none border border-slate-100">
+                                            {group.variants.length} {group.variants.length === 1 ? 'Network' : 'Networks'}
+                                          </span>
+                                        </div>
+                                        <span className="block text-[11px] text-[#008751] font-extrabold mt-0.5">
+                                          ₦{group.variants[0]?.rate.toLocaleString()} <span className="text-[9px] text-gray-400 font-normal">base rate</span>
+                                        </span>
+                                      </div>
+
+                                      {isSelected && (
+                                        <div className="absolute top-2.5 right-2.5 sm:top-3 sm:right-3 bg-[#008751] text-white p-0.5 rounded-full shrink-0">
+                                          <Check className="w-3 h-3 stroke-[3]" />
                                         </div>
                                       )}
-                                    </div>
-                                    
-                                    <div className="min-w-0 flex-1 space-y-0.5">
-                                      <span className="block font-extrabold text-[12px] text-slate-900 truncate leading-tight">
-                                        {group.name}
-                                      </span>
-                                      <div className="flex items-center gap-1.5 flex-wrap">
-                                        <span className="bg-slate-100 text-slate-700 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded-md leading-none uppercase">
-                                          {group.symbol}
-                                        </span>
-                                        <span className="bg-slate-50 text-slate-600 text-[8px] font-semibold px-1.5 py-0.5 rounded-md leading-none border border-slate-100">
-                                          {group.variants.length} {group.variants.length === 1 ? 'Network' : 'Networks'}
-                                        </span>
-                                      </div>
-                                      <span className="block text-[11px] text-[#008751] font-extrabold mt-1">
-                                        ₦{group.variants[0]?.rate.toLocaleString()} <span className="text-[9px] text-gray-400 font-normal">base rate</span>
-                                      </span>
-                                    </div>
-                                    
-                                    {isSelected && (
-                                      <div className="absolute top-3 right-3 bg-[#008751] text-white p-0.5 rounded-full">
-                                        <Check className="w-3 h-3 stroke-[3]" />
-                                      </div>
-                                    )}
-                                  </button>
-                                );
-                              })}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+
+                              {/* "More assets" nudge — shown when list is clipped */}
+                              {hiddenCoinCount > 0 && (
+                                <p className="mt-2.5 text-[10px] text-slate-400 text-center">
+                                  +{hiddenCoinCount} more asset{hiddenCoinCount !== 1 ? 's' : ''} — use the search box above to find them
+                                </p>
+                              )}
                             </div>
 
                             {/* Network type selector specifically for the selected grouped asset */}
