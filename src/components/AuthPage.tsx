@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { supabase } from '../lib/supabase';
 import { getOrCreateUserProfile } from '../lib/dbHelpers';
@@ -22,6 +22,27 @@ interface AuthPageProps {
   initialMode?: 'signin' | 'signup';
 }
 
+// Slide variants: forward (login→forgot) slides left; back (forgot→login) slides right
+const SLIDE_VARIANTS = {
+  forward: {
+    initial: { opacity: 0, x: 40 },
+    animate: { opacity: 1, x: 0 },
+    exit:    { opacity: 0, x: -40 },
+  },
+  back: {
+    initial: { opacity: 0, x: -40 },
+    animate: { opacity: 1, x: 0 },
+    exit:    { opacity: 0, x: 40 },
+  },
+  fade: {
+    initial: { opacity: 0, y: 20 },
+    animate: { opacity: 1, y: 0 },
+    exit:    { opacity: 0, y: -20 },
+  },
+};
+
+const TRANSITION = { duration: 0.32, ease: [0.16, 1, 0.3, 1] as const };
+
 export default function AuthPage({ onBack, onAuthSuccess, addToast, initialMode = 'signin' }: AuthPageProps) {
   const [isLogin, setIsLogin] = useState(initialMode === 'signin');
   const [email, setEmail] = useState('');
@@ -42,6 +63,21 @@ export default function AuthPage({ onBack, onAuthSuccess, addToast, initialMode 
   const [forgotEmail, setForgotEmail] = useState('');
   const [isForgotLoading, setIsForgotLoading] = useState(false);
 
+  // Track slide direction: 'forward' when entering forgot, 'back' when returning
+  const slideDir = useRef<'forward' | 'back' | 'fade'>('forward');
+
+  const enterForgot = () => {
+    slideDir.current = 'forward';
+    setForgotEmail(email);
+    setForgotMode(true);
+  };
+
+  const exitForgot = () => {
+    slideDir.current = 'back';
+    setForgotMode(false);
+    setForgotEmail('');
+  };
+
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!forgotEmail.trim()) { addToast('Please enter your email address.', 'error'); return; }
@@ -51,6 +87,7 @@ export default function AuthPage({ onBack, onAuthSuccess, addToast, initialMode 
         redirectTo: window.location.origin,
       });
       if (error) throw error;
+      slideDir.current = 'fade';
       setResetEmailSent(true);
     } catch (err: any) {
       console.error(err);
@@ -124,6 +161,7 @@ export default function AuthPage({ onBack, onAuthSuccess, addToast, initialMode 
         } else if (data.user) {
           // Email confirmation required — show pending screen, don't navigate
           setVerificationEmail(email);
+          slideDir.current = 'fade';
           setVerificationPending(true);
         } else {
           addToast('Something went wrong. Please try again.', 'error');
@@ -141,362 +179,379 @@ export default function AuthPage({ onBack, onAuthSuccess, addToast, initialMode 
     }
   };
 
+  // Determine active screen key for AnimatePresence
+  const screenKey = resetEmailSent
+    ? 'reset-sent'
+    : verificationPending
+    ? 'verify'
+    : forgotMode
+    ? 'forgot'
+    : 'main';
 
-  // ── Reset email sent screen ──────────────────────────────────────────────
-  if (resetEmailSent) {
-    return (
-      <div className="min-h-screen bg-[#F7F9F7] flex flex-col justify-center py-10 px-4 font-sans text-[#1A1A1A]">
-        <motion.div
-          className="w-full max-w-md mx-auto"
-          initial={{ opacity: 0, y: 28 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-        >
-          <div className="bg-white py-10 px-6 sm:px-10 shadow-sm rounded-3xl border border-[#E0E7E0] text-center space-y-5">
-            <div className="flex justify-center">
-              <div className="w-16 h-16 rounded-2xl bg-[#E6F4EA] border border-[#C5DFC9] flex items-center justify-center">
-                <MailCheck className="w-8 h-8 text-[#008751]" />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <h2 className="text-xl font-bold text-[#1A1A1A]">Check your inbox</h2>
-              <p className="text-sm text-gray-500 leading-relaxed">
-                We sent a password reset link to{' '}
-                <span className="font-semibold text-[#1A1A1A]">{forgotEmail}</span>.
-                Click the link in that email to set a new password — it expires in 1 hour.
-              </p>
-            </div>
-            <div className="pt-2 space-y-3">
-              <button
-                onClick={() => { setResetEmailSent(false); setForgotMode(false); setPassword(''); }}
-                className="w-full py-3 rounded-xl bg-[#008751] hover:bg-[#007043] text-white font-bold text-sm transition cursor-pointer"
-              >
-                Back to Sign In
-              </button>
-              <button
-                onClick={() => { setResetEmailSent(false); setForgotEmail(''); }}
-                className="w-full py-3 rounded-xl border border-[#E0E7E0] text-gray-500 hover:text-[#008751] font-semibold text-sm transition cursor-pointer"
-              >
-                Try a different email
-              </button>
-            </div>
-          </div>
-        </motion.div>
-      </div>
-    );
-  }
-
-  // ── Forgot password screen ────────────────────────────────────────────────
-  if (forgotMode) {
-    return (
-      <div className="min-h-screen bg-[#F7F9F7] flex flex-col justify-center py-10 px-4 font-sans text-[#1A1A1A]">
-        <div className="absolute top-4 left-4 sm:top-6 sm:left-6">
-          <button
-            onClick={() => { setForgotMode(false); setForgotEmail(''); }}
-            className="flex items-center gap-2 text-gray-500 hover:text-[#008751] font-semibold cursor-pointer transition text-sm"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back to Sign In
-          </button>
-        </div>
-
-        <motion.div
-          className="w-full max-w-md mx-auto"
-          initial={{ opacity: 0, y: 28 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-        >
-          <div className="flex justify-center mb-6">
-            <motion.img
-              src="/logo-icon.png"
-              alt="9ija Escrow"
-              className="h-16 w-auto"
-              initial={{ opacity: 0, scale: 0.75 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-            />
-          </div>
-          <h2 className="text-center text-2xl sm:text-3xl font-bold text-[#1A1A1A] tracking-tight">
-            Forgot your password?
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-500">
-            Enter your account email and we'll send you a reset link.
-          </p>
-
-          <div className="mt-6 bg-white py-8 px-5 sm:px-8 shadow-sm rounded-3xl border border-[#E0E7E0]">
-            <form className="space-y-5" onSubmit={handleForgotPassword}>
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-[#1A1A1A] mb-1.5">
-                  Email Address
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
-                    <Mail className="w-4 h-4" />
-                  </div>
-                  <input
-                    type="email"
-                    required
-                    autoFocus
-                    autoComplete="email"
-                    value={forgotEmail}
-                    onChange={(e) => setForgotEmail(e.target.value)}
-                    className="block w-full pl-10 pr-3 py-3 border border-[#E0E7E0] rounded-xl bg-[#F7F9F7] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#008751] text-sm text-[#1A1A1A]"
-                    placeholder="name@example.com"
-                  />
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                disabled={isForgotLoading}
-                className="w-full flex justify-center py-3.5 px-4 rounded-xl text-sm font-bold text-white bg-[#008751] hover:bg-[#007043] disabled:opacity-50 cursor-pointer transition-colors"
-              >
-                {isForgotLoading ? (
-                  <span className="flex items-center gap-2">
-                    <Loader2 className="w-4 h-4 animate-spin" /> Sending…
-                  </span>
-                ) : (
-                  'Send Reset Link'
-                )}
-              </button>
-            </form>
-          </div>
-        </motion.div>
-      </div>
-    );
-  }
-
-  // ── Email verification pending screen ────────────────────────────────────
-  if (verificationPending) {
-    return (
-      <div className="min-h-screen bg-[#F7F9F7] flex flex-col justify-center py-10 px-4 font-sans text-[#1A1A1A]">
-        <motion.div
-          className="w-full max-w-md mx-auto"
-          initial={{ opacity: 0, y: 28 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-        >
-          <div className="bg-white py-10 px-6 sm:px-10 shadow-sm rounded-3xl border border-[#E0E7E0] text-center space-y-5">
-            <div className="flex justify-center">
-              <div className="w-16 h-16 rounded-2xl bg-[#E6F4EA] border border-[#C5DFC9] flex items-center justify-center">
-                <MailCheck className="w-8 h-8 text-[#008751]" />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <h2 className="text-xl font-bold text-[#1A1A1A]">Check your email</h2>
-              <p className="text-sm text-gray-500 leading-relaxed">
-                We sent a verification link to{' '}
-                <span className="font-semibold text-[#1A1A1A]">{verificationEmail}</span>.
-                Click the link to activate your account, then come back and sign in.
-              </p>
-            </div>
-            <div className="pt-2 space-y-3">
-              <button
-                onClick={() => { setVerificationPending(false); setIsLogin(true); setPassword(''); setConfirmPassword(''); }}
-                className="w-full py-3 rounded-xl bg-[#008751] hover:bg-[#007043] text-white font-bold text-sm transition cursor-pointer"
-              >
-                Back to Sign In
-              </button>
-              <button
-                onClick={onBack}
-                className="w-full py-3 rounded-xl border border-[#E0E7E0] text-gray-500 hover:text-[#008751] font-semibold text-sm transition cursor-pointer"
-              >
-                Go to Home
-              </button>
-            </div>
-          </div>
-        </motion.div>
-      </div>
-    );
-  }
+  const variants = SLIDE_VARIANTS[slideDir.current];
 
   return (
-    <div className="min-h-screen bg-[#F7F9F7] flex flex-col justify-center py-10 px-4 font-sans text-[#1A1A1A]">
-      <div className="absolute top-4 left-4 sm:top-6 sm:left-6">
-        <button
-          onClick={onBack}
-          className="flex items-center gap-2 text-gray-500 hover:text-[#008751] font-semibold cursor-pointer transition text-sm"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back
-        </button>
-      </div>
+    <div className="min-h-screen bg-[#F7F9F7] font-sans text-[#1A1A1A] overflow-hidden">
+      <AnimatePresence mode="wait" initial={false}>
 
-      <motion.div
-        className="w-full max-w-md mx-auto"
-        initial={{ opacity: 0, y: 28 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-      >
-        <div className="flex justify-center mb-6">
-          <motion.img
-            src="/logo-icon.png"
-            alt="9ija Escrow"
-            className="h-16 w-auto"
-            initial={{ opacity: 0, scale: 0.75 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-          />
-        </div>
-        <h2 className="text-center text-2xl sm:text-3xl font-bold text-[#1A1A1A] tracking-tight">
-          {isLogin ? 'Sign in to 9ija Escrow' : 'Create a Trader Account'}
-        </h2>
-        
-        <p className="mt-2 text-center text-sm text-gray-500">
-          Or{' '}
-          <button
-            onClick={() => { setIsLogin(!isLogin); setPassword(''); setConfirmPassword(''); }}
-            className="font-bold text-[#008751] hover:text-[#007043] cursor-pointer"
+        {/* ── Reset email sent ───────────────────────────────────────────── */}
+        {screenKey === 'reset-sent' && (
+          <motion.div
+            key="reset-sent"
+            className="min-h-screen flex flex-col justify-center py-10 px-4"
+            initial={SLIDE_VARIANTS.fade.initial}
+            animate={SLIDE_VARIANTS.fade.animate}
+            exit={SLIDE_VARIANTS.fade.exit}
+            transition={TRANSITION}
           >
-            {isLogin ? 'Create a new trader account' : 'Sign in to your existing account'}
-          </button>
-        </p>
-
-        <div className="mt-6 bg-white py-8 px-5 sm:px-8 shadow-sm rounded-3xl border border-[#E0E7E0]">
-          {authErrorAlert && (
-            <div className="mb-5 p-4 bg-amber-50 border border-amber-200 rounded-2xl flex gap-3 text-xs leading-relaxed text-amber-800">
-              <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-              <div className="space-y-1">
-                <span className="font-bold block">Configuration Note:</span>
-                <span className="block whitespace-pre-line">{authErrorAlert}</span>
-              </div>
-            </div>
-          )}
-
-          {/* Google SSO */}
-          <button
-            type="button"
-            onClick={handleGoogleSignIn}
-            disabled={isGoogleLoading || isLoading}
-            className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-xl border border-[#E0E7E0] hover:bg-[#F7F9F7] hover:border-gray-300 text-sm font-semibold text-gray-700 transition-[background-color,border-color] duration-150 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed mb-5"
-          >
-            {isGoogleLoading ? (
-              <Loader2 className="w-4 h-4 animate-spin text-gray-500" />
-            ) : (
-              <GoogleIcon />
-            )}
-            {isGoogleLoading ? 'Redirecting to Google…' : 'Continue with Google'}
-          </button>
-
-          {/* Divider */}
-          <div className="relative flex items-center mb-5">
-            <div className="flex-1 border-t border-[#E0E7E0]" />
-            <span className="px-3 text-[11px] text-gray-400 font-medium bg-white">or use email</span>
-            <div className="flex-1 border-t border-[#E0E7E0]" />
-          </div>
-
-          <form className="space-y-5" onSubmit={handleSubmit}>
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-[#1A1A1A] mb-1.5">
-                Email Address
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
-                  <Mail className="w-4 h-4" />
+            <div className="w-full max-w-md mx-auto">
+              <div className="bg-white py-10 px-6 sm:px-10 shadow-sm rounded-3xl border border-[#E0E7E0] text-center space-y-5">
+                <div className="flex justify-center">
+                  <div className="w-16 h-16 rounded-2xl bg-[#E6F4EA] border border-[#C5DFC9] flex items-center justify-center">
+                    <MailCheck className="w-8 h-8 text-[#008751]" />
+                  </div>
                 </div>
-                <input
-                  type="email"
-                  required
-                  autoComplete="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="block w-full pl-10 pr-3 py-3 border border-[#E0E7E0] rounded-xl bg-[#F7F9F7] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#008751] text-sm text-[#1A1A1A]"
-                  placeholder="name@example.com"
-                />
-              </div>
-            </div>
-
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label className="block text-xs font-bold uppercase tracking-wider text-[#1A1A1A]">
-                  Password
-                </label>
-                {isLogin && (
+                <div className="space-y-2">
+                  <h2 className="text-xl font-bold text-[#1A1A1A]">Check your inbox</h2>
+                  <p className="text-sm text-gray-500 leading-relaxed">
+                    We sent a password reset link to{' '}
+                    <span className="font-semibold text-[#1A1A1A]">{forgotEmail}</span>.
+                    Click the link in that email to set a new password — it expires in 1 hour.
+                  </p>
+                </div>
+                <div className="pt-2 space-y-3">
                   <button
-                    type="button"
-                    onClick={() => { setForgotEmail(email); setForgotMode(true); }}
-                    className="text-xs font-semibold text-[#008751] hover:text-[#007043] cursor-pointer transition-colors"
+                    onClick={() => { slideDir.current = 'back'; setResetEmailSent(false); setForgotMode(false); setPassword(''); }}
+                    className="w-full py-3 rounded-xl bg-[#008751] hover:bg-[#007043] text-white font-bold text-sm transition cursor-pointer"
                   >
-                    Forgot password?
+                    Back to Sign In
                   </button>
-                )}
-              </div>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
-                  <KeyRound className="w-4 h-4" />
+                  <button
+                    onClick={() => { slideDir.current = 'back'; setResetEmailSent(false); setForgotEmail(''); }}
+                    className="w-full py-3 rounded-xl border border-[#E0E7E0] text-gray-500 hover:text-[#008751] font-semibold text-sm transition cursor-pointer"
+                  >
+                    Try a different email
+                  </button>
                 </div>
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  required
-                  autoComplete="current-password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="block w-full pl-10 pr-10 py-3 border border-[#E0E7E0] rounded-xl bg-[#F7F9F7] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#008751] text-sm text-[#1A1A1A]"
-                  placeholder="Min. 6 characters"
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {/* ── Forgot password form ───────────────────────────────────────── */}
+        {screenKey === 'forgot' && (
+          <motion.div
+            key="forgot"
+            className="min-h-screen flex flex-col justify-center py-10 px-4"
+            initial={variants.initial}
+            animate={variants.animate}
+            exit={variants.exit}
+            transition={TRANSITION}
+          >
+            <div className="absolute top-4 left-4 sm:top-6 sm:left-6">
+              <button
+                onClick={exitForgot}
+                className="flex items-center gap-2 text-gray-500 hover:text-[#008751] font-semibold cursor-pointer transition text-sm"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Back to Sign In
+              </button>
+            </div>
+
+            <div className="w-full max-w-md mx-auto">
+              <div className="flex justify-center mb-6">
+                <img
+                  src="/logo-icon.png"
+                  alt="9ija Escrow"
+                  className="h-16 w-auto"
                 />
+              </div>
+              <h2 className="text-center text-2xl sm:text-3xl font-bold text-[#1A1A1A] tracking-tight">
+                Forgot your password?
+              </h2>
+              <p className="mt-2 text-center text-sm text-gray-500">
+                Enter your account email and we'll send you a reset link.
+              </p>
+
+              <div className="mt-6 bg-white py-8 px-5 sm:px-8 shadow-sm rounded-3xl border border-[#E0E7E0]">
+                <form className="space-y-5" onSubmit={handleForgotPassword}>
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-[#1A1A1A] mb-1.5">
+                      Email Address
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
+                        <Mail className="w-4 h-4" />
+                      </div>
+                      <input
+                        type="email"
+                        required
+                        autoFocus
+                        autoComplete="email"
+                        value={forgotEmail}
+                        onChange={(e) => setForgotEmail(e.target.value)}
+                        className="block w-full pl-10 pr-3 py-3 border border-[#E0E7E0] rounded-xl bg-[#F7F9F7] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#008751] text-sm text-[#1A1A1A]"
+                        placeholder="name@example.com"
+                      />
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={isForgotLoading}
+                    className="w-full flex justify-center py-3.5 px-4 rounded-xl text-sm font-bold text-white bg-[#008751] hover:bg-[#007043] disabled:opacity-50 cursor-pointer transition-colors"
+                  >
+                    {isForgotLoading ? (
+                      <span className="flex items-center gap-2">
+                        <Loader2 className="w-4 h-4 animate-spin" /> Sending…
+                      </span>
+                    ) : (
+                      'Send Reset Link'
+                    )}
+                  </button>
+                </form>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {/* ── Email verification pending ─────────────────────────────────── */}
+        {screenKey === 'verify' && (
+          <motion.div
+            key="verify"
+            className="min-h-screen flex flex-col justify-center py-10 px-4"
+            initial={SLIDE_VARIANTS.fade.initial}
+            animate={SLIDE_VARIANTS.fade.animate}
+            exit={SLIDE_VARIANTS.fade.exit}
+            transition={TRANSITION}
+          >
+            <div className="w-full max-w-md mx-auto">
+              <div className="bg-white py-10 px-6 sm:px-10 shadow-sm rounded-3xl border border-[#E0E7E0] text-center space-y-5">
+                <div className="flex justify-center">
+                  <div className="w-16 h-16 rounded-2xl bg-[#E6F4EA] border border-[#C5DFC9] flex items-center justify-center">
+                    <MailCheck className="w-8 h-8 text-[#008751]" />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <h2 className="text-xl font-bold text-[#1A1A1A]">Check your email</h2>
+                  <p className="text-sm text-gray-500 leading-relaxed">
+                    We sent a verification link to{' '}
+                    <span className="font-semibold text-[#1A1A1A]">{verificationEmail}</span>.
+                    Click the link to activate your account, then come back and sign in.
+                  </p>
+                </div>
+                <div className="pt-2 space-y-3">
+                  <button
+                    onClick={() => { slideDir.current = 'back'; setVerificationPending(false); setIsLogin(true); setPassword(''); setConfirmPassword(''); }}
+                    className="w-full py-3 rounded-xl bg-[#008751] hover:bg-[#007043] text-white font-bold text-sm transition cursor-pointer"
+                  >
+                    Back to Sign In
+                  </button>
+                  <button
+                    onClick={onBack}
+                    className="w-full py-3 rounded-xl border border-[#E0E7E0] text-gray-500 hover:text-[#008751] font-semibold text-sm transition cursor-pointer"
+                  >
+                    Go to Home
+                  </button>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {/* ── Main login / signup form ───────────────────────────────────── */}
+        {screenKey === 'main' && (
+          <motion.div
+            key="main"
+            className="min-h-screen flex flex-col justify-center py-10 px-4"
+            initial={variants.initial}
+            animate={variants.animate}
+            exit={variants.exit}
+            transition={TRANSITION}
+          >
+            <div className="absolute top-4 left-4 sm:top-6 sm:left-6">
+              <button
+                onClick={onBack}
+                className="flex items-center gap-2 text-gray-500 hover:text-[#008751] font-semibold cursor-pointer transition text-sm"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Back
+              </button>
+            </div>
+
+            <div className="w-full max-w-md mx-auto">
+              <div className="flex justify-center mb-6">
+                <motion.img
+                  src="/logo-icon.png"
+                  alt="9ija Escrow"
+                  className="h-16 w-auto"
+                  initial={{ opacity: 0, scale: 0.75 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                />
+              </div>
+              <h2 className="text-center text-2xl sm:text-3xl font-bold text-[#1A1A1A] tracking-tight">
+                {isLogin ? 'Sign in to 9ija Escrow' : 'Create a Trader Account'}
+              </h2>
+
+              <p className="mt-2 text-center text-sm text-gray-500">
+                Or{' '}
+                <button
+                  onClick={() => { setIsLogin(!isLogin); setPassword(''); setConfirmPassword(''); }}
+                  className="font-bold text-[#008751] hover:text-[#007043] cursor-pointer"
+                >
+                  {isLogin ? 'Create a new trader account' : 'Sign in to your existing account'}
+                </button>
+              </p>
+
+              <div className="mt-6 bg-white py-8 px-5 sm:px-8 shadow-sm rounded-3xl border border-[#E0E7E0]">
+                {authErrorAlert && (
+                  <div className="mb-5 p-4 bg-amber-50 border border-amber-200 rounded-2xl flex gap-3 text-xs leading-relaxed text-amber-800">
+                    <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                    <div className="space-y-1">
+                      <span className="font-bold block">Configuration Note:</span>
+                      <span className="block whitespace-pre-line">{authErrorAlert}</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Google SSO */}
                 <button
                   type="button"
-                  onClick={() => setShowPassword((p) => !p)}
-                  className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-400 hover:text-gray-600 cursor-pointer"
-                  tabIndex={-1}
+                  onClick={handleGoogleSignIn}
+                  disabled={isGoogleLoading || isLoading}
+                  className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-xl border border-[#E0E7E0] hover:bg-[#F7F9F7] hover:border-gray-300 text-sm font-semibold text-gray-700 transition-[background-color,border-color] duration-150 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed mb-5"
                 >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  {isGoogleLoading ? (
+                    <Loader2 className="w-4 h-4 animate-spin text-gray-500" />
+                  ) : (
+                    <GoogleIcon />
+                  )}
+                  {isGoogleLoading ? 'Redirecting to Google…' : 'Continue with Google'}
                 </button>
+
+                {/* Divider */}
+                <div className="relative flex items-center mb-5">
+                  <div className="flex-1 border-t border-[#E0E7E0]" />
+                  <span className="px-3 text-[11px] text-gray-400 font-medium bg-white">or use email</span>
+                  <div className="flex-1 border-t border-[#E0E7E0]" />
+                </div>
+
+                <form className="space-y-5" onSubmit={handleSubmit}>
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-[#1A1A1A] mb-1.5">
+                      Email Address
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
+                        <Mail className="w-4 h-4" />
+                      </div>
+                      <input
+                        type="email"
+                        required
+                        autoComplete="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="block w-full pl-10 pr-3 py-3 border border-[#E0E7E0] rounded-xl bg-[#F7F9F7] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#008751] text-sm text-[#1A1A1A]"
+                        placeholder="name@example.com"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="block text-xs font-bold uppercase tracking-wider text-[#1A1A1A]">
+                        Password
+                      </label>
+                      {isLogin && (
+                        <button
+                          type="button"
+                          onClick={enterForgot}
+                          className="text-xs font-semibold text-[#008751] hover:text-[#007043] cursor-pointer transition-colors"
+                        >
+                          Forgot password?
+                        </button>
+                      )}
+                    </div>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
+                        <KeyRound className="w-4 h-4" />
+                      </div>
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        required
+                        autoComplete="current-password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="block w-full pl-10 pr-10 py-3 border border-[#E0E7E0] rounded-xl bg-[#F7F9F7] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#008751] text-sm text-[#1A1A1A]"
+                        placeholder="Min. 6 characters"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword((p) => !p)}
+                        className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-400 hover:text-gray-600 cursor-pointer"
+                        tabIndex={-1}
+                      >
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <AnimatePresence>
+                    {!isLogin && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.25, ease: 'easeInOut' }}
+                        style={{ overflow: 'hidden' }}
+                      >
+                        <label className="block text-xs font-bold uppercase tracking-wider text-[#1A1A1A] mb-1.5">
+                          Confirm Password
+                        </label>
+                        <div className="relative">
+                          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
+                            <UserPlus className="w-4 h-4" />
+                          </div>
+                          <input
+                            type={showConfirm ? 'text' : 'password'}
+                            required
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
+                            className="block w-full pl-10 pr-10 py-3 border border-[#E0E7E0] rounded-xl bg-[#F7F9F7] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#008751] text-sm text-[#1A1A1A]"
+                            placeholder="Repeat password"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowConfirm((p) => !p)}
+                            className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-400 hover:text-gray-600 cursor-pointer"
+                            tabIndex={-1}
+                          >
+                            {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </button>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    className="w-full flex justify-center py-3.5 px-4 rounded-xl text-sm font-bold text-white bg-[#008751] hover:bg-[#007043] disabled:opacity-50 cursor-pointer transition"
+                  >
+                    {isLoading ? (
+                      <span className="flex items-center gap-2">
+                        <Loader2 className="w-4 h-4 animate-spin" /> Connecting...
+                      </span>
+                    ) : isLogin ? 'Sign In' : 'Create Account'}
+                  </button>
+                </form>
               </div>
             </div>
+          </motion.div>
+        )}
 
-            <AnimatePresence>
-              {!isLogin && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                  transition={{ duration: 0.25, ease: 'easeInOut' }}
-                  style={{ overflow: 'hidden' }}
-                >
-                  <label className="block text-xs font-bold uppercase tracking-wider text-[#1A1A1A] mb-1.5">
-                    Confirm Password
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
-                      <UserPlus className="w-4 h-4" />
-                    </div>
-                    <input
-                      type={showConfirm ? 'text' : 'password'}
-                      required
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="block w-full pl-10 pr-10 py-3 border border-[#E0E7E0] rounded-xl bg-[#F7F9F7] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#008751] text-sm text-[#1A1A1A]"
-                      placeholder="Repeat password"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowConfirm((p) => !p)}
-                      className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-400 hover:text-gray-600 cursor-pointer"
-                      tabIndex={-1}
-                    >
-                      {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full flex justify-center py-3.5 px-4 rounded-xl text-sm font-bold text-white bg-[#008751] hover:bg-[#007043] disabled:opacity-50 cursor-pointer transition"
-            >
-              {isLoading ? (
-                <span className="flex items-center gap-2">
-                  <Loader2 className="w-4 h-4 animate-spin" /> Connecting...
-                </span>
-              ) : isLogin ? 'Sign In' : 'Create Account'}
-            </button>
-          </form>
-
-        </div>
-      </motion.div>
+      </AnimatePresence>
     </div>
   );
 }

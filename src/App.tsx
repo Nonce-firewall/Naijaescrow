@@ -19,6 +19,24 @@ import { UserProfile, Order, AdminSettings, Announcement, CoinListing, Dispute }
 import Navbar from './components/Navbar';
 import LandingPage from './components/LandingPage';
 import Notification, { ToastMessage } from './components/Notification';
+import PrivacyPolicyPage from './components/PrivacyPolicyPage';
+import TermsPage from './components/TermsPage';
+import SupportPage from './components/SupportPage';
+
+// ── Static URL routing (no react-router needed) ──────────────────────────────
+// Normalize pathname: strip trailing slash so /privacy/ === /privacy
+const _pathname = typeof window !== 'undefined'
+  ? window.location.pathname.replace(/\/$/, '') || '/'
+  : '/';
+const STATIC_ROUTES: Record<string, { title: string; component: React.ReactElement }> = {
+  '/privacy': { title: 'Privacy Policy — 9ija Escrow', component: <PrivacyPolicyPage /> },
+  '/terms':   { title: 'Terms of Use — 9ija Escrow',   component: <TermsPage /> },
+  '/support': { title: 'Support — 9ija Escrow',         component: <SupportPage /> },
+};
+const _staticRoute = STATIC_ROUTES[_pathname] ?? null;
+if (_staticRoute && typeof document !== 'undefined') {
+  document.title = _staticRoute.title;
+}
 
 const AuthPage = lazy(() => import('./components/AuthPage'));
 const UserDashboard = lazy(() => import('./components/UserDashboard'));
@@ -26,6 +44,9 @@ const AdminCMS = lazy(() => import('./components/AdminCMS'));
 const ResetPasswordPage = lazy(() => import('./components/ResetPasswordPage'));
 
 export default function App() {
+  // Serve static pages without loading auth/realtime
+  if (_staticRoute) return <>{_staticRoute.component}</>;
+
   const [currentPage, setCurrentPage] = useState<'landing' | 'auth' | 'dashboard'>('landing');
   const [authInitialMode, setAuthInitialMode] = useState<'signin' | 'signup'>('signin');
 
