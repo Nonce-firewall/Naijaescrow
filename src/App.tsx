@@ -90,11 +90,17 @@ export default function App() {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session?.user) {
         setCurrentUser(session.user);
-        // If this page-load came from a password-reset link, show the reset form
-        // instead of going straight to the dashboard
+        // Implicit-flow recovery: hash contains type=recovery
         if (isPasswordRecoveryRef.current) {
           isPasswordRecoveryRef.current = false;
           setShowPasswordReset(true);
+          setIsInitializing(false);
+          return;
+        }
+        // PKCE-flow: any auth callback (recovery, OAuth, email verify) arrives as ?code=...
+        // onAuthStateChange fires with the correct event type and handles navigation.
+        // Skip eager profile fetch here to avoid racing with PASSWORD_RECOVERY.
+        if (new URLSearchParams(window.location.search).has('code')) {
           setIsInitializing(false);
           return;
         }
@@ -103,11 +109,6 @@ export default function App() {
           setUserProfile(profile);
           setIsAdminMode(profile.role === 'admin');
           setCurrentPage('dashboard');
-          // Show verification toast if the page loaded via an email-verification redirect
-          if (isEmailVerificationRef.current) {
-            isEmailVerificationRef.current = false;
-            addToast('✅ Email verified! Welcome to 9ijaEscrow.', 'success');
-          }
         } catch (err) {
           console.error('Error fetching profile:', err);
         }
@@ -463,7 +464,7 @@ export default function App() {
             }}
           />
         </Suspense>
-        <Notification toasts={toasts} removeToast={removeToast} />
+        <Notification toasts={toasts} onClose={removeToast} />
       </MotionConfig>
     );
   }
