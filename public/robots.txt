@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+
+# Block access to private API and auth endpoints
+Disallow: /api/
+Disallow: /dashboard
+
+# Sitemap
+Sitemap: https://9ijaescrow.com.ng/sitemap.xml

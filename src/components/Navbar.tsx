@@ -127,22 +127,6 @@ export default function Navbar({ userProfile, isAdminMode, currentPage, onToggle
                   </button>
                 )}
 
-                {/* Bell icon — desktop, not shown in admin mode */}
-                {!isAdminMode && (
-                  <button
-                    onClick={onBellClick}
-                    className="relative p-2 rounded-lg border border-[#E0E7E0] text-gray-600 hover:bg-[#F7F9F7] cursor-pointer transition"
-                    title="System Bulletin"
-                  >
-                    <Bell className="w-4 h-4" />
-                    {bulletinCount > 0 && (
-                      <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-0.5 bg-rose-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center leading-none border border-white">
-                        {bulletinCount > 9 ? '9+' : bulletinCount}
-                      </span>
-                    )}
-                  </button>
-                )}
-
                 {/* Support icon — desktop */}
                 {!isAdminMode && <SupportButton />}
 
