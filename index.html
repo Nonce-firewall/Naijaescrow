@@ -17,14 +17,15 @@
     <!-- ═══════════════════════════════════════════
          FAVICON & ICONS
     ═══════════════════════════════════════════ -->
-    <!-- ICO fallback (IE / old systems) -->
-    <link rel="icon" href="/favicon.ico" sizes="any" />
-    <!-- Modern PNG favicon (32 × 32) -->
-    <link rel="icon" type="image/png" href="/logo-icon.png" sizes="32x32" />
+    <!-- Legacy shortcut icon — used by browsers for history, bookmarks & address bar -->
+    <link rel="shortcut icon" href="/favicon.ico?v=2" />
+    <!-- Modern standard — explicit ICO with all sizes -->
+    <link rel="icon" href="/favicon.ico?v=2" sizes="16x16 32x32 48x48" type="image/x-icon" />
+    <!-- Modern PNG favicon (32 × 32) — Chrome, Edge, Firefox prefer this over ICO -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/logo-icon.png?v=2" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/logo-icon.png?v=2" />
     <!-- Apple home-screen icon -->
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-    <!-- Legacy SVG favicon (if needed) -->
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=2" />
 
     <!-- ═══════════════════════════════════════════
          OPEN GRAPH  (Facebook, WhatsApp, LinkedIn, Telegram…)
