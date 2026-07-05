@@ -209,6 +209,26 @@ as $
   );
 $;
 
+-- ── Helper: active account check ─────────────────────────────
+-- Returns true only if the user's account_status is 'active'.
+-- Used to block order creation for suspended/terminated accounts.
+create or replace function public.is_account_active()
+returns boolean
+language sql
+security definer
+stable
+set search_path = public
+as $
+  select exists (
+    select 1 from public.users
+     where id = auth.uid()::text
+       and account_status = 'active'
+  );
+$;
+
+-- Grant execute on helper functions to authenticated users
+grant execute on function public.is_account_active() to anon, authenticated;
+
 -- ── users ──────────────────────────────────────────────────
 -- Regular users insert their own row at sign-up with role='user'.
 -- The admin email may also self-provision with role='admin' on first sign-up.
@@ -286,11 +306,14 @@ create policy "orders: read own or admin"
   to authenticated
   using (auth.uid()::text = user_id or is_admin());
 
--- Users can only place orders tied to their own uid
+-- Users can only place orders tied to their own uid AND with active account status
 create policy "orders: own insert"
   on public.orders for insert
   to authenticated
-  with check (auth.uid()::text = user_id);
+  with check (
+    auth.uid()::text = user_id
+    and public.is_account_active()
+  );
 
 -- Only admin can update orders (approve / reject / add tx ID)
 create policy "orders: admin update"

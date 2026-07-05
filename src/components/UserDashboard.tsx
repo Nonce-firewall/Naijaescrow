@@ -1,34 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { formatNGT, formatNGTDate } from '../lib/dateUtils';
 import { motion, AnimatePresence } from 'motion/react';
-import { 
-  TrendingUp, 
-  ArrowUpRight, 
-  ArrowDownLeft, 
-  Clock, 
-  CheckCircle2, 
-  XCircle, 
-  AlertCircle, 
-  Upload, 
-  Receipt, 
-  Smartphone, 
-  Eye, 
-  Lock, 
-  Bell, 
-  ChevronRight, 
-  UserCheck, 
-  FileText,
-  Camera,
-  Coins,
-  Search,
-  Filter,
-  Check,
-  MessageSquare,
-  AlertOctagon,
-  ShieldOff,
-  X,
-  RotateCw
-} from 'lucide-react';
+import { TrendingUp, ArrowUpRight, ArrowDownLeft, Clock, CircleCheck as CheckCircle2, Circle as XCircle, CircleAlert as AlertCircle, Upload, Receipt, Smartphone, Eye, Lock, Bell, ChevronRight, UserCheck, FileText, Camera, Coins, Search, ListFilter as Filter, Check, MessageSquare, OctagonAlert as AlertOctagon, ShieldOff, X, RotateCw } from 'lucide-react';
 import { UserProfile, Order, AdminSettings, Announcement, KYCData, CoinListing, Dispute } from '../types';
 import { createOrder, submitKYC, submitDispute } from '../lib/dbHelpers';
 import { compressImage } from '../lib/imageCompressor';
@@ -463,6 +436,16 @@ export default function UserDashboard({
 
     if (userProfile.kycStatus !== 'approved') {
       addToast('Your KYC must be approved by the admin before trading.', 'error');
+      return;
+    }
+
+    if (userProfile.accountStatus === 'suspended') {
+      addToast('Your account is suspended. You cannot place new orders.', 'error');
+      return;
+    }
+
+    if (userProfile.accountStatus === 'terminated') {
+      addToast('Your account has been terminated. Trading is permanently disabled.', 'error');
       return;
     }
 
