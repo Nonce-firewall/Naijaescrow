@@ -77,7 +77,6 @@ export default async (req: Request) => {
         email: `deleted-${uid}@removed.local`,
         account_status: 'deleted',
         notification_preferences: null,
-        deleted_at: new Date().toISOString(),
       })
       .eq('id', uid);
 
