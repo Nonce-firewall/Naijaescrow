@@ -98,7 +98,7 @@ export default function SupportDropdown({ onClose }: SupportDropdownProps) {
 
         {/* Email */}
         <a
-          href="mailto:contact@9ijaescrow.com.ng"
+          href="mailto:support@9ijaescrow.com.ng"
           onClick={onClose}
           className="flex items-center gap-3 px-3 py-2.5 rounded-xl border border-[#E0E7E0] bg-[#F7F9F7] hover:bg-[#EEF4EE] transition-colors"
         >
@@ -108,7 +108,7 @@ export default function SupportDropdown({ onClose }: SupportDropdownProps) {
           <div className="flex-1 min-w-0">
             <p className="text-xs font-bold text-[#1A1A1A]">Email Support</p>
             <p className="text-[10px] text-gray-500 mt-0.5">KYC reviews & trade disputes</p>
-            <p className="text-[11px] font-semibold text-[#008751] mt-0.5">contact@9ijaescrow.com.ng</p>
+            <p className="text-[11px] font-semibold text-[#008751] mt-0.5">support@9ijaescrow.com.ng</p>
           </div>
         </a>
       </div>
