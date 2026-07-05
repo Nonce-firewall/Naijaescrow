@@ -15,8 +15,8 @@ const CHANNELS = [
     key: 'whatsapp',
     label: 'WhatsApp Support',
     desc: 'Urgent trade issues & real-time status checks',
-    handle: '+234 900 000 0000',
-    href: 'https://wa.me/2349000000000',
+    handle: '+234 916 550 1298',
+    href: 'https://wa.me/2349165501298',
     logo: '/whatsapp-icon.png',
     ring: 'ring-green-200',
     bg: 'bg-green-50 hover:bg-green-100/80',
@@ -28,8 +28,8 @@ const CHANNELS = [
     key: 'telegram',
     label: 'Telegram Support',
     desc: 'Quick help, announcements & order alerts',
-    handle: '@9ijaescrow',
-    href: 'https://t.me/9ijaescrow',
+    handle: '@NijaEscrow',
+    href: 'https://t.me/NijaEscrow',
     logo: '/telegram-icon.png',
     ring: 'ring-sky-200',
     bg: 'bg-sky-50 hover:bg-sky-100/80',
@@ -98,7 +98,7 @@ export default function SupportDropdown({ onClose }: SupportDropdownProps) {
 
         {/* Email */}
         <a
-          href="mailto:support@9ijaescrow.com"
+          href="mailto:contact@9ijaescrow.com.ng"
           onClick={onClose}
           className="flex items-center gap-3 px-3 py-2.5 rounded-xl border border-[#E0E7E0] bg-[#F7F9F7] hover:bg-[#EEF4EE] transition-colors"
         >
@@ -108,7 +108,7 @@ export default function SupportDropdown({ onClose }: SupportDropdownProps) {
           <div className="flex-1 min-w-0">
             <p className="text-xs font-bold text-[#1A1A1A]">Email Support</p>
             <p className="text-[10px] text-gray-500 mt-0.5">KYC reviews & trade disputes</p>
-            <p className="text-[11px] font-semibold text-[#008751] mt-0.5">support@9ijaescrow.com</p>
+            <p className="text-[11px] font-semibold text-[#008751] mt-0.5">contact@9ijaescrow.com.ng</p>
           </div>
         </a>
       </div>
