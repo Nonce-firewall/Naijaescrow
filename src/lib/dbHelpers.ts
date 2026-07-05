@@ -425,13 +425,21 @@ export async function changePassword(newPassword: string) {
 
 // Permanently deletes the caller's own auth account and scrubs their profile,
 // while retaining KYC records (kyc_status/kyc_data) for fraud/legal purposes.
-// Actual deletion happens server-side in the `delete-account` Supabase Edge
+// Actual deletion happens server-side in the `delete-account` Netlify
 // Function, since removing an auth user requires the service-role key which
-// must never be exposed to the browser. See supabase/functions/delete-account.
+// must never be exposed to the browser. See netlify/functions/delete-account.mts.
 export async function deleteAccount() {
-  const { data, error } = await supabase.functions.invoke('delete-account');
-  if (error) throw new Error(error.message || 'Failed to delete account.');
-  if (data?.error) throw new Error(data.error);
+  const { data: sessionData } = await supabase.auth.getSession();
+  const accessToken = sessionData.session?.access_token;
+  if (!accessToken) throw new Error('You must be signed in to delete your account.');
+
+  const response = await fetch('/api/delete-account', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data?.error || 'Failed to delete account.');
 }
 
 export async function reinstateUser(uid: string) {

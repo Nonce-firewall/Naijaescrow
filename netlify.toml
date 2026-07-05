@@ -5,6 +5,9 @@
 [build.environment]
   NODE_VERSION = "20"
 
+[dev]
+  targetPort = 5000
+
 # SPA fallback — all routes serve index.html so React Router handles them
 [[redirects]]
   from   = "/*"
