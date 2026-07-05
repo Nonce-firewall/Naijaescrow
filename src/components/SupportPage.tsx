@@ -106,7 +106,7 @@ export default function SupportPage() {
 
           {/* Email */}
           <motion.a
-            href="mailto: contact@9ijaescrow.com.ng"
+            href="mailto:contact@9ijaescrow.com.ng"
             className="flex items-center gap-5 bg-white rounded-3xl border border-[#E0E7E0] shadow-sm p-5 hover:border-[#008751]/30 hover:shadow-md transition-all group"
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
