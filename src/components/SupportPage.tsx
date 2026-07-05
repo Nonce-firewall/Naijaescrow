@@ -21,8 +21,8 @@ const CHANNELS = [
     key: 'telegram',
     label: 'Telegram Support',
     desc: 'Quick help, announcements & order alerts',
-    handle: '@9ijaescrow',
-    href: 'https://t.me/9ijaescrow',
+    handle: '@NijaEscrow',
+    href: 'https://t.me/NijaEscrow',
     logo: '/telegram-icon.png',
     ring: 'ring-sky-300',
     bg: 'bg-sky-50 hover:bg-sky-100/70',
@@ -106,7 +106,7 @@ export default function SupportPage() {
 
           {/* Email */}
           <motion.a
-            href="mailto:support@9ijaescrow.com"
+            href="mailto: contact@9ijaescrow.com.ng"
             className="flex items-center gap-5 bg-white rounded-3xl border border-[#E0E7E0] shadow-sm p-5 hover:border-[#008751]/30 hover:shadow-md transition-all group"
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
@@ -119,7 +119,7 @@ export default function SupportPage() {
             <div className="flex-1 min-w-0">
               <p className="font-bold text-[#1A1A1A] mb-1">Email Support</p>
               <p className="text-xs text-gray-500">For account issues, KYC reviews, and trade disputes</p>
-              <p className="text-sm font-semibold text-[#008751] mt-1.5">support@9ijaescrow.com</p>
+              <p className="text-sm font-semibold text-[#008751] mt-1.5">contact@9ijaescrow.com.ng</p>
             </div>
           </motion.a>
         </div>
