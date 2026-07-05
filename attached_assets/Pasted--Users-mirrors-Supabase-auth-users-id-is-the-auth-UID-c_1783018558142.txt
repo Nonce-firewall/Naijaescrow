@@ -8,7 +8,7 @@ create table if not exists public.users (
                                      check (kyc_status in ('none', 'pending', 'approved', 'rejected')),
   kyc_data                 jsonb,
   account_status           text    not null default 'active'
-                                     check (account_status in ('active', 'suspended', 'terminated')),
+                                     check (account_status in ('active', 'suspended', 'terminated', 'deleted')),
   suspend_reason           text,
   terminate_reason         text,
   notification_preferences jsonb,
