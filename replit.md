@@ -35,16 +35,12 @@ If you already have a live database running the old open `USING(true)` policies,
 
 Fresh installs using `supabase-schema.sql` already include these correct policies.
 
-## Account deletion (Supabase Edge Function)
-The "Delete Account" option (Navbar → Account menu) permanently deletes the user's Supabase Auth login while retaining their `kyc_status`/`kyc_data` for fraud/legal purposes. This requires the service-role key, so the actual deletion runs server-side in a Supabase Edge Function — **it will not work until deployed**:
+## Account deletion (Netlify Function)
+The "Delete Account" option (Navbar → Account menu) permanently deletes the user's Supabase Auth login while retaining their `kyc_status`/`kyc_data` for fraud/legal purposes. This requires the service-role key, so the actual deletion runs server-side in a Netlify Function that deploys automatically with the site. Set these two Netlify environment variables (site settings > Environment variables) for it to work:
+- `SUPABASE_URL` — same value as `VITE_SUPABASE_URL` (falls back to it automatically if unset)
+- `SUPABASE_SERVICE_ROLE_KEY` — from Supabase project settings > API (keep this secret, server-side only)
 
-```bash
-supabase login
-supabase link --project-ref <your-project-ref>
-supabase functions deploy delete-account
-```
-
-Function source: `supabase/functions/delete-account/index.ts`. Supabase auto-injects `SUPABASE_URL`/`SUPABASE_SERVICE_ROLE_KEY` into edge functions — no manual secret setup needed.
+Function source: `netlify/functions/delete-account.mts`.
 
 ## Project structure
 - `src/App.tsx` — root component; auth state, realtime subscriptions, page routing
