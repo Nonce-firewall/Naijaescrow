@@ -98,7 +98,7 @@ function Modal({ type, onClose }: { type: ModalType; onClose: () => void }) {
               <p className="text-xs text-gray-500">Our support team is available Monday–Friday, 9 AM–6 PM WAT. We typically respond within 2–4 business hours.</p>
 
               {/* WhatsApp */}
-              <a href="https://wa.me/2349000000000" target="_blank" rel="noopener noreferrer"
+              <a href="https://wa.me/2349165501298" target="_blank" rel="noopener noreferrer"
                 className="flex items-center gap-3 bg-green-50 border border-green-200 rounded-2xl p-4 hover:bg-green-100/70 transition-colors group"
               >
                 <img src="/whatsapp-icon.png" alt="WhatsApp" loading="lazy"
@@ -109,12 +109,12 @@ function Modal({ type, onClose }: { type: ModalType; onClose: () => void }) {
                     <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-green-100 text-green-700">Live</span>
                   </div>
                   <div className="text-xs text-gray-500 mt-0.5">Urgent trade issues and real-time status checks</div>
-                  <span className="text-green-700 font-semibold text-sm mt-1 block">+234 900 000 0000</span>
+                  <span className="text-green-700 font-semibold text-sm mt-1 block">+234 916 550 1298</span>
                 </div>
               </a>
 
               {/* Telegram */}
-              <a href="https://t.me/9ijaescrow" target="_blank" rel="noopener noreferrer"
+              <a href="https://t.me/NijaEscrow" target="_blank" rel="noopener noreferrer"
                 className="flex items-center gap-3 bg-sky-50 border border-sky-200 rounded-2xl p-4 hover:bg-sky-100/70 transition-colors group"
               >
                 <img src="/telegram-icon.png" alt="Telegram" loading="lazy"
@@ -125,12 +125,12 @@ function Modal({ type, onClose }: { type: ModalType; onClose: () => void }) {
                     <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-sky-100 text-sky-700">Active</span>
                   </div>
                   <div className="text-xs text-gray-500 mt-0.5">Quick help, announcements & order alerts</div>
-                  <span className="text-sky-600 font-semibold text-sm mt-1 block">@9ijaescrow</span>
+                  <span className="text-sky-600 font-semibold text-sm mt-1 block">@NijaEscrow</span>
                 </div>
               </a>
 
               {/* Email */}
-              <a href="mailto:support@9ijaescrow.com"
+              <a href="mailto:contact@9ijaescrow.com.ng"
                 className="flex items-center gap-3 bg-[#F0F7F2] border border-[#D1E6D8] rounded-2xl p-4 hover:bg-[#e6f4ea] transition-colors"
               >
                 <div className="w-12 h-12 rounded-full bg-[#E6F4EA] border border-[#C5DFC9] flex items-center justify-center shrink-0">
@@ -139,7 +139,7 @@ function Modal({ type, onClose }: { type: ModalType; onClose: () => void }) {
                 <div>
                   <div className="font-bold text-[#1A1A1A] text-sm mb-0.5">Email Support</div>
                   <div className="text-xs text-gray-500">For account issues, KYC reviews, and trade disputes</div>
-                  <span className="text-[#008751] font-semibold text-sm mt-1 block hover:underline">support@9ijaescrow.com</span>
+                  <span className="text-[#008751] font-semibold text-sm mt-1 block hover:underline">contact@9ijaescrow.com.ng</span>
                 </div>
               </a>
 
