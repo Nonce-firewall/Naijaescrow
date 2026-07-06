@@ -13,25 +13,3 @@
   from   = "/*"
   to     = "/index.html"
   status = 200
-
-# ── Security headers ────────────────────────────────────────────────────────
-# Applied to every response served by Netlify (pages, assets, API functions).
-[[headers]]
-  for = "/*"
-  [headers.values]
-    # Prevent the site from being embedded in iframes on other origins (clickjacking)
-    X-Frame-Options = "DENY"
-    # Stop browsers from MIME-sniffing the content type
-    X-Content-Type-Options = "nosniff"
-    # Legacy XSS filter — browsers that still honour it will block reflected XSS
-    X-XSS-Protection = "1; mode=block"
-    # Only send the origin (no path) as the Referer header on cross-origin requests
-    Referrer-Policy = "strict-origin-when-cross-origin"
-    # Disable browser features that are not needed by this app
-    Permissions-Policy = "camera=(), microphone=(), geolocation=(), payment=(), usb=(), bluetooth=()"
-    # Content-Security-Policy
-    # • script-src 'unsafe-inline': Vite injects a small inline bootstrap script in index.html
-    # • connect-src: Supabase REST + realtime WebSocket + local Netlify function calls
-    # • img-src https: data: blob:: Supabase Storage, crypto logos, compressed previews
-    # • frame-ancestors 'none': redundant with X-Frame-Options but defence-in-depth
-    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://cryptologos.cc; frame-src 'none'; frame-ancestors 'none'; object-src 'none'; base-uri 'self';"
