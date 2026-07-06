@@ -1117,7 +1117,7 @@ export default function UserDashboard({
                                           <img
                                             src={group.logoUrl}
                                             alt={group.name}
-                                            className="w-9 h-9 sm:w-11 sm:h-11 rounded-full object-cover border border-[#E0E7E0] bg-white"
+                                            className="w-9 h-9 sm:w-11 sm:h-11 object-contain"
                                             referrerPolicy="no-referrer"
                                           />
                                         ) : (
@@ -1276,7 +1276,7 @@ export default function UserDashboard({
                             <img 
                               src={activeCoin.logoUrl} 
                               alt={activeCoin.name} 
-                              className="w-12 h-12 rounded-full object-cover border border-slate-200 bg-white" 
+                              className="w-12 h-12 object-contain" 
                               referrerPolicy="no-referrer"
                             />
                           ) : (
