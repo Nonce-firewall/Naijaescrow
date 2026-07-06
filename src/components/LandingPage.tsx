@@ -633,10 +633,15 @@ function TradingWidget({
 interface LandingPageProps {
   announcements: Announcement[];
   settings: AdminSettings;
+  liveNgnRate?: number | null;
   onNavigate: (page: 'auth' | 'dashboard', extra?: string) => void;
 }
 
-export default function LandingPage({ announcements, settings, onNavigate }: LandingPageProps) {
+export default function LandingPage({ announcements, settings, liveNgnRate, onNavigate }: LandingPageProps) {
+  // Effective SELL rate = live market + admin markup; fallback to markup alone when CoinGecko unavailable
+  const effectiveSellRate = liveNgnRate
+    ? Math.round(liveNgnRate) + settings.usdtSellMarkup
+    : settings.usdtSellMarkup;
   const [activeModal, setActiveModal] = useState<ModalType>(null);
 
   const publicAnnouncements = announcements.filter(
@@ -719,7 +724,7 @@ export default function LandingPage({ announcements, settings, onNavigate }: Lan
               <div>
                 <span className="text-gray-400 text-[10px] font-bold uppercase tracking-wider block mb-1">Live Exchange Rate</span>
                 <div className="flex items-end gap-2">
-                  <span className="text-2xl sm:text-3xl font-bold text-[#00FF85]">₦{settings.usdtRate.toLocaleString()}</span>
+                  <span className="text-2xl sm:text-3xl font-bold text-[#00FF85]">₦{effectiveSellRate.toLocaleString()}</span>
                   <span className="text-xs text-gray-400 mb-0.5">/USDT</span>
                 </div>
               </div>
@@ -759,7 +764,7 @@ export default function LandingPage({ announcements, settings, onNavigate }: Lan
             style={{ willChange: 'transform, opacity' }}
           >
             <TradingWidget
-              rate={settings.usdtRate}
+              rate={effectiveSellRate}
               onCtaClick={() => onNavigate('auth', 'signup')}
             />
           </motion.div>

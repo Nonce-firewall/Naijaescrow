@@ -38,7 +38,10 @@ export interface AdminSettings {
   ngnBankName: string;
   ngnAccountNumber: string;
   ngnAccountName: string;
-  usdtRate: number;
+  /** NGN added on top of live market price for SELL orders — also drives hero & dashboard display */
+  usdtSellMarkup: number;
+  /** NGN added on top of live market price for BUY orders */
+  usdtBuyMarkup: number;
   wallets: {
     BSC: string;
     Tron: string;
@@ -109,4 +112,14 @@ export interface Dispute {
   adminResponse?: string;
   createdAt: number;
   resolvedAt?: number;
+}
+
+export interface DisputeMessage {
+  id: string;
+  disputeId: string;
+  senderId: string;
+  senderEmail: string;
+  senderRole: 'user' | 'admin';
+  message: string;
+  createdAt: number;
 }

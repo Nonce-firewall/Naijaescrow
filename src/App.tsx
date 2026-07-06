@@ -77,6 +77,8 @@ export default function App() {
   const [kycUsers, setKycUsers] = useState<UserProfile[]>([]);
   const [coins, setCoins] = useState<CoinListing[]>([]);
   const [disputes, setDisputes] = useState<Dispute[]>([]);
+  /** Live NGN/USDT market price from CoinGecko — refreshed every 5 minutes */
+  const [liveNgnRate, setLiveNgnRate] = useState<number | null>(null);
 
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
@@ -187,11 +189,29 @@ export default function App() {
     return () => subscription.unsubscribe();
   }, []);
 
+  // Live market rate: CoinGecko NGN/USDT — single global fetch, refreshed every 5 min
+  useEffect(() => {
+    let cancelled = false;
+    const fetchRate = async () => {
+      try {
+        const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=tether&vs_currencies=ngn');
+        if (!res.ok) return;
+        const json = await res.json();
+        if (!cancelled) setLiveNgnRate(json?.tether?.ngn ?? null);
+      } catch { /* silently ignore — markup rates are still shown */ }
+    };
+    fetchRate();
+    const iv = setInterval(fetchRate, 5 * 60 * 1000);
+    return () => { cancelled = true; clearInterval(iv); };
+  }, []);
+
   // Realtime: Settings
   useEffect(() => {
     // Initial fetch
+    // Select both old (usdt_rate) and new (usdt_sell_markup/usdt_buy_markup) columns —
+    // rowToSettings handles the backward-compat fallback so either schema works.
     supabase.from('settings')
-      .select('ngn_bank_name,ngn_account_number,ngn_account_name,usdt_rate,wallet_bsc,wallet_tron,wallet_polygon')
+      .select('ngn_bank_name,ngn_account_number,ngn_account_name,usdt_rate,usdt_sell_markup,usdt_buy_markup,wallet_bsc,wallet_tron,wallet_polygon')
       .eq('id', 'admin_settings').single().then(({ data }) => {
         if (data) setSettings(rowToSettings(data));
       });
@@ -528,6 +548,7 @@ export default function App() {
               <LandingPage
                 announcements={announcements}
                 settings={settings}
+                liveNgnRate={liveNgnRate}
                 onNavigate={navigateToPage}
               />
             </motion.div>
@@ -570,6 +591,7 @@ export default function App() {
                     announcements={announcements}
                     coins={coins}
                     disputes={disputes}
+                    liveNgnRate={liveNgnRate}
                     addToast={addToast}
                     onRefresh={handleDatabaseRefresh}
                   />
@@ -581,6 +603,7 @@ export default function App() {
                     announcements={announcements}
                     coins={coins}
                     disputes={disputes}
+                    liveNgnRate={liveNgnRate}
                     addToast={addToast}
                     onRefresh={handleDatabaseRefresh}
                     mobileBulletinOpen={mobileBulletinOpen}

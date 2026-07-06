@@ -35,6 +35,7 @@ import {
 } from 'lucide-react';
 import { UserProfile, Order, AdminSettings, Announcement, KYCData, CoinListing, Dispute } from '../types';
 import { formatNGT, formatNGTDate } from '../lib/dateUtils';
+import DisputeChat from './DisputeChat';
 import { 
   processOrder, 
   handleKYCReview, 
@@ -62,6 +63,7 @@ interface AdminCMSProps {
   announcements: Announcement[];
   coins: CoinListing[];
   disputes: Dispute[];
+  liveNgnRate?: number | null;
   addToast: (msg: string, type: 'success' | 'error' | 'info') => void;
   onRefresh: () => void;
 }
@@ -74,6 +76,7 @@ export default function AdminCMS({
   announcements, 
   coins,
   disputes,
+  liveNgnRate,
   addToast,
   onRefresh
 }: AdminCMSProps) {
@@ -100,7 +103,8 @@ export default function AdminCMS({
   const [bankName, setBankName] = useState(settings.ngnBankName);
   const [accountNumber, setAccountNumber] = useState(settings.ngnAccountNumber);
   const [accountName, setAccountName] = useState(settings.ngnAccountName);
-  const [usdtRate, setUsdtRate] = useState<number>(settings.usdtRate);
+  const [usdtSellMarkup, setUsdtSellMarkup] = useState<number>(settings.usdtSellMarkup);
+  const [usdtBuyMarkup, setUsdtBuyMarkup] = useState<number>(settings.usdtBuyMarkup);
   const [bscWallet, setBscWallet] = useState(settings.wallets.BSC);
   const [tronWallet, setTronWallet] = useState(settings.wallets.Tron);
   const [polygonWallet, setPolygonWallet] = useState(settings.wallets.Polygon);
@@ -111,7 +115,7 @@ export default function AdminCMS({
   const [coinSymbol, setCoinSymbol] = useState('');
   const [coinNetwork, setCoinNetwork] = useState('');
   const [coinWalletAddress, setCoinWalletAddress] = useState('');
-  const [coinRate, setCoinRate] = useState<number>(settings.usdtRate);
+  const [coinRate, setCoinRate] = useState<number>(settings.usdtSellMarkup);
   const [coinLogoUrl, setCoinLogoUrl] = useState('');
   const [coinFeePercentage, setCoinFeePercentage] = useState<number>(0);
   const [coinMinTradeAmount, setCoinMinTradeAmount] = useState<number>(1);
@@ -318,8 +322,8 @@ export default function AdminCMS({
   // Update Settings
   const handleSaveSettings = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!bankName || !accountNumber || !accountName || usdtRate <= 0) {
-      addToast('Please complete all configurations.', 'error');
+    if (!bankName || !accountNumber || !accountName) {
+      addToast('Please complete all bank credential fields.', 'error');
       return;
     }
 
@@ -329,7 +333,8 @@ export default function AdminCMS({
         ngnBankName: bankName,
         ngnAccountNumber: accountNumber,
         ngnAccountName: accountName,
-        usdtRate: Number(usdtRate),
+        usdtSellMarkup: Number(usdtSellMarkup),
+        usdtBuyMarkup: Number(usdtBuyMarkup),
         wallets: {
           BSC: bscWallet,
           Tron: tronWallet,
@@ -441,7 +446,7 @@ export default function AdminCMS({
       setCoinSymbol('');
       setCoinNetwork('');
       setCoinWalletAddress('');
-      setCoinRate(settings.usdtRate);
+      setCoinRate(settings.usdtSellMarkup);
       setCoinLogoUrl('');
       setCoinFeePercentage(0);
       setCoinMinTradeAmount(1);
@@ -557,8 +562,12 @@ export default function AdminCMS({
             <span className="text-base lg:text-lg font-bold text-amber-400">{pendingKycCount}</span>
           </div>
           <div className="bg-white/10 px-2.5 lg:px-4 py-2 lg:py-2.5 rounded-xl lg:rounded-2xl border border-white/10 text-center">
-            <span className="text-[8px] lg:text-[9px] text-gray-400 font-mono block leading-tight">USDT<br className="lg:hidden" />{' '}RATE</span>
-            <span className="text-base lg:text-lg font-bold text-[#00FF85]">₦{settings.usdtRate}</span>
+            <span className="text-[8px] lg:text-[9px] text-gray-400 font-mono block leading-tight">SELL<br className="lg:hidden" />{' '}RATE</span>
+            <span className="text-base lg:text-lg font-bold text-[#00FF85]">
+              ₦{liveNgnRate
+                ? (Math.round(liveNgnRate) + settings.usdtSellMarkup).toLocaleString()
+                : `+${settings.usdtSellMarkup}`}
+            </span>
           </div>
         </div>
       </div>
@@ -932,28 +941,79 @@ export default function AdminCMS({
                 <p className="text-xs text-slate-500">Update NGN cash receiving bank credentials, cryptocurrency rates, and active wallet address logs.</p>
               </div>
 
-              {/* Rate setting */}
-              <div className="bg-slate-50 border border-slate-100 rounded-xl p-4">
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                  USDT NGN Exchange Rate
-                </label>
-                <div className="relative rounded-md max-w-sm">
-                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500 text-xs font-bold">
-                    ₦
+              {/* Rate setting — split SELL / BUY markups */}
+              <div className="bg-slate-50 border border-slate-100 rounded-xl p-4 space-y-4">
+                <div>
+                  <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">NGN/USDT Rate Configuration</h4>
+                  <p className="text-[11px] text-slate-400 mt-0.5">
+                    Set the NGN markup added on top of the live CoinGecko market price for each trade direction.
+                    The SELL rate drives the hero & dashboard display.
+                  </p>
+                </div>
+
+                {/* Live preview card */}
+                {liveNgnRate ? (
+                  <div className="bg-white border border-slate-200 rounded-xl p-3 space-y-1.5 text-[11px]">
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-400 font-mono uppercase text-[9px] tracking-wider">Live Market (CoinGecko)</span>
+                      <span className="font-semibold text-slate-600">₦{Math.round(liveNgnRate).toLocaleString()} / USDT</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-400 font-mono uppercase text-[9px] tracking-wider">Effective SELL Rate</span>
+                      <span className="font-bold text-emerald-700">₦{(Math.round(liveNgnRate) + usdtSellMarkup).toLocaleString()} / USDT</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-400 font-mono uppercase text-[9px] tracking-wider">Effective BUY Rate</span>
+                      <span className="font-bold text-blue-700">₦{(Math.round(liveNgnRate) + usdtBuyMarkup).toLocaleString()} / USDT</span>
+                    </div>
                   </div>
-                  <input
-                    type="number"
-                    required
-                    value={usdtRate}
-                    onChange={(e) => setUsdtRate(Number(e.target.value))}
-                    className="block w-full pl-8 pr-12 py-2.5 border border-slate-200 rounded-lg text-sm font-semibold focus:outline-none"
-                    placeholder="Exchange Rate"
-                  />
-                  <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-xs font-bold text-slate-400">
-                    / 1 USDT
+                ) : (
+                  <div className="bg-amber-50 border border-amber-100 rounded-xl p-3 text-[11px] text-amber-700 font-mono">
+                    ⏳ Fetching live market rate… preview will appear once available.
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* SELL Markup */}
+                  <div>
+                    <label className="block text-[10px] text-slate-500 font-mono uppercase mb-1.5">
+                      SELL Markup (NGN added to market)
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500 text-xs font-bold">+₦</div>
+                      <input
+                        type="number"
+                        value={usdtSellMarkup}
+                        onChange={(e) => setUsdtSellMarkup(Number(e.target.value))}
+                        className="block w-full pl-10 pr-14 py-2.5 border border-slate-200 rounded-lg text-sm font-semibold focus:outline-none focus:ring-1 focus:ring-[#008751]"
+                        placeholder="e.g. 100"
+                        min={0}
+                      />
+                      <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-[10px] font-bold text-slate-400">/ USDT</div>
+                    </div>
+                    <p className="text-[10px] text-slate-400 mt-1">Hero display, dashboard card & sell orders.</p>
+                  </div>
+
+                  {/* BUY Markup */}
+                  <div>
+                    <label className="block text-[10px] text-slate-500 font-mono uppercase mb-1.5">
+                      BUY Markup (NGN added to market)
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500 text-xs font-bold">+₦</div>
+                      <input
+                        type="number"
+                        value={usdtBuyMarkup}
+                        onChange={(e) => setUsdtBuyMarkup(Number(e.target.value))}
+                        className="block w-full pl-10 pr-14 py-2.5 border border-slate-200 rounded-lg text-sm font-semibold focus:outline-none focus:ring-1 focus:ring-[#008751]"
+                        placeholder="e.g. 80"
+                        min={0}
+                      />
+                      <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-[10px] font-bold text-slate-400">/ USDT</div>
+                    </div>
+                    <p className="text-[10px] text-slate-400 mt-1">Applied only at buy order creation time.</p>
                   </div>
                 </div>
-                <p className="text-[11px] text-slate-400 mt-2">This is the global exchange rate used on user-facing forms instantly.</p>
               </div>
 
               {/* Bank accounts */}
@@ -1463,16 +1523,16 @@ export default function AdminCMS({
                         )}
                       </div>
                       <div className="shrink-0">
-                        {d.status === 'open' ? (
-                          <button
-                            onClick={() => { setSelectedDispute(d); setDisputeResponseText(''); }}
-                            className="bg-slate-900 hover:bg-[#008751] text-white px-4 py-2 rounded-xl text-xs font-bold cursor-pointer transition"
-                          >
-                            Respond & Resolve
-                          </button>
-                        ) : (
-                          <span className="text-emerald-600 text-xs font-bold">Resolved</span>
-                        )}
+                        <button
+                          onClick={() => { setSelectedDispute(d); setDisputeResponseText(''); }}
+                          className={`text-white px-4 py-2 rounded-xl text-xs font-bold cursor-pointer transition ${
+                            d.status === 'open'
+                              ? 'bg-slate-900 hover:bg-[#008751]'
+                              : 'bg-slate-200 hover:bg-slate-300 text-slate-700'
+                          }`}
+                        >
+                          {d.status === 'open' ? 'Open Chat & Resolve' : 'View Thread'}
+                        </button>
                       </div>
                     </div>
                   ))}
@@ -2676,68 +2736,86 @@ export default function AdminCMS({
         )}
       </AnimatePresence>
 
-      {/* DISPUTE RESOLUTION MODAL */}
+      {/* DISPUTE CHAT + RESOLUTION MODAL */}
       <AnimatePresence>
         {selectedDispute && (
-          <div className="fixed inset-0 bg-slate-900/50 z-50 flex items-center justify-center p-4">
+          <div
+            className="fixed inset-0 bg-slate-900/60 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
+            onClick={() => setSelectedDispute(null)}
+          >
             <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-100 overflow-hidden"
+              initial={{ opacity: 0, y: 32, scale: 0.97 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 20, scale: 0.97 }}
+              transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+              className="bg-white rounded-t-3xl sm:rounded-2xl w-full sm:max-w-lg shadow-2xl border border-slate-100 flex flex-col max-h-[92vh] sm:max-h-[85vh]"
+              onClick={(e) => e.stopPropagation()}
             >
-              <div className="bg-slate-950 text-white p-5 flex justify-between items-center">
+              {/* Header */}
+              <div className="bg-slate-950 text-white px-5 py-4 flex items-center justify-between shrink-0 rounded-t-3xl sm:rounded-t-2xl">
                 <div>
-                  <span className="text-[10px] uppercase font-bold tracking-widest text-rose-400 font-mono">Dispute Resolution</span>
+                  <span className="text-[10px] uppercase font-bold tracking-widest text-rose-400 font-mono">
+                    {selectedDispute.status === 'open' ? '🔴 Open Dispute' : '✅ Resolved'}
+                  </span>
                   <h3 className="text-base font-extrabold mt-0.5">Order #{selectedDispute.orderId.substring(0,6).toUpperCase()}</h3>
+                  <p className="text-[10px] text-slate-400 font-mono mt-0.5">{selectedDispute.userEmail}</p>
                 </div>
-                <button onClick={() => setSelectedDispute(null)} className="text-slate-400 hover:text-white cursor-pointer"><X className="w-5 h-5" /></button>
+                <button onClick={() => setSelectedDispute(null)} className="text-slate-400 hover:text-white cursor-pointer transition">
+                  <X className="w-5 h-5" />
+                </button>
               </div>
-              <div className="p-6 space-y-4 text-xs overflow-y-auto max-h-[75vh]">
-                <div>
-                  <span className="text-slate-400 font-mono block text-[9px] uppercase mb-1">From</span>
-                  <span className="font-bold text-slate-800">{selectedDispute.userEmail}</span>
-                  <span className="text-slate-400 ml-2">{formatNGT(selectedDispute.createdAt)}</span>
-                </div>
-                <div>
-                  <span className="text-slate-400 font-mono block text-[9px] uppercase mb-1">Trader Message</span>
-                  <div className="bg-slate-50 border border-slate-100 p-3 rounded-xl text-slate-800 leading-relaxed">{selectedDispute.message}</div>
-                </div>
-                {selectedDispute.imageUrls && selectedDispute.imageUrls.length > 0 && (
-                  <div>
-                    <span className="text-slate-400 font-mono block text-[9px] uppercase mb-2">
-                      Payment Proof ({selectedDispute.imageUrls.length} image{selectedDispute.imageUrls.length > 1 ? 's' : ''})
-                    </span>
-                    <div className="flex gap-2 flex-wrap">
+
+              {/* Body — scrollable */}
+              <div className="overflow-y-auto flex-1 min-h-0 p-5 space-y-4 text-xs">
+
+                {/* Initial dispute message + evidence */}
+                <div className="bg-slate-50 border border-slate-100 rounded-xl p-3 space-y-2">
+                  <span className="text-slate-400 font-mono block text-[9px] uppercase">Initial Dispute · {formatNGT(selectedDispute.createdAt)}</span>
+                  <p className="text-slate-800 leading-relaxed">{selectedDispute.message}</p>
+                  {selectedDispute.imageUrls && selectedDispute.imageUrls.length > 0 && (
+                    <div className="flex gap-2 flex-wrap pt-1">
                       {selectedDispute.imageUrls.map((url, idx) => (
                         <a key={idx} href={url} target="_blank" rel="noreferrer">
-                          <img
-                            src={url}
-                            alt={`Proof ${idx + 1}`}
-                            className="h-24 w-28 object-cover rounded-xl border border-slate-200 hover:opacity-80 transition cursor-pointer"
-                          />
+                          <img src={url} alt={`Proof ${idx + 1}`} className="h-16 w-20 object-cover rounded-lg border border-slate-200 hover:opacity-80 transition cursor-pointer" />
                         </a>
                       ))}
                     </div>
+                  )}
+                </div>
+
+                {/* Live chat thread */}
+                <div>
+                  <span className="text-slate-400 font-mono block text-[9px] uppercase mb-2">Chat Thread</span>
+                  <DisputeChat
+                    disputeId={selectedDispute.id}
+                    currentUserId={userProfile.uid}
+                    currentUserEmail={userProfile.email}
+                    currentUserRole="admin"
+                    isOpen={selectedDispute.status === 'open'}
+                  />
+                </div>
+
+                {/* Resolve section — only when open */}
+                {selectedDispute.status === 'open' && (
+                  <div className="space-y-2 pt-2 border-t border-slate-100">
+                    <span className="text-slate-500 font-mono block text-[9px] uppercase">Close & Resolve Dispute</span>
+                    <p className="text-[10px] text-slate-400">Write a final resolution note (optional) and mark this dispute as resolved.</p>
+                    <textarea
+                      rows={2}
+                      value={disputeResponseText}
+                      onChange={(e) => setDisputeResponseText(e.target.value)}
+                      placeholder="Final resolution note (optional)…"
+                      className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs resize-none focus:outline-none focus:ring-1 focus:ring-[#008751]"
+                    />
+                    <button
+                      onClick={() => handleResolveDispute(selectedDispute.id)}
+                      disabled={isResolvingDispute}
+                      className="w-full bg-[#008751] hover:bg-[#007043] text-white py-3 rounded-xl text-xs font-bold transition cursor-pointer disabled:opacity-60"
+                    >
+                      {isResolvingDispute ? 'Resolving...' : '✓ Mark as Resolved'}
+                    </button>
                   </div>
                 )}
-                <div className="space-y-2 pt-2 border-t border-slate-100">
-                  <span className="text-slate-500 font-mono block text-[9px] uppercase">Your Response</span>
-                  <textarea
-                    rows={3}
-                    value={disputeResponseText}
-                    onChange={(e) => setDisputeResponseText(e.target.value)}
-                    placeholder="Explain the resolution or reason for the final decision..."
-                    className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs resize-none focus:outline-none focus:ring-1 focus:ring-[#008751]"
-                  />
-                  <button
-                    onClick={() => handleResolveDispute(selectedDispute.id)}
-                    disabled={isResolvingDispute}
-                    className="w-full bg-[#008751] hover:bg-[#007043] text-white py-3 rounded-xl text-xs font-bold transition cursor-pointer disabled:opacity-60"
-                  >
-                    {isResolvingDispute ? 'Resolving...' : 'Mark as Resolved & Send Response'}
-                  </button>
-                </div>
               </div>
             </motion.div>
           </div>

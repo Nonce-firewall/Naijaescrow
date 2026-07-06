@@ -5,7 +5,8 @@ export const DEFAULT_SETTINGS: AdminSettings = {
   ngnBankName: 'Zenith Bank',
   ngnAccountNumber: '1012345678',
   ngnAccountName: '9ija Escrow Ltd.',
-  usdtRate: 1540,
+  usdtSellMarkup: 100,
+  usdtBuyMarkup: 80,
   wallets: {
     BSC: '0x71C7656EC7ab88b098defB751B7401B5f6d1476B',
     Tron: 'TYG9xLq5Ym6296U6g1m29P1Pq9T7Pz8D8W',
@@ -22,7 +23,8 @@ export async function ensureDefaultSettings() {
         ngn_bank_name: DEFAULT_SETTINGS.ngnBankName,
         ngn_account_number: DEFAULT_SETTINGS.ngnAccountNumber,
         ngn_account_name: DEFAULT_SETTINGS.ngnAccountName,
-        usdt_rate: DEFAULT_SETTINGS.usdtRate,
+        usdt_sell_markup: DEFAULT_SETTINGS.usdtSellMarkup,
+        usdt_buy_markup: DEFAULT_SETTINGS.usdtBuyMarkup,
         wallet_bsc: DEFAULT_SETTINGS.wallets.BSC,
         wallet_tron: DEFAULT_SETTINGS.wallets.Tron,
         wallet_polygon: DEFAULT_SETTINGS.wallets.Polygon
@@ -111,11 +113,15 @@ export async function ensureDefaultCoins() {
 }
 
 export function rowToSettings(row: any): AdminSettings {
+  // Backward-compat: fall back to old usdt_rate column if new markup columns don't exist yet
+  // (DB migration may not have run). Once migration is applied, usdt_rate is gone.
+  const legacyRate = row.usdt_rate ?? 0;
   return {
     ngnBankName: row.ngn_bank_name,
     ngnAccountNumber: row.ngn_account_number,
     ngnAccountName: row.ngn_account_name,
-    usdtRate: row.usdt_rate,
+    usdtSellMarkup: row.usdt_sell_markup ?? legacyRate ?? DEFAULT_SETTINGS.usdtSellMarkup,
+    usdtBuyMarkup:  row.usdt_buy_markup  ?? legacyRate ?? DEFAULT_SETTINGS.usdtBuyMarkup,
     wallets: {
       BSC: row.wallet_bsc,
       Tron: row.wallet_tron,
@@ -337,10 +343,29 @@ export async function updateAdminSettings(settings: AdminSettings) {
     ngn_bank_name: settings.ngnBankName,
     ngn_account_number: settings.ngnAccountNumber,
     ngn_account_name: settings.ngnAccountName,
-    usdt_rate: settings.usdtRate,
+    usdt_sell_markup: settings.usdtSellMarkup,
+    usdt_buy_markup: settings.usdtBuyMarkup,
     wallet_bsc: settings.wallets.BSC,
     wallet_tron: settings.wallets.Tron,
     wallet_polygon: settings.wallets.Polygon
+  });
+  if (error) throw new Error(error.message);
+}
+
+export async function sendDisputeMessage(
+  disputeId: string,
+  senderId: string,
+  senderEmail: string,
+  senderRole: 'user' | 'admin',
+  message: string
+) {
+  const { error } = await supabase.from('dispute_messages').insert({
+    dispute_id: disputeId,
+    sender_id: senderId,
+    sender_email: senderEmail,
+    sender_role: senderRole,
+    message,
+    created_at: Date.now(),
   });
   if (error) throw new Error(error.message);
 }

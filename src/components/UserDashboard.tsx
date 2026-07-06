@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { TrendingUp, ArrowUpRight, ArrowDownLeft, Clock, CircleCheck as CheckCircle2, Circle as XCircle, CircleAlert as AlertCircle, Upload, Receipt, Smartphone, Eye, Lock, Bell, ChevronRight, UserCheck, FileText, Camera, Coins, Search, ListFilter as Filter, Check, MessageSquare, OctagonAlert as AlertOctagon, ShieldOff, X, RotateCw, Copy } from 'lucide-react';
 import { UserProfile, Order, AdminSettings, Announcement, KYCData, CoinListing, Dispute } from '../types';
 import { createOrder, submitKYC, submitDispute } from '../lib/dbHelpers';
+import DisputeChat from './DisputeChat';
 import { compressImage } from '../lib/imageCompressor';
 
 interface UserDashboardProps {
@@ -13,6 +14,7 @@ interface UserDashboardProps {
   announcements: Announcement[];
   coins: CoinListing[];
   disputes?: Dispute[];
+  liveNgnRate?: number | null;
   addToast: (msg: string, type: 'success' | 'error' | 'info') => void;
   onRefresh: () => void;
   mobileBulletinOpen?: boolean;
@@ -27,6 +29,7 @@ export default function UserDashboard({
   announcements, 
   coins = [],
   disputes = [],
+  liveNgnRate = null,
   addToast,
   onRefresh,
   mobileBulletinOpen = false,
@@ -298,25 +301,20 @@ export default function UserDashboard({
     ? userProfile.kycData.fullName.trim().split(/\s+/).slice(0, 2).join(' ')
     : userProfile.email.split('@')[0];
 
-  const activeRate = activeCoin ? activeCoin.rate : settings.usdtRate;
-  const calculatedNgnAmount = cryptoAmount ? cryptoAmount * activeRate : 0;
+  // Effective rates: live market price + admin-set markup
+  // SELL rate drives all display; BUY rate is applied only at buy-order creation time
+  const effectiveSellRate = liveNgnRate
+    ? Math.round(liveNgnRate) + settings.usdtSellMarkup
+    : settings.usdtSellMarkup;
+  const effectiveBuyRate = liveNgnRate
+    ? Math.round(liveNgnRate) + settings.usdtBuyMarkup
+    : settings.usdtBuyMarkup;
 
-  // Live global NGN/USDT market rate from CoinGecko
-  const [liveNgnRate, setLiveNgnRate] = useState<number | null>(null);
-  useEffect(() => {
-    let cancelled = false;
-    const fetchRate = async () => {
-      try {
-        const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=tether&vs_currencies=ngn');
-        if (!res.ok) return;
-        const json = await res.json();
-        if (!cancelled) setLiveNgnRate(json?.tether?.ngn ?? null);
-      } catch { /* silently ignore — admin rate is always shown */ }
-    };
-    fetchRate();
-    const iv = setInterval(fetchRate, 5 * 60 * 1000);
-    return () => { cancelled = true; clearInterval(iv); };
-  }, []);
+  // For coins (custom listings) use their own rate; for USDT use the trade-direction rate
+  const activeRate = activeCoin
+    ? activeCoin.rate
+    : (tradeType === 'buy' ? effectiveBuyRate : effectiveSellRate);
+  const calculatedNgnAmount = cryptoAmount ? cryptoAmount * activeRate : 0;
 
   // Copy to clipboard helper
   const copyToClipboard = async (text: string, label: string) => {
@@ -794,7 +792,7 @@ export default function UserDashboard({
           </span>
           <div className="flex items-baseline gap-1.5 sm:gap-2">
             <span className="text-3xl sm:text-5xl font-bold tracking-tight italic text-[#00FF85]">
-              ₦{settings.usdtRate.toLocaleString()}
+              ₦{effectiveSellRate.toLocaleString()}
             </span>
             <span className="text-xs sm:text-sm text-gray-400 font-mono">/USDT</span>
           </div>
@@ -2304,7 +2302,8 @@ export default function UserDashboard({
                                       transition={{ duration: 0.2, ease: 'easeInOut' }}
                                       className="overflow-hidden"
                                     >
-                                      <div className="px-3 pb-3 space-y-2 border-t border-[#E0E7E0]">
+                                      <div className="px-3 pb-3 space-y-2.5 border-t border-[#E0E7E0]">
+                                        {/* Initial message + evidence */}
                                         <p className="text-gray-700 leading-relaxed pt-2">{d.message}</p>
                                         {d.imageUrls && d.imageUrls.length > 0 && (
                                           <div className="flex gap-2 flex-wrap">
@@ -2315,18 +2314,28 @@ export default function UserDashboard({
                                             ))}
                                           </div>
                                         )}
-                                        {d.adminResponse ? (
+                                        {/* Live chat thread */}
+                                        <div className="border-t border-[#E0E7E0] pt-2.5">
+                                          <span className="text-[9px] font-bold text-gray-500 uppercase tracking-wider block mb-2">Chat Thread</span>
+                                          <DisputeChat
+                                            disputeId={d.id}
+                                            currentUserId={userProfile.uid}
+                                            currentUserEmail={userProfile.email}
+                                            currentUserRole="user"
+                                            isOpen={d.status === 'open'}
+                                          />
+                                        </div>
+                                        {/* Resolution note */}
+                                        {d.adminResponse && (
                                           <div className="bg-emerald-50 border border-emerald-200 p-2.5 rounded-lg">
-                                            <span className="text-[9px] font-bold text-emerald-700 uppercase tracking-wider block mb-1">✅ Admin Response</span>
-                                            <p className="text-emerald-900 leading-relaxed">{d.adminResponse}</p>
+                                            <span className="text-[9px] font-bold text-emerald-700 uppercase tracking-wider block mb-1">✅ Resolution Note</span>
+                                            <p className="text-emerald-900 leading-relaxed text-[11px]">{d.adminResponse}</p>
                                             {d.resolvedAt && (
                                               <span className="text-[9px] text-emerald-500 font-mono block mt-1">
                                                 Resolved {formatNGT(d.resolvedAt)}
                                               </span>
                                             )}
                                           </div>
-                                        ) : (
-                                          <div className="text-[9px] text-amber-600 font-mono">⏳ Awaiting admin review…</div>
                                         )}
                                       </div>
                                     </motion.div>
