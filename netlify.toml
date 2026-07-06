@@ -33,4 +33,4 @@
     # • connect-src: Supabase REST + realtime WebSocket + local Netlify function calls
     # • img-src https: data: blob:: Supabase Storage, crypto logos, compressed previews
     # • frame-ancestors 'none': redundant with X-Frame-Options but defence-in-depth
-    Content-Security-Policy = "default-src 'self'; connect-src 'self' https://*.supabase.co wss://*.supabase.co; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://cryptologos.cc; frame-src 'none'; frame-ancestors 'none'; object-src 'none'; base-uri 'self';"
+    Content-Security-Policy = "default-src 'self'; connect-src 'self' https://https://klatbnznamwmshqfrzep.supabase.co wss://*.supabase.co; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://cryptologos.cc; frame-src 'none'; frame-ancestors 'none'; object-src 'none'; base-uri 'self';"
