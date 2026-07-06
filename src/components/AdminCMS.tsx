@@ -2431,14 +2431,14 @@ export default function AdminCMS({
       {/* COMPLIANCE KYC AUDIT MODAL — read-only retained KYC view for deleted/scrubbed accounts */}
       <AnimatePresence>
         {complianceViewUser && (
-          <div className="fixed inset-0 bg-slate-900/50 z-50 flex items-center justify-center p-4 overflow-y-auto">
+          <div className="fixed inset-0 bg-slate-900/50 z-50 flex items-center justify-center p-4 overflow-hidden">
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white rounded-2xl max-w-lg w-full shadow-2xl border border-slate-100 overflow-hidden text-slate-800 flex flex-col max-h-[96vh]"
+              className="bg-white rounded-2xl max-w-lg w-full shadow-2xl border border-slate-100 text-slate-800 flex flex-col max-h-[90vh]"
             >
-              <div className="bg-slate-950 text-white p-5 flex justify-between items-center shrink-0">
+              <div className="bg-slate-950 text-white p-5 flex justify-between items-center shrink-0 rounded-t-2xl">
                 <div>
                   <span className="text-[10px] uppercase font-bold tracking-widest text-amber-400 font-mono">Compliance Audit — Retained KYC</span>
                   <h3 className="text-base font-extrabold mt-0.5">{complianceViewUser.email}</h3>
