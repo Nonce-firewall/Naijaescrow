@@ -208,11 +208,12 @@ export default function App() {
   // Realtime: Settings
   useEffect(() => {
     // Initial fetch
-    // Select both old (usdt_rate) and new (usdt_sell_markup/usdt_buy_markup) columns —
-    // rowToSettings handles the backward-compat fallback so either schema works.
+    // Use select('*') so no explicit column name can 400 the fetch.
+    // rowToSettings handles both old (usdt_rate) and new (usdt_sell_markup/usdt_buy_markup) schemas.
     supabase.from('settings')
-      .select('ngn_bank_name,ngn_account_number,ngn_account_name,usdt_rate,usdt_sell_markup,usdt_buy_markup,wallet_bsc,wallet_tron,wallet_polygon')
-      .eq('id', 'admin_settings').single().then(({ data }) => {
+      .select('*')
+      .eq('id', 'admin_settings').single().then(({ data, error }) => {
+        if (error) console.error('[settings fetch]', error.message);
         if (data) setSettings(rowToSettings(data));
       });
 
