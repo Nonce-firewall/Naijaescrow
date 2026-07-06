@@ -1,1 +1,15 @@
+# Static files — serve directly, don't route to SPA
+/sitemap.xml    /sitemap.xml    200
+/robots.txt     /robots.txt     200
+/favicon.ico    /favicon.ico    200
+/logo-icon.png  /logo-icon.png  200
+/logo-main.png  /logo-main.png  200
+/og-image.png   /og-image.png   200
+/apple-touch-icon.png   /apple-touch-icon.png  200
+/icon-192.png   /icon-192.png   200
+/icon-512.png   /icon-512.png   200
+/whatsapp-icon.png      /whatsapp-icon.png    200
+/telegram-icon.png      /telegram-icon.png    200
+
+# SPA fallback — all other routes go to index.html
 /*    /index.html   200
