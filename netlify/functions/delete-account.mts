@@ -97,7 +97,13 @@ export default async (req: Request) => {
       );
     }
 
-    return Response.json({ success: true });
+    return Response.json({ success: true }, {
+      headers: {
+        'X-Content-Type-Options': 'nosniff',
+        'X-Frame-Options': 'DENY',
+        'Referrer-Policy': 'strict-origin-when-cross-origin',
+      },
+    });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error.';
     return Response.json({ error: message }, { status: 500 });

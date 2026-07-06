@@ -213,7 +213,10 @@ export function rowToDispute(row: any): Dispute {
 export async function getOrCreateUserProfile(uid: string, email: string): Promise<UserProfile> {
   const isAdmin = email.toLowerCase() === 'cryptogangstar247@gmail.com';
 
-  const { data: existing } = await supabase.from('users').select('*').eq('id', uid).single();
+  // Select only the columns needed by rowToUserProfile — avoids pulling unused data.
+  const USER_COLS = 'id,email,role,kyc_status,kyc_data,account_status,suspend_reason,terminate_reason,notification_preferences,created_at,deleted_at';
+
+  const { data: existing } = await supabase.from('users').select(USER_COLS).eq('id', uid).single();
 
   if (existing) {
     if (isAdmin && existing.role !== 'admin') {
@@ -232,7 +235,7 @@ export async function getOrCreateUserProfile(uid: string, email: string): Promis
     created_at: Date.now()
   };
 
-  const { data: inserted, error: insertError } = await supabase.from('users').insert(newRow).select().single();
+  const { data: inserted, error: insertError } = await supabase.from('users').insert(newRow).select(USER_COLS).single();
   if (inserted) return rowToUserProfile(inserted);
 
   // PostgreSQL unique-violation (23505) means a concurrent call already inserted the row — safe to fetch.
@@ -242,7 +245,7 @@ export async function getOrCreateUserProfile(uid: string, email: string): Promis
   }
 
   // Race-condition retry: the concurrent insert won, so the row must now exist.
-  const { data: retried, error: retryError } = await supabase.from('users').select('*').eq('id', uid).single();
+  const { data: retried, error: retryError } = await supabase.from('users').select(USER_COLS).eq('id', uid).single();
   if (retried) return rowToUserProfile(retried);
 
   throw new Error(`Failed to retrieve user profile after insert race: ${retryError?.message ?? 'unknown'}`);
@@ -250,24 +253,31 @@ export async function getOrCreateUserProfile(uid: string, email: string): Promis
 
 export async function submitKYC(uid: string, kycData: Omit<KYCData, 'submittedAt'>) {
   const fullKYC: KYCData = { ...kycData, submittedAt: Date.now() };
-  await supabase.from('users').update({
+  const { error } = await supabase.from('users').update({
     kyc_status: 'pending',
     kyc_data: fullKYC
   }).eq('id', uid);
+  if (error) throw new Error(error.message);
 }
 
 export async function handleKYCReview(uid: string, approve: boolean, rejectionReason?: string) {
-  const existing = await supabase.from('users').select('kyc_data').eq('id', uid).single();
-  const kycData = existing.data?.kyc_data || {};
+  const { data: existing, error: fetchError } = await supabase
+    .from('users')
+    .select('kyc_data')
+    .eq('id', uid)
+    .single();
+  if (fetchError) throw new Error(fetchError.message);
+  const kycData = existing?.kyc_data || {};
   const updatedKyc = {
     ...kycData,
     reviewedAt: Date.now(),
     rejectionReason: approve ? '' : (rejectionReason || '')
   };
-  await supabase.from('users').update({
+  const { error } = await supabase.from('users').update({
     kyc_status: approve ? 'approved' : 'rejected',
     kyc_data: updatedKyc
   }).eq('id', uid);
+  if (error) throw new Error(error.message);
 }
 
 export async function createOrder(

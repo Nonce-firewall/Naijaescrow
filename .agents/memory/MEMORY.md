@@ -2,3 +2,4 @@
 - [Modal height pattern](modal-height-pattern.md) — Tall modals require flex flex-col + max-h-[96vh] on motion.div, shrink-0 on header, overflow-y-auto flex-1 min-h-0 on body.
 - [Account deletion architecture](account-deletion.md) — client can't delete Supabase auth users; must use a server-side function with service-role key; KYC data retained for fraud/legal compliance.
 - [Motion animation patterns](motion-animation-patterns.md) — Reduced-motion, Vite HMR stale-URL recovery, and AnimatePresence conventions used in this codebase.
+- [RLS and security hardening](rls-security.md) — Full RLS + column-level trigger written to supabase/migrations/20260706_rls_indexes.sql; must be run in Supabase SQL Editor.

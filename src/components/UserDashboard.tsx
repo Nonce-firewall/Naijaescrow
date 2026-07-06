@@ -464,8 +464,27 @@ export default function UserDashboard({
         addToast('Please provide all NGN bank details to receive payment.', 'error');
         return;
       }
+      // NUBAN format: exactly 10 digits
+      if (!/^\d{10}$/.test(userAccountNumber)) {
+        addToast('Bank account number must be exactly 10 digits (Nigerian NUBAN format).', 'error');
+        return;
+      }
       if (!sellTxHash.trim()) {
         addToast('Please provide the blockchain transaction hash for your crypto transfer.', 'error');
+        return;
+      }
+      // Validate TX hash format per network
+      const effectiveNetwork = (activeCoin?.network ?? network).toLowerCase();
+      const isTron = effectiveNetwork.includes('tron');
+      const evmTxOk  = /^0x[0-9a-fA-F]{64}$/.test(sellTxHash.trim());
+      const tronTxOk = /^[0-9a-fA-F]{64}$/.test(sellTxHash.trim());
+      if (isTron ? !tronTxOk : !evmTxOk) {
+        addToast(
+          isTron
+            ? 'Invalid Tron TxID — must be exactly 64 hex characters (no 0x prefix).'
+            : 'Invalid TX hash — BSC/Polygon hashes start with 0x followed by 64 hex characters.',
+          'error'
+        );
         return;
       }
     }
@@ -635,6 +654,16 @@ export default function UserDashboard({
     e.preventDefault();
     if (!kycName || !kycIdNumber || !kycScreenshot || !kycHoldingId) {
       addToast('Please fill in all fields, upload your ID document, and provide your Holding ID photo.', 'error');
+      return;
+    }
+    // Full legal name must contain at least a first and last name
+    if (kycName.trim().split(/\s+/).length < 2) {
+      addToast('Please enter your full legal name — first and last name required.', 'error');
+      return;
+    }
+    // ID number: 6–20 alphanumeric characters (covers NIN 11 digits, Voter card ~19 chars, DL)
+    if (!/^[A-Z0-9]{6,20}$/i.test(kycIdNumber.trim())) {
+      addToast('ID number must be 6–20 alphanumeric characters (no spaces or symbols).', 'error');
       return;
     }
 
@@ -2260,9 +2289,11 @@ export default function UserDashboard({
                               rows={3}
                               value={disputeMessage}
                               onChange={(e) => setDisputeMessage(e.target.value)}
+                              maxLength={1000}
                               placeholder="Describe your challenge — include your reference number, transaction details, or any relevant info…"
                               className="w-full px-3 py-2 border border-[#E0E7E0] rounded-xl text-[11px] text-[#1A1A1A] resize-none focus:outline-none focus:ring-1 focus:ring-[#008751]"
                             />
+                            <p className="text-[9px] text-slate-400 font-mono text-right -mt-1">{disputeMessage.length}/1 000</p>
 
                             {/* Multi-image upload — up to 3 */}
                             <div className="space-y-1.5">
@@ -2311,6 +2342,7 @@ export default function UserDashboard({
                             <button
                               onClick={async () => {
                                 if (!disputeMessage.trim()) { addToast('Please enter a dispute message.', 'error'); return; }
+                                if (disputeMessage.trim().length > 1000) { addToast('Dispute message must be under 1 000 characters.', 'error'); return; }
                                 setIsSubmittingDispute(true);
                                 try {
                                   await submitDispute(viewReceipt.id, userProfile.uid, userProfile.email, disputeMessage.trim(), disputeImageUrls.length > 0 ? disputeImageUrls : undefined);
