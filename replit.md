@@ -49,4 +49,5 @@ Function source: `netlify/functions/delete-account.mts`.
 - `src/lib/dbHelpers.ts` — DB query helpers and row mappers
 - `src/types.ts` — shared TypeScript types
 
-## User preferences
+## Instructions
+For the first time code import, don't modify any parts of the code, ask for the user's approval
