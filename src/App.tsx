@@ -190,11 +190,9 @@ export default function App() {
   // Realtime: Settings
   useEffect(() => {
     // Initial fetch
-    supabase.from('settings')
-      .select('ngn_bank_name,ngn_account_number,ngn_account_name,usdt_rate,wallet_bsc,wallet_tron,wallet_polygon')
-      .eq('id', 'admin_settings').single().then(({ data }) => {
-        if (data) setSettings(rowToSettings(data));
-      });
+    supabase.from('settings').select('*').eq('id', 'admin_settings').single().then(({ data }) => {
+      if (data) setSettings(rowToSettings(data));
+    });
 
     const channel = supabase
       .channel('settings-changes')
@@ -208,15 +206,14 @@ export default function App() {
 
   // Realtime: Announcements
   useEffect(() => {
-    const ANN_COLS = 'id,title,content,scope,is_active,created_at';
-    supabase.from('announcements').select(ANN_COLS).order('created_at', { ascending: false }).then(({ data }) => {
+    supabase.from('announcements').select('*').order('created_at', { ascending: false }).then(({ data }) => {
       if (data) setAnnouncements(data.map(rowToAnnouncement));
     });
 
     const channel = supabase
       .channel('announcements-changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'announcements' }, () => {
-        supabase.from('announcements').select(ANN_COLS).order('created_at', { ascending: false }).then(({ data }) => {
+        supabase.from('announcements').select('*').order('created_at', { ascending: false }).then(({ data }) => {
           if (data) setAnnouncements(data.map(rowToAnnouncement));
         });
       })
@@ -234,12 +231,9 @@ export default function App() {
 
     const isTrader = userProfile?.role !== 'admin';
 
-    const ORDER_COLS = 'id,user_id,user_email,type,crypto_amount,ngn_amount,rate,status,network,token,payment_screenshot,user_bank_details,admin_bank_details,admin_wallet_address,blockchain_tx_id,rejection_reason,created_at,processed_at';
     const fetchOrders = async () => {
-      let query = supabase.from('orders').select(ORDER_COLS).order('created_at', { ascending: false });
+      let query = supabase.from('orders').select('*').order('created_at', { ascending: false });
       if (isTrader) query = query.eq('user_id', currentUser.id);
-      // Admin: cap at 2 000 most-recent orders to prevent runaway reads at scale
-      if (!isTrader) query = (query as any).limit(2000);
       const { data } = await query;
       if (data) setOrders(data.map(rowToOrder));
     };
@@ -283,15 +277,14 @@ export default function App() {
       return;
     }
 
-    const USER_COLS = 'id,email,role,kyc_status,kyc_data,account_status,suspend_reason,terminate_reason,notification_preferences,created_at,deleted_at';
-    supabase.from('users').select(USER_COLS).limit(5000).then(({ data }) => {
+    supabase.from('users').select('*').then(({ data }) => {
       if (data) setKycUsers(data.map(rowToUserProfile));
     });
 
     const channel = supabase
       .channel('users-changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, () => {
-        supabase.from('users').select(USER_COLS).limit(5000).then(({ data }) => {
+        supabase.from('users').select('*').then(({ data }) => {
           if (data) setKycUsers(data.map(rowToUserProfile));
         });
       })
@@ -302,15 +295,14 @@ export default function App() {
 
   // Realtime: Coins
   useEffect(() => {
-    const COIN_COLS = 'id,name,symbol,network,wallet_address,rate,logo_url,published,created_at';
-    supabase.from('coins').select(COIN_COLS).order('created_at', { ascending: false }).then(({ data }) => {
+    supabase.from('coins').select('*').order('created_at', { ascending: false }).then(({ data }) => {
       if (data) setCoins(data.map(rowToCoin));
     });
 
     const channel = supabase
       .channel('coins-changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'coins' }, () => {
-        supabase.from('coins').select(COIN_COLS).order('created_at', { ascending: false }).then(({ data }) => {
+        supabase.from('coins').select('*').order('created_at', { ascending: false }).then(({ data }) => {
           if (data) setCoins(data.map(rowToCoin));
         });
       })
@@ -326,15 +318,14 @@ export default function App() {
       return;
     }
 
-    const DISPUTE_COLS = 'id,order_id,user_id,user_email,message,image_urls,status,admin_response,created_at,resolved_at';
-    supabase.from('disputes').select(DISPUTE_COLS).order('created_at', { ascending: false }).then(({ data }) => {
+    supabase.from('disputes').select('*').order('created_at', { ascending: false }).then(({ data }) => {
       if (data) setDisputes(data.map(rowToDispute));
     });
 
     const channel = supabase
       .channel('disputes-changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'disputes' }, () => {
-        supabase.from('disputes').select(DISPUTE_COLS).order('created_at', { ascending: false }).then(({ data }) => {
+        supabase.from('disputes').select('*').order('created_at', { ascending: false }).then(({ data }) => {
           if (data) setDisputes(data.map(rowToDispute));
         });
       })
