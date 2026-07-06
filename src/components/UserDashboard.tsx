@@ -217,10 +217,13 @@ export default function UserDashboard({
     : filteredGroupedCoins.slice(0, coinDisplayLimit);
   const hiddenCoinCount = isFilteringActive ? 0 : Math.max(0, filteredGroupedCoins.length - coinDisplayLimit);
 
-  // Get active coin details
-  const activeCoin = activeCoinsList.length > 0
-    ? (activeCoinsList.find(c => c.id === selectedCoinId) || activeCoinsList[0])
-    : null;
+  // Coin the user *explicitly* selected by clicking one in the picker.
+  // Undefined / empty selectedCoinId means "no coin chosen yet" → USDT / live-rate mode.
+  const selectedCoin = activeCoinsList.find(c => c.id === selectedCoinId) ?? null;
+
+  // activeCoin drives all UI (coin picker highlight, wallet/network display, order fields).
+  // Falls back to the first published coin so the picker always shows something.
+  const activeCoin = selectedCoin ?? (activeCoinsList.length > 0 ? activeCoinsList[0] : null);
   
   // User bank details for selling
   const [userBankName, setUserBankName] = useState('');
@@ -310,10 +313,16 @@ export default function UserDashboard({
     ? Math.round(liveNgnRate) + settings.usdtBuyMarkup
     : settings.usdtBuyMarkup;
 
-  // For coins (custom listings) use their own rate; for USDT use the trade-direction rate
-  const activeRate = activeCoin
-    ? activeCoin.rate
-    : (tradeType === 'buy' ? effectiveBuyRate : effectiveSellRate);
+  // Rate logic:
+  //  • No coin explicitly chosen, OR the chosen coin is USDT → use the live effective rate
+  //    which differs between buy and sell (admin sell-markup vs buy-markup).
+  //  • Any other coin (BTC, ETH …) → use that coin's admin-set rate (same for both directions).
+  const isLiveRateMode =
+    !selectedCoin || selectedCoin.symbol.trim().toUpperCase() === 'USDT';
+
+  const activeRate = isLiveRateMode
+    ? (tradeType === 'buy' ? effectiveBuyRate : effectiveSellRate)
+    : selectedCoin!.rate;
   const calculatedNgnAmount = cryptoAmount ? cryptoAmount * activeRate : 0;
 
   // Copy to clipboard helper

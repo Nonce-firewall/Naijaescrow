@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   ShieldCheck, 
@@ -109,6 +109,19 @@ export default function AdminCMS({
   const [tronWallet, setTronWallet] = useState(settings.wallets.Tron);
   const [polygonWallet, setPolygonWallet] = useState(settings.wallets.Polygon);
   const [isSavingSettings, setIsSavingSettings] = useState(false);
+
+  // Sync form fields whenever the settings prop updates (e.g. after save → Supabase realtime refresh).
+  // Without this, useState initialises once and the form reverts to stale defaults on prop change.
+  useEffect(() => {
+    setBankName(settings.ngnBankName);
+    setAccountNumber(settings.ngnAccountNumber);
+    setAccountName(settings.ngnAccountName);
+    setUsdtSellMarkup(settings.usdtSellMarkup);
+    setUsdtBuyMarkup(settings.usdtBuyMarkup);
+    setBscWallet(settings.wallets.BSC);
+    setTronWallet(settings.wallets.Tron);
+    setPolygonWallet(settings.wallets.Polygon);
+  }, [settings]);
 
   // Coin Listing form states
   const [coinName, setCoinName] = useState('');
