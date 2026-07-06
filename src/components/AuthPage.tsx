@@ -147,6 +147,32 @@ export default function AuthPage({ onBack, onAuthSuccess, addToast, initialMode 
         addToast('Sign in successful!', 'success');
         onAuthSuccess();
       } else {
+        // Sign-up flow
+        // First, check if an account with this email already exists.
+        // Supabase's signUp() does NOT error on duplicate emails by default —
+        // it silently returns a user object without a session, which would
+        // incorrectly trigger the "check your email" verification screen.
+        const { data: existingUser } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+        if (existingUser.session) {
+          // Account exists AND the password matches — log them in directly.
+          const profile = await getOrCreateUserProfile(existingUser.user.id, existingUser.user.email || '');
+          if (profile.accountStatus === 'terminated') {
+            await supabase.auth.signOut();
+            const reason = profile.terminateReason ? ` Reason: ${profile.terminateReason}` : '';
+            setAuthErrorAlert(`Your account has been permanently terminated by the platform.${reason} Contact support for assistance.`);
+            return;
+          }
+          addToast('Welcome back! You already have an account — signed in successfully.', 'success');
+          onAuthSuccess();
+          return;
+        }
+
+        // Password didn't match (or account uses a different auth method like Google).
+        // Try signUp — if the email is already registered, Supabase returns a user
+        // without a session. We detect that and redirect to sign in.
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
@@ -159,10 +185,16 @@ export default function AuthPage({ onBack, onAuthSuccess, addToast, initialMode 
           addToast('Account created successfully!', 'success');
           onAuthSuccess();
         } else if (data.user) {
-          // Email confirmation required — show pending screen, don't navigate
-          setVerificationEmail(email);
-          slideDir.current = 'fade';
-          setVerificationPending(true);
+          // No session returned — either email confirmation is required OR the
+          // email already exists. Distinguish: if the user has an ID but no
+          // session and confirmation is OFF, the account already exists.
+          // Check if this is a pre-existing account by attempting to detect
+          // the "already registered" scenario. Since signUp doesn't error,
+          // we treat the no-session case as "account exists" and redirect to sign in.
+          addToast('An account with this email already exists. Please sign in instead.', 'info');
+          setIsLogin(true);
+          setPassword('');
+          setConfirmPassword('');
         } else {
           addToast('Something went wrong. Please try again.', 'error');
         }
