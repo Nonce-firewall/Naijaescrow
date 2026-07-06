@@ -302,7 +302,7 @@ export default function App() {
 
   // Realtime: Coins
   useEffect(() => {
-    const COIN_COLS = 'id,name,symbol,network,wallet_address,rate,logo_url,published,created_at';
+    const COIN_COLS = 'id,name,symbol,network,wallet_address,rate,logo_url,published,fee_percentage,min_trade_amount,created_at';
     supabase.from('coins').select(COIN_COLS).order('created_at', { ascending: false }).then(({ data }) => {
       if (data) setCoins(data.map(rowToCoin));
     });
