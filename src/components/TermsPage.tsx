@@ -60,15 +60,30 @@ export default function TermsPage() {
             {
               num: '4',
               title: 'Rates & Fees',
-              body: 'The exchange rate locked at order creation is your guaranteed payout rate. Standard blockchain network (mining) fees are covered by 9ija Escrow. No hidden charges apply.',
+              body: 'The exchange rate locked at order creation is your guaranteed payout rate. Network fees are covered by 9ija Escrow for USDT trades. For other listed tokens, a small trade fee (displayed before order confirmation) may apply. No hidden charges.',
             },
             {
               num: '5',
+              title: 'Supported Networks',
+              body: 'We support trading on BSC (BNB Smart Chain), Tron, and Polygon networks. You are responsible for providing correct wallet addresses for your chosen network. Funds sent to incorrect addresses are irrecoverable.',
+            },
+            {
+              num: '6',
+              title: 'Dispute Resolution',
+              body: 'If you have an issue with a trade, you may submit a dispute with evidence (screenshots, transaction IDs). Admin will review and respond within 48 hours. Once resolved, disputes are marked with the admin\'s decision and cannot be reopened. Abuse of the dispute system (spam submissions, false claims) may result in account suspension.',
+            },
+            {
+              num: '7',
+              title: 'Account Status',
+              body: 'Accounts may be active, suspended, or terminated. Suspended accounts cannot place new orders but retain read access to history. Terminated accounts are permanently restricted. You may request account deletion via support; your data will be scrubbed except for transaction records retained for regulatory compliance.',
+            },
+            {
+              num: '8',
               title: 'Liability',
               body: '9ija Escrow acts as an intermediary and is not liable for losses arising from user-provided incorrect wallet addresses, bank details, or payment delays caused by third-party banks.',
             },
             {
-              num: '6',
+              num: '9',
               title: 'Termination',
               body: 'We reserve the right to suspend or terminate any account found to be in violation of these terms, without prior notice.',
             },

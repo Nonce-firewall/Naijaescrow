@@ -45,12 +45,12 @@ export default function PrivacyPolicyPage() {
             {
               num: '1',
               title: 'Data We Collect',
-              body: "We collect your email address, KYC identity documents (NIN, Voter's Card, Driver's License), and order transaction records solely to facilitate P2P escrow trades and comply with financial regulations.",
+              body: "We collect your email address, KYC identity documents (NIN, Voter's Card, Driver's License), order transaction records, dispute submissions, and bank/wallet details you provide for trades.",
             },
             {
               num: '2',
               title: 'How We Use Your Data',
-              body: 'Your data is used exclusively to verify your identity, process trades, and prevent fraud. We do not sell, lease, or share your personal information with third parties except where required by Nigerian law.',
+              body: 'Your data is used exclusively to verify your identity, process trades, handle disputes, and prevent fraud. We do not sell, lease, or share your personal information with third parties except where required by Nigerian law.',
             },
             {
               num: '3',
@@ -59,13 +59,28 @@ export default function PrivacyPolicyPage() {
             },
             {
               num: '4',
+              title: 'Dispute Data',
+              body: 'When you submit a dispute, we store your message, attached evidence images, and all chat messages between you and admin. This data is visible to you and platform administrators only. Resolved disputes are retained for audit and compliance purposes.',
+            },
+            {
+              num: '5',
+              title: 'Account Status Records',
+              body: 'If your account is suspended or terminated, we record the reason and timestamp. This information is retained to prevent circumvention of platform restrictions.',
+            },
+            {
+              num: '6',
+              title: 'Notification Preferences',
+              body: 'You may customize which notifications you receive (order updates, KYC status, announcements). Your preferences are stored securely and used only to filter communications to you.',
+            },
+            {
+              num: '7',
               title: 'Cookies & Tracking',
               body: 'We use session cookies strictly to maintain your authenticated session. No advertising or analytics cookies are used.',
             },
             {
-              num: '5',
+              num: '8',
               title: 'Your Rights',
-              body: 'You may request deletion of your account and associated data by contacting support. Note that transaction records may be retained for regulatory compliance even after account deletion.',
+              body: 'You may request deletion of your account and associated data by contacting support. Note that transaction records, dispute history, and KYC documents may be retained for regulatory compliance even after account deletion.',
             },
           ].map((section) => (
             <div key={section.num} className="px-6 py-5">
@@ -83,7 +98,7 @@ export default function PrivacyPolicyPage() {
           <div className="px-6 py-5">
             <h2 className="font-bold text-[#1A1A1A] mb-2 flex items-center gap-2">
               <span className="inline-flex items-center justify-center w-6 h-6 bg-[#E6F4EA] text-[#008751] rounded-full text-xs font-bold shrink-0">
-                6
+                9
               </span>
               Contact
             </h2>
