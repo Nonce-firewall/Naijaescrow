@@ -279,6 +279,9 @@ export default function UserDashboard({
   const [isSubmittingDispute, setIsSubmittingDispute] = useState(false);
   const [disputeSubmitted, setDisputeSubmitted] = useState<string | null>(null);
 
+  // Image lightbox
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
+
   // Collapsible announcements (collapsed by default — click title to expand)
   const [expandedAnnIds, setExpandedAnnIds] = useState<string[]>([]);
   const toggleAnn = (id: string) => setExpandedAnnIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
@@ -2122,13 +2125,13 @@ export default function UserDashboard({
                                 <span className="text-[9px] font-bold uppercase tracking-wider text-gray-400 block mb-1.5">Attached Evidence</span>
                                 <div className="flex gap-2 flex-wrap">
                                   {d.imageUrls.map((url, idx) => (
-                                    <a key={idx} href={url} target="_blank" rel="noopener noreferrer">
+                                    <button key={idx} type="button" onClick={() => setLightboxUrl(url)}>
                                       <img
                                         src={url}
                                         alt={`Evidence ${idx + 1}`}
                                         className="w-20 h-20 object-cover rounded-xl border border-[#E0E7E0] hover:opacity-80 transition cursor-pointer"
                                       />
-                                    </a>
+                                    </button>
                                   ))}
                                 </div>
                               </div>
@@ -2512,9 +2515,9 @@ export default function UserDashboard({
                                         {d.imageUrls && d.imageUrls.length > 0 && (
                                           <div className="flex gap-2 flex-wrap">
                                             {d.imageUrls.map((url, idx) => (
-                                              <a key={idx} href={url} target="_blank" rel="noreferrer">
+                                              <button key={idx} type="button" onClick={() => setLightboxUrl(url)} className="cursor-pointer">
                                                 <img src={url} alt={`proof ${idx + 1}`} className="h-16 w-20 object-cover rounded-lg border border-[#E0E7E0] hover:opacity-80 transition" />
-                                              </a>
+                                              </button>
                                             ))}
                                           </div>
                                         )}
@@ -2807,6 +2810,37 @@ export default function UserDashboard({
               </div>
             </motion.div>
           </>
+        )}
+      </AnimatePresence>
+
+      {/* Image lightbox overlay */}
+      <AnimatePresence>
+        {lightboxUrl && (
+          <motion.div
+            className="fixed inset-0 z-[60] flex items-center justify-center bg-black/85 p-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.18 }}
+            onClick={() => setLightboxUrl(null)}
+          >
+            <button
+              onClick={() => setLightboxUrl(null)}
+              className="absolute top-4 right-4 w-9 h-9 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white transition cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <motion.img
+              src={lightboxUrl}
+              alt="Evidence"
+              className="max-w-full max-h-[90vh] rounded-2xl shadow-2xl object-contain"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+              onClick={(e) => e.stopPropagation()}
+            />
+          </motion.div>
         )}
       </AnimatePresence>
 

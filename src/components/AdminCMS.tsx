@@ -1,39 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { 
-  ShieldCheck, 
-  TrendingUp, 
-  Users, 
-  Layers, 
-  Settings, 
-  Bell, 
-  FileCheck, 
-  X, 
-  CheckCircle, 
-  XCircle, 
-  AlertTriangle, 
-  CheckSquare, 
-  ExternalLink, 
-  Wallet, 
-  HelpCircle, 
-  Clock, 
-  Lock, 
-  Plus,
-  Coins,
-  Trash,
-  Camera,
-  Eye,
-  EyeOff,
-  MessageSquare,
-  Ban,
-  UserX,
-  UserCheck,
-  RotateCcw,
-  ChevronRight,
-  Edit2,
-  Percent,
-  Link2
-} from 'lucide-react';
+import { ShieldCheck, TrendingUp, Users, Layers, Settings, Bell, FileCheck, X, CircleCheck as CheckCircle, Circle as XCircle, TriangleAlert as AlertTriangle, SquareCheck as CheckSquare, ExternalLink, Wallet, Circle as HelpCircle, Clock, Lock, Plus, Coins, Trash, Camera, Eye, EyeOff, MessageSquare, Ban, UserX, UserCheck, RotateCcw, ChevronRight, CreditCard as Edit2, Percent, Link2 } from 'lucide-react';
 import { UserProfile, Order, AdminSettings, Announcement, KYCData, CoinListing, Dispute } from '../types';
 import { formatNGT, formatNGTDate } from '../lib/dateUtils';
 import DisputeChat from './DisputeChat';
@@ -165,6 +132,9 @@ export default function AdminCMS({
   const [selectedDispute, setSelectedDispute] = useState<Dispute | null>(null);
   const [disputeResponseText, setDisputeResponseText] = useState('');
   const [isResolvingDispute, setIsResolvingDispute] = useState(false);
+
+  // Image lightbox
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
 
   // Lookup tab state
   const [lookupQuery, setLookupQuery] = useState('');
@@ -597,7 +567,7 @@ export default function AdminCMS({
         <div className="lg:col-span-3">
 
           {/* ── Mobile chip strip (hidden on lg+) ── */}
-          <div className="flex lg:hidden overflow-x-auto gap-2 pb-2 [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: 'none' }}>
+          <div className="flex lg:hidden overflow-x-auto gap-2 pt-2 pb-2 [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: 'none' }}>
 
             {/* Analytics */}
             <button onClick={() => setActiveTab('analytics')} className={`flex-shrink-0 flex flex-col items-center gap-1.5 px-3.5 py-2.5 rounded-xl border font-bold transition cursor-pointer min-w-[72px] ${activeTab === 'analytics' ? 'bg-[#008751] text-white border-[#008751] shadow-sm' : 'bg-white text-gray-600 border-[#E0E7E0]'}`}>
@@ -1528,9 +1498,9 @@ export default function AdminCMS({
                         {d.imageUrls && d.imageUrls.length > 0 && (
                           <div className="flex gap-2 flex-wrap pt-1">
                             {d.imageUrls.map((url, idx) => (
-                              <a key={idx} href={url} target="_blank" rel="noreferrer">
+                              <button key={idx} type="button" onClick={() => setLightboxUrl(url)}>
                                 <img src={url} alt={`proof ${idx + 1}`} className="h-14 w-18 object-cover rounded-lg border border-slate-200 hover:opacity-80 transition cursor-pointer" />
-                              </a>
+                              </button>
                             ))}
                           </div>
                         )}
@@ -2829,9 +2799,9 @@ export default function AdminCMS({
                   {selectedDispute.imageUrls && selectedDispute.imageUrls.length > 0 && (
                     <div className="flex gap-2 flex-wrap pt-1">
                       {selectedDispute.imageUrls.map((url, idx) => (
-                        <a key={idx} href={url} target="_blank" rel="noreferrer">
+                        <button key={idx} type="button" onClick={() => setLightboxUrl(url)}>
                           <img src={url} alt={`Proof ${idx + 1}`} className="h-16 w-20 object-cover rounded-lg border border-slate-200 hover:opacity-80 transition cursor-pointer" />
-                        </a>
+                        </button>
                       ))}
                     </div>
                   )}
@@ -2873,6 +2843,37 @@ export default function AdminCMS({
               </div>
             </motion.div>
           </div>
+        )}
+      </AnimatePresence>
+
+      {/* IMAGE LIGHTBOX */}
+      <AnimatePresence>
+        {lightboxUrl && (
+          <motion.div
+            className="fixed inset-0 z-[60] flex items-center justify-center bg-black/85 p-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.18 }}
+            onClick={() => setLightboxUrl(null)}
+          >
+            <button
+              onClick={() => setLightboxUrl(null)}
+              className="absolute top-4 right-4 w-9 h-9 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white transition cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <motion.img
+              src={lightboxUrl}
+              alt="Evidence"
+              className="max-w-full max-h-[90vh] rounded-2xl shadow-2xl object-contain"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+              onClick={(e) => e.stopPropagation()}
+            />
+          </motion.div>
         )}
       </AnimatePresence>
 
