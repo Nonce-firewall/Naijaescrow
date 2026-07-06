@@ -190,6 +190,7 @@ export function rowToCoin(row: any): CoinListing {
     rate: row.rate,
     logoUrl: row.logo_url || undefined,
     published: row.published,
+    pricePegged: row.price_pegged ?? false,
     feePercentage: row.fee_percentage ?? 0,
     minTradeAmount: row.min_trade_amount ?? 1,
     createdAt: row.created_at
@@ -405,6 +406,7 @@ export async function createCoinListing(coin: Omit<CoinListing, 'id' | 'createdA
     rate: coin.rate,
     logo_url: coin.logoUrl || null,
     published: true,
+    price_pegged: coin.pricePegged ?? false,
     fee_percentage: coin.feePercentage ?? 0,
     min_trade_amount: coin.minTradeAmount ?? 1,
     created_at: Date.now()
@@ -412,11 +414,13 @@ export async function createCoinListing(coin: Omit<CoinListing, 'id' | 'createdA
   if (error) throw new Error(error.message);
 }
 
-export async function updateCoinFees(id: string, feePercentage: number, minTradeAmount: number) {
-  const { error } = await supabase.from('coins').update({
+export async function updateCoinFees(id: string, feePercentage: number, minTradeAmount: number, pricePegged?: boolean) {
+  const updates: any = {
     fee_percentage: feePercentage,
     min_trade_amount: minTradeAmount
-  }).eq('id', id);
+  };
+  if (pricePegged !== undefined) updates.price_pegged = pricePegged;
+  const { error } = await supabase.from('coins').update(updates).eq('id', id);
   if (error) throw new Error(error.message);
 }
 

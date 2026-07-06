@@ -316,9 +316,14 @@ export default function UserDashboard({
   // Rate logic:
   //  • No coin explicitly chosen, OR the chosen coin is USDT → use the live effective rate
   //    which differs between buy and sell (admin sell-markup vs buy-markup).
-  //  • Any other coin (BTC, ETH …) → use that coin's admin-set rate (same for both directions).
+  //  • A coin marked as price-pegged → also uses the live effective rate (Buy/Sell aware),
+  //    so its price synchronizes with the current effective rate as users switch tabs.
+  //  • Any other non-pegged coin (BTC, ETH …) → use that coin's admin-set static rate
+  //    (same for both directions, unaffected by Buy/Sell switching).
   const isLiveRateMode =
-    !selectedCoin || selectedCoin.symbol.trim().toUpperCase() === 'USDT';
+    !selectedCoin ||
+    selectedCoin.symbol.trim().toUpperCase() === 'USDT' ||
+    selectedCoin.pricePegged === true;
 
   const activeRate = isLiveRateMode
     ? (tradeType === 'buy' ? effectiveBuyRate : effectiveSellRate)
@@ -1181,7 +1186,10 @@ export default function UserDashboard({
                                           </span>
                                         </div>
                                         <span className="block text-[11px] text-[#008751] font-extrabold mt-0.5">
-                                          ₦{group.variants[0]?.rate.toLocaleString()} <span className="text-[9px] text-gray-400 font-normal">base rate</span>
+                                          ₦{(group.variants[0]?.pricePegged
+                                            ? (tradeType === 'buy' ? effectiveBuyRate : effectiveSellRate)
+                                            : group.variants[0]?.rate ?? 0
+                                          ).toLocaleString()} <span className="text-[9px] text-gray-400 font-normal">{group.variants[0]?.pricePegged ? 'live rate' : 'base rate'}</span>
                                         </span>
                                       </div>
 
@@ -1235,7 +1243,10 @@ export default function UserDashboard({
                                             <span className={`w-2.5 h-2.5 rounded-full shrink-0 transition-all ${isVarSelected ? 'bg-[#008751] scale-110' : 'bg-slate-300'}`} />
                                             <div className="text-left leading-tight">
                                               <span className="block font-extrabold">{variant.network}</span>
-                                              <span className="block text-[9px] text-slate-400 font-medium">Rate: ₦{variant.rate.toLocaleString()}/$</span>
+                                              <span className="block text-[9px] text-slate-400 font-medium">Rate: ₦{(variant.pricePegged
+                                                ? (tradeType === 'buy' ? effectiveBuyRate : effectiveSellRate)
+                                                : variant.rate
+                                              ).toLocaleString()}/{variant.symbol}{variant.pricePegged ? ' (pegged)' : ''}</span>
                                             </div>
                                           </button>
                                         );

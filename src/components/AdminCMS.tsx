@@ -1,38 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { 
-  ShieldCheck, 
-  TrendingUp, 
-  Users, 
-  Layers, 
-  Settings, 
-  Bell, 
-  FileCheck, 
-  X, 
-  CheckCircle, 
-  XCircle, 
-  AlertTriangle, 
-  CheckSquare, 
-  ExternalLink, 
-  Wallet, 
-  HelpCircle, 
-  Clock, 
-  Lock, 
-  Plus,
-  Coins,
-  Trash,
-  Camera,
-  Eye,
-  EyeOff,
-  MessageSquare,
-  Ban,
-  UserX,
-  UserCheck,
-  RotateCcw,
-  ChevronRight,
-  Edit2,
-  Percent
-} from 'lucide-react';
+import { ShieldCheck, TrendingUp, Users, Layers, Settings, Bell, FileCheck, X, CircleCheck as CheckCircle, Circle as XCircle, TriangleAlert as AlertTriangle, SquareCheck as CheckSquare, ExternalLink, Wallet, Circle as HelpCircle, Clock, Lock, Plus, Coins, Trash, Camera, Eye, EyeOff, MessageSquare, Ban, UserX, UserCheck, RotateCcw, ChevronRight, CreditCard as Edit2, Percent, Link2 } from 'lucide-react';
 import { UserProfile, Order, AdminSettings, Announcement, KYCData, CoinListing, Dispute } from '../types';
 import { formatNGT, formatNGTDate } from '../lib/dateUtils';
 import DisputeChat from './DisputeChat';
@@ -132,6 +100,7 @@ export default function AdminCMS({
   const [coinLogoUrl, setCoinLogoUrl] = useState('');
   const [coinFeePercentage, setCoinFeePercentage] = useState<number>(0);
   const [coinMinTradeAmount, setCoinMinTradeAmount] = useState<number>(1);
+  const [coinPricePegged, setCoinPricePegged] = useState<boolean>(false);
   const [isCreatingCoin, setIsCreatingCoin] = useState(false);
   const coinLogoInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -139,6 +108,7 @@ export default function AdminCMS({
   const [editingCoinId, setEditingCoinId] = useState<string | null>(null);
   const [editFeePercent, setEditFeePercent] = useState<number>(0);
   const [editMinAmount, setEditMinAmount] = useState<number>(1);
+  const [editPricePegged, setEditPricePegged] = useState<boolean>(false);
   const [isSavingCoinFees, setIsSavingCoinFees] = useState(false);
 
   // Announcement form states
@@ -452,6 +422,7 @@ export default function AdminCMS({
         logoUrl: coinLogoUrl || 'https://cryptologos.cc/logos/tether-usdt-logo.png?v=040',
         feePercentage: coinFeePercentage,
         minTradeAmount: coinMinTradeAmount,
+        pricePegged: coinPricePegged,
       });
       addToast(`Coin listing "${coinName}" added successfully!`, 'success');
       // Reset form
@@ -463,6 +434,7 @@ export default function AdminCMS({
       setCoinLogoUrl('');
       setCoinFeePercentage(0);
       setCoinMinTradeAmount(1);
+      setCoinPricePegged(false);
       onRefresh();
     } catch (err: any) {
       console.error(err);
@@ -476,7 +448,7 @@ export default function AdminCMS({
   const handleSaveCoinFees = async (coinId: string) => {
     setIsSavingCoinFees(true);
     try {
-      await updateCoinFees(coinId, editFeePercent, editMinAmount);
+      await updateCoinFees(coinId, editFeePercent, editMinAmount, editPricePegged);
       addToast('Fee settings saved!', 'success');
       setEditingCoinId(null);
       onRefresh();
@@ -1935,6 +1907,24 @@ export default function AdminCMS({
                     </div>
                   </div>
 
+                  {/* Price Peg toggle */}
+                  <label className="flex items-start gap-3 p-3 bg-sky-50 border border-sky-200 rounded-xl cursor-pointer hover:bg-sky-100/60 transition-colors">
+                    <input
+                      type="checkbox"
+                      checked={coinPricePegged}
+                      onChange={(e) => setCoinPricePegged(e.target.checked)}
+                      className="mt-0.5 w-4 h-4 accent-sky-500 cursor-pointer shrink-0"
+                    />
+                    <div>
+                      <span className="text-xs font-bold text-sky-800 flex items-center gap-1.5">
+                        <Link2 className="w-3.5 h-3.5" /> USDT Price Peg Synchronization
+                      </span>
+                      <p className="text-[10px] text-sky-600 mt-0.5 leading-relaxed">
+                        When enabled, this coin's price automatically follows the live effective Buy/Sell rate (market + admin markup) instead of its own static rate. The price updates as users switch between Buy and Sell tabs.
+                      </p>
+                    </div>
+                  </label>
+
                   {/* Logo upload (512x512) */}
                   <div>
                     <label className="block text-[10px] text-slate-500 mb-1 font-mono uppercase">Coin Logo (Ideal: 512x512 px)</label>
@@ -2042,6 +2032,14 @@ export default function AdminCMS({
                                 <span>Fee: <strong className="text-amber-600">{coin.feePercentage ?? 0}%</strong></span>
                                 <span>•</span>
                                 <span>Min: <strong className="text-slate-600">{coin.minTradeAmount ?? 1} {coin.symbol}</strong></span>
+                                {coin.pricePegged && (
+                                  <>
+                                    <span>•</span>
+                                    <span className="inline-flex items-center gap-0.5 bg-sky-50 text-sky-700 text-[8px] px-1.5 py-0.5 rounded-full font-extrabold border border-sky-200/50">
+                                      <Link2 className="w-2.5 h-2.5" /> PEGGED
+                                    </span>
+                                  </>
+                                )}
                               </div>
 
                               {/* Inline fee editor */}
@@ -2065,6 +2063,15 @@ export default function AdminCMS({
                                       className="w-24 px-2 py-1.5 border border-amber-200 rounded-lg text-xs bg-white"
                                     />
                                   </div>
+                                  <label className="flex items-center gap-1.5 text-[10px] text-amber-700 font-bold cursor-pointer select-none pb-1.5">
+                                    <input
+                                      type="checkbox"
+                                      checked={editPricePegged}
+                                      onChange={(e) => setEditPricePegged(e.target.checked)}
+                                      className="w-3.5 h-3.5 accent-sky-500 cursor-pointer"
+                                    />
+                                    Price Peg
+                                  </label>
                                   <button
                                     type="button"
                                     onClick={() => handleSaveCoinFees(coin.id!)}
@@ -2092,6 +2099,7 @@ export default function AdminCMS({
                                 setEditingCoinId(coin.id!);
                                 setEditFeePercent(coin.feePercentage ?? 0);
                                 setEditMinAmount(coin.minTradeAmount ?? 1);
+                                setEditPricePegged(coin.pricePegged ?? false);
                               }}
                               className="p-2 rounded-xl border border-amber-200 text-amber-600 hover:bg-amber-50 transition cursor-pointer shrink-0"
                               title="Edit fee & minimum"

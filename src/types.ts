@@ -96,6 +96,8 @@ export interface CoinListing {
   rate: number;
   logoUrl?: string;
   published?: boolean;
+  /** When true, the coin's price follows the live effective Buy/Sell rate (market + markup) instead of its own static `rate`. */
+  pricePegged?: boolean;
   feePercentage?: number;
   minTradeAmount?: number;
   createdAt: number;
