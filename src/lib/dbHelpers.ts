@@ -184,6 +184,8 @@ export function rowToCoin(row: any): CoinListing {
     rate: row.rate,
     logoUrl: row.logo_url || undefined,
     published: row.published,
+    feePercentage: row.fee_percentage ?? 0,
+    minTradeAmount: row.min_trade_amount ?? 1,
     createdAt: row.created_at
   };
 }
@@ -378,8 +380,18 @@ export async function createCoinListing(coin: Omit<CoinListing, 'id' | 'createdA
     rate: coin.rate,
     logo_url: coin.logoUrl || null,
     published: true,
+    fee_percentage: coin.feePercentage ?? 0,
+    min_trade_amount: coin.minTradeAmount ?? 1,
     created_at: Date.now()
   });
+  if (error) throw new Error(error.message);
+}
+
+export async function updateCoinFees(id: string, feePercentage: number, minTradeAmount: number) {
+  const { error } = await supabase.from('coins').update({
+    fee_percentage: feePercentage,
+    min_trade_amount: minTradeAmount
+  }).eq('id', id);
   if (error) throw new Error(error.message);
 }
 

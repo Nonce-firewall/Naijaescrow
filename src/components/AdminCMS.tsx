@@ -29,7 +29,9 @@ import {
   UserX,
   UserCheck,
   RotateCcw,
-  ChevronRight
+  ChevronRight,
+  Edit2,
+  Percent
 } from 'lucide-react';
 import { UserProfile, Order, AdminSettings, Announcement, KYCData, CoinListing, Dispute } from '../types';
 import { formatNGT, formatNGTDate } from '../lib/dateUtils';
@@ -44,6 +46,7 @@ import {
   createCoinListing,
   deleteCoinListing,
   toggleCoinPublish,
+  updateCoinFees,
   updateUserAdminAction,
   suspendUser,
   terminateUser,
@@ -110,8 +113,16 @@ export default function AdminCMS({
   const [coinWalletAddress, setCoinWalletAddress] = useState('');
   const [coinRate, setCoinRate] = useState<number>(settings.usdtRate);
   const [coinLogoUrl, setCoinLogoUrl] = useState('');
+  const [coinFeePercentage, setCoinFeePercentage] = useState<number>(0);
+  const [coinMinTradeAmount, setCoinMinTradeAmount] = useState<number>(1);
   const [isCreatingCoin, setIsCreatingCoin] = useState(false);
   const coinLogoInputRef = React.useRef<HTMLInputElement>(null);
+
+  // Inline fee editor state for existing coins
+  const [editingCoinId, setEditingCoinId] = useState<string | null>(null);
+  const [editFeePercent, setEditFeePercent] = useState<number>(0);
+  const [editMinAmount, setEditMinAmount] = useState<number>(1);
+  const [isSavingCoinFees, setIsSavingCoinFees] = useState(false);
 
   // Announcement form states
   const [bulletinTitle, setBulletinTitle] = useState('');
@@ -420,7 +431,9 @@ export default function AdminCMS({
         network: coinNetwork.trim(),
         walletAddress: coinWalletAddress.trim(),
         rate: Number(coinRate),
-        logoUrl: coinLogoUrl || 'https://cryptologos.cc/logos/tether-usdt-logo.png?v=040'
+        logoUrl: coinLogoUrl || 'https://cryptologos.cc/logos/tether-usdt-logo.png?v=040',
+        feePercentage: coinFeePercentage,
+        minTradeAmount: coinMinTradeAmount,
       });
       addToast(`Coin listing "${coinName}" added successfully!`, 'success');
       // Reset form
@@ -430,12 +443,29 @@ export default function AdminCMS({
       setCoinWalletAddress('');
       setCoinRate(settings.usdtRate);
       setCoinLogoUrl('');
+      setCoinFeePercentage(0);
+      setCoinMinTradeAmount(1);
       onRefresh();
     } catch (err: any) {
       console.error(err);
       addToast('Failed to list coin: ' + err.message, 'error');
     } finally {
       setIsCreatingCoin(false);
+    }
+  };
+
+  // Save fee settings on existing coin
+  const handleSaveCoinFees = async (coinId: string) => {
+    setIsSavingCoinFees(true);
+    try {
+      await updateCoinFees(coinId, editFeePercent, editMinAmount);
+      addToast('Fee settings saved!', 'success');
+      setEditingCoinId(null);
+      onRefresh();
+    } catch (err: any) {
+      addToast('Failed to save fees: ' + err.message, 'error');
+    } finally {
+      setIsSavingCoinFees(false);
     }
   };
 
@@ -1799,6 +1829,39 @@ export default function AdminCMS({
                     />
                   </div>
 
+                  {/* Fee % + Min Trade Amount */}
+                  <div className="grid grid-cols-2 gap-4 p-3 bg-amber-50 border border-amber-200 rounded-xl">
+                    <div>
+                      <label className="block text-[10px] text-amber-700 mb-1 font-mono uppercase flex items-center gap-1">
+                        <Percent className="w-3 h-3" /> Platform Fee (%)
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="0.01"
+                        value={coinFeePercentage}
+                        onChange={(e) => setCoinFeePercentage(Number(e.target.value))}
+                        placeholder="e.g. 7"
+                        className="block w-full px-3 py-2 border border-amber-200 rounded-lg text-xs bg-white"
+                      />
+                      <p className="text-[9px] text-amber-600 mt-1">Deducted from user's crypto on BUY. 0 = no fee.</p>
+                    </div>
+                    <div>
+                      <label className="block text-[10px] text-amber-700 mb-1 font-mono uppercase">Min Trade Amount</label>
+                      <input
+                        type="number"
+                        min="0"
+                        step="any"
+                        value={coinMinTradeAmount}
+                        onChange={(e) => setCoinMinTradeAmount(Number(e.target.value))}
+                        placeholder="e.g. 5"
+                        className="block w-full px-3 py-2 border border-amber-200 rounded-lg text-xs bg-white"
+                      />
+                      <p className="text-[9px] text-amber-600 mt-1">Minimum units a user must trade.</p>
+                    </div>
+                  </div>
+
                   {/* Logo upload (512x512) */}
                   <div>
                     <label className="block text-[10px] text-slate-500 mb-1 font-mono uppercase">Coin Logo (Ideal: 512x512 px)</label>
@@ -1887,7 +1950,7 @@ export default function AdminCMS({
                                 </div>
                               )}
                             </div>
-                            <div className="space-y-1">
+                            <div className="space-y-1 flex-1 min-w-0">
                               <div className="flex items-center gap-1.5 flex-wrap">
                                 <h5 className="font-extrabold text-slate-800 text-xs leading-none">{coin.name}</h5>
                                 <span className="bg-emerald-50 text-emerald-700 text-[9px] px-1.5 py-0.5 rounded-md font-mono font-bold leading-none uppercase">{coin.symbol}</span>
@@ -1898,15 +1961,70 @@ export default function AdminCMS({
                                 )}
                               </div>
                               <p className="text-[10px] text-slate-500 font-mono tracking-wider break-all">Wallet: {coin.walletAddress}</p>
-                              <div className="flex items-center gap-3 text-[10px] text-slate-400 font-mono">
+                              <div className="flex items-center gap-3 text-[10px] text-slate-400 font-mono flex-wrap">
                                 <span>Network: <strong className="text-slate-600">{coin.network}</strong></span>
                                 <span>•</span>
                                 <span>Rate: <strong className="text-[#008751]">₦{coin.rate}/$</strong></span>
+                                <span>•</span>
+                                <span>Fee: <strong className="text-amber-600">{coin.feePercentage ?? 0}%</strong></span>
+                                <span>•</span>
+                                <span>Min: <strong className="text-slate-600">{coin.minTradeAmount ?? 1} {coin.symbol}</strong></span>
                               </div>
+
+                              {/* Inline fee editor */}
+                              {editingCoinId === coin.id && (
+                                <div className="mt-2 p-2.5 bg-amber-50 border border-amber-200 rounded-xl flex flex-wrap items-end gap-2">
+                                  <div>
+                                    <label className="block text-[9px] text-amber-700 font-mono uppercase mb-1">Fee %</label>
+                                    <input
+                                      type="number" min="0" max="100" step="0.01"
+                                      value={editFeePercent}
+                                      onChange={(e) => setEditFeePercent(Number(e.target.value))}
+                                      className="w-20 px-2 py-1.5 border border-amber-200 rounded-lg text-xs bg-white"
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="block text-[9px] text-amber-700 font-mono uppercase mb-1">Min Amount</label>
+                                    <input
+                                      type="number" min="0" step="any"
+                                      value={editMinAmount}
+                                      onChange={(e) => setEditMinAmount(Number(e.target.value))}
+                                      className="w-24 px-2 py-1.5 border border-amber-200 rounded-lg text-xs bg-white"
+                                    />
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleSaveCoinFees(coin.id!)}
+                                    disabled={isSavingCoinFees}
+                                    className="px-3 py-1.5 bg-[#008751] text-white text-xs font-bold rounded-lg cursor-pointer hover:bg-[#007043] transition disabled:opacity-60"
+                                  >
+                                    {isSavingCoinFees ? 'Saving…' : 'Save'}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => setEditingCoinId(null)}
+                                    className="px-3 py-1.5 bg-slate-100 text-slate-600 text-xs font-bold rounded-lg cursor-pointer hover:bg-slate-200 transition"
+                                  >
+                                    Cancel
+                                  </button>
+                                </div>
+                              )}
                             </div>
                           </div>
 
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditingCoinId(coin.id!);
+                                setEditFeePercent(coin.feePercentage ?? 0);
+                                setEditMinAmount(coin.minTradeAmount ?? 1);
+                              }}
+                              className="p-2 rounded-xl border border-amber-200 text-amber-600 hover:bg-amber-50 transition cursor-pointer shrink-0"
+                              title="Edit fee & minimum"
+                            >
+                              <Edit2 className="w-4 h-4" />
+                            </button>
                             <button
                               type="button"
                               onClick={() => handleToggleCoinPublish(coin.id!, coin.published !== false, coin.name)}

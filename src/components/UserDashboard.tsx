@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { formatNGT, formatNGTDate } from '../lib/dateUtils';
 import { motion, AnimatePresence } from 'motion/react';
-import { TrendingUp, ArrowUpRight, ArrowDownLeft, Clock, CircleCheck as CheckCircle2, Circle as XCircle, CircleAlert as AlertCircle, Upload, Receipt, Smartphone, Eye, Lock, Bell, ChevronRight, UserCheck, FileText, Camera, Coins, Search, ListFilter as Filter, Check, MessageSquare, OctagonAlert as AlertOctagon, ShieldOff, X, RotateCw } from 'lucide-react';
+import { TrendingUp, ArrowUpRight, ArrowDownLeft, Clock, CircleCheck as CheckCircle2, Circle as XCircle, CircleAlert as AlertCircle, Upload, Receipt, Smartphone, Eye, Lock, Bell, ChevronRight, UserCheck, FileText, Camera, Coins, Search, ListFilter as Filter, Check, MessageSquare, OctagonAlert as AlertOctagon, ShieldOff, X, RotateCw, Copy } from 'lucide-react';
 import { UserProfile, Order, AdminSettings, Announcement, KYCData, CoinListing, Dispute } from '../types';
 import { createOrder, submitKYC, submitDispute } from '../lib/dbHelpers';
 import { compressImage } from '../lib/imageCompressor';
@@ -300,6 +300,40 @@ export default function UserDashboard({
 
   const activeRate = activeCoin ? activeCoin.rate : settings.usdtRate;
   const calculatedNgnAmount = cryptoAmount ? cryptoAmount * activeRate : 0;
+
+  // Live global NGN/USDT market rate from CoinGecko
+  const [liveNgnRate, setLiveNgnRate] = useState<number | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    const fetchRate = async () => {
+      try {
+        const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=tether&vs_currencies=ngn');
+        if (!res.ok) return;
+        const json = await res.json();
+        if (!cancelled) setLiveNgnRate(json?.tether?.ngn ?? null);
+      } catch { /* silently ignore — admin rate is always shown */ }
+    };
+    fetchRate();
+    const iv = setInterval(fetchRate, 5 * 60 * 1000);
+    return () => { cancelled = true; clearInterval(iv); };
+  }, []);
+
+  // Copy to clipboard helper
+  const copyToClipboard = async (text: string, label: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      addToast(`${label} copied!`, 'success');
+    } catch {
+      addToast('Copy failed — please select and copy manually.', 'error');
+    }
+  };
+
+  // Fee calculations (BUY only)
+  const activeFeePercent = (activeCoin?.feePercentage ?? 0);
+  const feeAmount = cryptoAmount && activeFeePercent > 0 ? Number(cryptoAmount) * activeFeePercent / 100 : 0;
+  const netCryptoAmount = cryptoAmount ? Number(cryptoAmount) - feeAmount : 0;
+  const activeMinTrade = activeCoin?.minTradeAmount ?? 1;
+  const belowMinimum = !!(cryptoAmount && Number(cryptoAmount) > 0 && Number(cryptoAmount) < activeMinTrade);
 
   // Handle Drag Over
   const handleDragOver = (e: React.DragEvent) => {
@@ -1243,8 +1277,8 @@ export default function UserDashboard({
                           step="any"
                           value={cryptoAmount}
                           onChange={(e) => setCryptoAmount(e.target.value !== '' ? Number(e.target.value) : '')}
-                          className="block w-full px-4 py-3 border border-[#E0E7E0] rounded-xl bg-[#F7F9F7] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#008751] text-sm font-semibold text-[#1A1A1A]"
-                          placeholder={`Min. 5 ${activeCoin ? activeCoin.symbol : 'USDT'}`}
+                          className={`block w-full px-4 py-3 border rounded-xl bg-[#F7F9F7] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#008751] text-sm font-semibold text-[#1A1A1A] ${belowMinimum ? 'border-rose-400' : 'border-[#E0E7E0]'}`}
+                          placeholder={`Min. ${activeMinTrade} ${activeCoin ? activeCoin.symbol : 'USDT'}`}
                         />
                         <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-xs font-bold text-gray-400">
                           {activeCoin ? activeCoin.symbol : 'USDT'}
@@ -1266,6 +1300,35 @@ export default function UserDashboard({
                       </div>
                     </div>
                   </div>
+
+                  {/* Min trade warning */}
+                  {belowMinimum && (
+                    <p className="text-xs text-rose-600 font-semibold -mt-3">
+                      Minimum trade for {activeCoin?.symbol} on {activeCoin?.network} is <span className="font-extrabold">{activeMinTrade} {activeCoin?.symbol}</span>
+                    </p>
+                  )}
+
+                  {/* Fee Breakdown — BUY only, shown when fee > 0 and user has typed an amount */}
+                  {tradeType === 'buy' && activeFeePercent > 0 && cryptoAmount && Number(cryptoAmount) > 0 && (
+                    <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs space-y-1.5">
+                      <div className="flex items-center justify-between mb-0.5">
+                        <span className="font-extrabold text-amber-700 uppercase tracking-wider text-[10px]">Fee Breakdown</span>
+                        <span className="text-amber-600 font-mono text-[10px] bg-amber-100 px-1.5 py-0.5 rounded">{activeFeePercent}% platform fee</span>
+                      </div>
+                      <div className="flex justify-between text-slate-600">
+                        <span>Trade amount</span>
+                        <span className="font-semibold">{cryptoAmount} {activeCoin?.symbol}</span>
+                      </div>
+                      <div className="flex justify-between text-slate-600">
+                        <span>Platform fee ({activeFeePercent}%)</span>
+                        <span className="font-semibold text-rose-600">− {feeAmount.toFixed(4)} {activeCoin?.symbol}</span>
+                      </div>
+                      <div className="flex justify-between border-t border-amber-200 pt-1.5 mt-0.5">
+                        <span className="font-bold text-slate-800">You receive (net)</span>
+                        <span className="font-extrabold text-[#008751]">{netCryptoAmount.toFixed(4)} {activeCoin?.symbol}</span>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Transaction Summary Card */}
                   {activeCoin && (
@@ -1303,6 +1366,11 @@ export default function UserDashboard({
                         <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Active Rate</span>
                         <span className="font-extrabold text-sm text-[#008751]">₦{activeRate.toLocaleString()}/$</span>
                         <span className="block text-[9px] text-slate-400 font-medium">Escrow Protected Guarantee</span>
+                        {liveNgnRate && (
+                          <span className="block text-[9px] text-slate-400 mt-0.5">
+                            Market: <span className="text-slate-600 font-semibold">₦{Math.round(liveNgnRate).toLocaleString()}</span>
+                          </span>
+                        )}
                       </div>
                     </div>
                   )}
@@ -1325,7 +1393,12 @@ export default function UserDashboard({
                           </div>
                           <div>
                             <span className="text-[10px] text-gray-400 block font-mono">ACCOUNT NUMBER</span>
-                            <span className="font-mono font-bold text-[#1A1A1A]">{settings.ngnAccountNumber}</span>
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-mono font-bold text-[#1A1A1A]">{settings.ngnAccountNumber}</span>
+                              <button type="button" onClick={() => copyToClipboard(settings.ngnAccountNumber, 'Account number')} className="p-0.5 rounded text-[#008751] hover:bg-[#008751]/10 transition cursor-pointer shrink-0" title="Copy account number">
+                                <Copy className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
                           </div>
                           <div>
                             <span className="text-[10px] text-gray-400 block font-mono">ACCOUNT NAME</span>
@@ -1344,9 +1417,14 @@ export default function UserDashboard({
                         </p>
                         <div className="bg-white p-3 rounded-xl border border-rose-100 text-xs flex flex-col justify-center">
                           <span className="text-[10px] text-gray-400 block font-mono">ADMIN {activeCoin ? activeCoin.network : network} WALLET ADDRESS</span>
-                          <span className="font-mono font-bold text-[#1A1A1A] break-all select-all py-1">
-                            {activeCoin ? activeCoin.walletAddress : (settings.wallets[network] || '')}
-                          </span>
+                          <div className="flex items-start gap-2 py-1">
+                            <span className="font-mono font-bold text-[#1A1A1A] break-all select-all flex-1">
+                              {activeCoin ? activeCoin.walletAddress : (settings.wallets[network] || '')}
+                            </span>
+                            <button type="button" onClick={() => copyToClipboard(activeCoin ? activeCoin.walletAddress : (settings.wallets[network] || ''), 'Wallet address')} className="p-0.5 rounded text-[#008751] hover:bg-[#008751]/10 transition cursor-pointer shrink-0 mt-0.5" title="Copy wallet address">
+                              <Copy className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
                         </div>
                       </>
                     )}
@@ -2097,7 +2175,10 @@ export default function UserDashboard({
                       <span className="text-[9px] text-gray-400 font-mono block">BENEFICIARY BANK ACCOUNT:</span>
                       <div className="bg-[#F7F9F7] border border-[#E0E7E0] p-3 rounded-xl text-[11px] font-mono">
                         <div className="font-bold text-[#1A1A1A]">{viewReceipt.adminBankDetails.bankName}</div>
-                        <div className="text-[#1A1A1A]">No: {viewReceipt.adminBankDetails.accountNumber}</div>
+                        <div className="flex items-center gap-1.5 text-[#1A1A1A]">
+                          No: {viewReceipt.adminBankDetails.accountNumber}
+                          <button type="button" onClick={() => copyToClipboard(viewReceipt!.adminBankDetails!.accountNumber, 'Account number')} className="p-0.5 rounded text-slate-400 hover:text-[#008751] transition cursor-pointer" title="Copy"><Copy className="w-3 h-3" /></button>
+                        </div>
                         <div className="text-gray-500">{viewReceipt.adminBankDetails.accountName}</div>
                       </div>
                     </div>
@@ -2109,7 +2190,10 @@ export default function UserDashboard({
                       <span className="text-[9px] text-gray-400 font-mono block">PAYEE BANK ACCOUNT:</span>
                       <div className="bg-[#F7F9F7] border border-[#E0E7E0] p-3 rounded-xl text-[11px] font-mono">
                         <div className="font-bold text-[#1A1A1A]">{viewReceipt.userBankDetails.bankName}</div>
-                        <div className="text-[#1A1A1A]">No: {viewReceipt.userBankDetails.accountNumber}</div>
+                        <div className="flex items-center gap-1.5 text-[#1A1A1A]">
+                          No: {viewReceipt.userBankDetails.accountNumber}
+                          <button type="button" onClick={() => copyToClipboard(viewReceipt!.userBankDetails!.accountNumber, 'Account number')} className="p-0.5 rounded text-slate-400 hover:text-[#008751] transition cursor-pointer" title="Copy"><Copy className="w-3 h-3" /></button>
+                        </div>
                         <div className="text-gray-500">{viewReceipt.userBankDetails.accountName}</div>
                       </div>
                     </div>

@@ -93,6 +93,8 @@ export interface CoinListing {
   rate: number;
   logoUrl?: string;
   published?: boolean;
+  feePercentage?: number;
+  minTradeAmount?: number;
   createdAt: number;
 }
 
