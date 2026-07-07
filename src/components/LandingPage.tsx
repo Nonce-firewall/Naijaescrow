@@ -890,8 +890,15 @@ export default function LandingPage({ announcements, settings, liveNgnRate, onNa
           <div className="flex flex-col sm:flex-row justify-between items-center pt-8 text-xs gap-4">
             <div>&copy; {new Date().getFullYear()} 9ija Escrow Inc. All rights reserved.</div>
             <div className="flex gap-5">
-              <button onClick={() => setActiveModal('privacy')} className="hover:text-emerald-400 transition cursor-pointer">Privacy Policy</button>
-              <button onClick={() => setActiveModal('terms')} className="hover:text-emerald-400 transition cursor-pointer">Terms of Use</button>
+              {/* Modal button for UX — real <a href> beside it for Google crawler */}
+              <span className="flex items-center gap-1">
+                <button onClick={() => setActiveModal('privacy')} className="hover:text-emerald-400 transition cursor-pointer">Privacy Policy</button>
+                <a href="/privacy" aria-label="Privacy Policy standalone page" className="text-slate-700 hover:text-slate-500 transition text-[10px] leading-none" tabIndex={-1}>↗</a>
+              </span>
+              <span className="flex items-center gap-1">
+                <button onClick={() => setActiveModal('terms')} className="hover:text-emerald-400 transition cursor-pointer">Terms of Use</button>
+                <a href="/terms" aria-label="Terms of Use standalone page" className="text-slate-700 hover:text-slate-500 transition text-[10px] leading-none" tabIndex={-1}>↗</a>
+              </span>
               <button onClick={() => setActiveModal('support')} className="hover:text-emerald-400 transition cursor-pointer">Support</button>
             </div>
           </div>
