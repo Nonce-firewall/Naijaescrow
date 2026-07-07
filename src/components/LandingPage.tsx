@@ -457,19 +457,24 @@ const NETWORKS = ['BSC', 'Tron', 'Polygon'] as const;
 type Network = typeof NETWORKS[number];
 
 function TradingWidget({
-  rate,
+  sellRate,
+  buyRate,
   onCtaClick,
 }: {
-  rate: number;
+  sellRate: number;
+  buyRate: number;
   onCtaClick: () => void;
 }) {
   const [tab, setTab] = useState<'buy' | 'sell'>('buy');
   const [amount, setAmount] = useState('');
   const [network, setNetwork] = useState<Network>('BSC');
 
+  // Active rate switches with the tab
+  const activeRate = tab === 'buy' ? buyRate : sellRate;
+
   const numAmount = parseFloat(amount) || 0;
-  const usdtAmt  = tab === 'buy'  ? numAmount : numAmount / rate;
-  const ngnAmt   = tab === 'buy'  ? numAmount * rate : numAmount;
+  const usdtAmt  = tab === 'buy'  ? numAmount : numAmount / activeRate;
+  const ngnAmt   = tab === 'buy'  ? numAmount * activeRate : numAmount;
   const hasAmt   = numAmount > 0;
 
   const handleInput = (v: string) => {
@@ -504,15 +509,35 @@ function TradingWidget({
           </div>
         </div>
 
-        {/* Rate strip */}
-        <div className="bg-slate-950 rounded-xl px-3 py-2 flex items-center justify-between border border-slate-800">
+        {/* Rate strip — value animates when tab switches */}
+        <div className={`rounded-xl px-3 py-2 flex items-center justify-between border transition-colors duration-300 ${
+          tab === 'buy'
+            ? 'bg-slate-950 border-slate-800'
+            : 'bg-slate-950 border-slate-800'
+        }`}>
           <div>
-            <div className="text-[9px] text-slate-500 uppercase tracking-wider mb-0.5">Live Rate</div>
-            <div className="text-emerald-400 font-bold text-base">
-              ₦{rate.toLocaleString()}<span className="text-slate-500 text-[10px] font-normal"> /USDT</span>
+            <div className="text-[9px] text-slate-500 uppercase tracking-wider mb-0.5">
+              {tab === 'buy' ? 'Buy Rate' : 'Sell Rate'}
             </div>
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={`${tab}-rate`}
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 8 }}
+                transition={{ duration: 0.2, ease: 'easeOut' }}
+                className={`font-bold text-base ${tab === 'buy' ? 'text-emerald-400' : 'text-rose-400'}`}
+              >
+                ₦{activeRate.toLocaleString()}
+                <span className="text-slate-500 text-[10px] font-normal"> /USDT</span>
+              </motion.div>
+            </AnimatePresence>
           </div>
-          <div className="flex items-center gap-1 text-[9px] font-bold px-2 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
+          <div className={`flex items-center gap-1 text-[9px] font-bold px-2 py-1 rounded-lg transition-colors duration-300 ${
+            tab === 'buy'
+              ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400'
+              : 'bg-rose-500/10 border border-rose-500/20 text-rose-400'
+          }`}>
             <Zap className="w-2.5 h-2.5" />
             LIVE
           </div>
@@ -549,7 +574,9 @@ function TradingWidget({
             transition={{ duration: 0.18 }}
             className="space-y-2"
           >
-            <div className="bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 flex items-center gap-2 focus-within:border-emerald-500/50 transition-colors">
+            <div className={`bg-slate-950 border rounded-xl px-3 py-2.5 flex items-center gap-2 transition-colors ${
+              tab === 'buy' ? 'border-slate-700 focus-within:border-emerald-500/50' : 'border-slate-700 focus-within:border-rose-500/40'
+            }`}>
               <span className="text-slate-500 text-[10px] uppercase tracking-wider shrink-0">
                 {tab === 'buy' ? 'USDT' : 'NGN'}
               </span>
@@ -561,9 +588,7 @@ function TradingWidget({
                 placeholder={tab === 'buy' ? '0.00' : '0'}
                 className="flex-1 bg-transparent outline-none text-white font-bold text-sm placeholder-slate-600 w-0"
               />
-              <span className="text-[9px] text-slate-600 shrink-0">
-                {tab === 'buy' ? 'amount' : 'amount'}
-              </span>
+              <span className="text-[9px] text-slate-600 shrink-0">amount</span>
             </div>
 
             {/* Live conversion result */}
@@ -576,9 +601,13 @@ function TradingWidget({
                   transition={{ duration: 0.2 }}
                   className="overflow-hidden"
                 >
-                  <div className="bg-emerald-950/40 border border-emerald-800/30 rounded-xl px-3 py-2 flex items-center justify-between">
+                  <div className={`border rounded-xl px-3 py-2 flex items-center justify-between ${
+                    tab === 'buy'
+                      ? 'bg-emerald-950/40 border-emerald-800/30'
+                      : 'bg-rose-950/30 border-rose-800/20'
+                  }`}>
                     <span className="text-slate-400 text-[9px]">You {tab === 'buy' ? 'pay' : 'receive'}</span>
-                    <span className="text-emerald-400 font-bold text-[11px]">
+                    <span className={`font-bold text-[11px] ${tab === 'buy' ? 'text-emerald-400' : 'text-rose-400'}`}>
                       {tab === 'buy'
                         ? `₦${ngnAmt.toLocaleString(undefined, { maximumFractionDigits: 2 })}`
                         : `${usdtAmt.toFixed(4)} USDT`}
@@ -642,6 +671,9 @@ export default function LandingPage({ announcements, settings, liveNgnRate, onNa
   const effectiveSellRate = liveNgnRate
     ? Math.round(liveNgnRate) + settings.usdtSellMarkup
     : settings.usdtSellMarkup;
+  const effectiveBuyRate = liveNgnRate
+    ? Math.round(liveNgnRate) + settings.usdtBuyMarkup
+    : settings.usdtBuyMarkup;
   const [activeModal, setActiveModal] = useState<ModalType>(null);
 
   const publicAnnouncements = announcements.filter(
@@ -764,7 +796,8 @@ export default function LandingPage({ announcements, settings, liveNgnRate, onNa
             style={{ willChange: 'transform, opacity' }}
           >
             <TradingWidget
-              rate={effectiveSellRate}
+              sellRate={effectiveSellRate}
+              buyRate={effectiveBuyRate}
               onCtaClick={() => onNavigate('auth', 'signup')}
             />
           </motion.div>
