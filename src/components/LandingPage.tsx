@@ -472,9 +472,11 @@ function TradingWidget({
   // Active rate switches with the tab
   const activeRate = tab === 'buy' ? buyRate : sellRate;
 
+  // Both tabs: user always enters a USDT amount.
+  // BUY  → they pay NGN  (ngnAmt = USDT × rate)
+  // SELL → they receive NGN (ngnAmt = USDT × rate)
   const numAmount = parseFloat(amount) || 0;
-  const usdtAmt  = tab === 'buy'  ? numAmount : numAmount / activeRate;
-  const ngnAmt   = tab === 'buy'  ? numAmount * activeRate : numAmount;
+  const ngnAmt   = numAmount * activeRate;
   const hasAmt   = numAmount > 0;
 
   const handleInput = (v: string) => {
@@ -578,7 +580,7 @@ function TradingWidget({
               tab === 'buy' ? 'border-slate-700 focus-within:border-emerald-500/50' : 'border-slate-700 focus-within:border-rose-500/40'
             }`}>
               <span className="text-slate-500 text-[10px] uppercase tracking-wider shrink-0">
-                {tab === 'buy' ? 'USDT' : 'NGN'}
+                USDT
               </span>
               <input
                 type="text"
@@ -608,9 +610,7 @@ function TradingWidget({
                   }`}>
                     <span className="text-slate-400 text-[9px]">You {tab === 'buy' ? 'pay' : 'receive'}</span>
                     <span className={`font-bold text-[11px] ${tab === 'buy' ? 'text-emerald-400' : 'text-rose-400'}`}>
-                      {tab === 'buy'
-                        ? `₦${ngnAmt.toLocaleString(undefined, { maximumFractionDigits: 2 })}`
-                        : `${usdtAmt.toFixed(4)} USDT`}
+                      ₦{ngnAmt.toLocaleString(undefined, { maximumFractionDigits: 2 })}
                     </span>
                   </div>
                 </motion.div>
