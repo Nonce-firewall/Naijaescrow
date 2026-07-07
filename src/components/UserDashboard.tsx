@@ -820,11 +820,12 @@ export default function UserDashboard({
           <span className="text-[9px] sm:text-[10px] uppercase font-bold tracking-wider text-[#00FF85] bg-[#E6F4EA]/10 border border-[#E6F4EA]/20 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full inline-block">
             Live Exchange Rate
           </span>
-          <div className="flex items-baseline gap-1.5 sm:gap-2">
-            <span className="text-3xl sm:text-5xl font-bold tracking-tight italic text-[#00FF85]">
+          <div className="flex items-baseline gap-1 sm:gap-2 min-w-0">
+            <span className="font-bold tracking-tight italic text-[#00FF85] leading-none tabular-nums"
+              style={{ fontSize: 'clamp(1.4rem, 6vw, 3rem)' }}>
               ₦{effectiveSellRate.toLocaleString()}
             </span>
-            <span className="text-xs sm:text-sm text-gray-400 font-mono">/USDT</span>
+            <span className="text-[10px] sm:text-sm text-gray-400 font-mono shrink-0">/USDT</span>
           </div>
           <p className="hidden sm:block text-xs text-gray-400 max-w-xl">
             Seamless local bank transfers of Naira for USDT with guaranteed dispute resolution. Verified by 9ija Escrow Ledger.

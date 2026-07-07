@@ -1,9 +1,33 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans:wght@400;700&display=swap');
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Inter", "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  /* Noto Sans is pre-installed on Android 4.4+ — catches ₦ when Google Fonts fails to load */
+  --font-sans: "Inter", "Space Grotesk", "NairaFix", "Noto Sans", ui-sans-serif, system-ui, "Arial Unicode MS", sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+
+/*
+ * Naira sign (₦ U+20A6) fallback for low-end Android devices.
+ * When Inter/Space Grotesk fail to load (slow network, offline cache),
+ * the browser uses this @font-face to pull ₦ from a locally installed font
+ * instead of rendering a missing-glyph box.
+ */
+@font-face {
+  font-family: 'NairaFix';
+  src: local('Noto Sans'), local('Noto Sans Regular'),
+       local('Arial Unicode MS'), local('DejaVu Sans'), local('Unifont');
+  unicode-range: U+20A6; /* ₦ Naira sign only — no other characters affected */
+  font-display: swap;
+}
+
+/*
+ * Prevent Android WebView from auto-inflating small text (e.g. labels inside
+ * the Price Inflation chart). Auto-scaling breaks absolute-positioned overlays.
+ */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 @keyframes ticker-scroll {

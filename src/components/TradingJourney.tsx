@@ -215,22 +215,22 @@ const UnifiedChart = memo(function UnifiedChart({
       </svg>
 
       {/* BUY label — top-left */}
-      <span className="absolute top-1.5 left-2.5 text-[8px] font-mono font-bold tracking-widest pointer-events-none text-[#10B981]/60">
+      <span className="absolute top-1.5 left-2 text-[7px] font-mono font-bold tracking-widest pointer-events-none text-[#10B981]/60 leading-none">
         BUY
       </span>
 
       {/* BUY effective rate — top-right (green) */}
-      <span className="absolute top-1.5 right-2.5 text-[8px] font-mono tabular-nums pointer-events-none text-[#10B981]/60">
+      <span className="absolute top-1.5 right-2 text-[7px] font-mono tabular-nums pointer-events-none text-[#10B981]/60 leading-none max-w-[45%] truncate text-right">
         ₦{effectiveBuyRate.toLocaleString()}
       </span>
 
       {/* SELL label — bottom-left */}
-      <span className="absolute bottom-1.5 left-2.5 text-[8px] font-mono font-bold tracking-widest pointer-events-none text-[#F43F5E]/60">
+      <span className="absolute bottom-1.5 left-2 text-[7px] font-mono font-bold tracking-widest pointer-events-none text-[#F43F5E]/60 leading-none">
         SELL
       </span>
 
       {/* SELL effective rate — bottom-right (red) */}
-      <span className="absolute bottom-1.5 right-2.5 text-[8px] font-mono tabular-nums pointer-events-none text-[#F43F5E]/60">
+      <span className="absolute bottom-1.5 right-2 text-[7px] font-mono tabular-nums pointer-events-none text-[#F43F5E]/60 leading-none max-w-[45%] truncate text-right">
         ₦{effectiveSellRate.toLocaleString()}
       </span>
 
@@ -331,7 +331,8 @@ export default function TradingJourney({
         {/* Unified chart area — BUY (upper zone) + SELL (lower zone) in one SVG */}
         <div className="flex-1 flex flex-col px-3 sm:px-6 pt-2.5 sm:pt-3 pb-3 sm:pb-5 min-w-0">
           <div
-            className="relative flex-1 min-h-[120px] rounded-xl bg-[#0A0A0A] border border-white/[0.04] overflow-hidden"
+            className="relative rounded-xl bg-[#0A0A0A] border border-white/[0.04] overflow-hidden"
+            style={{ height: 'clamp(130px, 22vw, 160px)' }}
           >
             <UnifiedChart
               buyLine={buy.line}
