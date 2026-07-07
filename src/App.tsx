@@ -258,7 +258,7 @@ export default function App() {
 
     const isTrader = userProfile?.role !== 'admin';
 
-    const ORDER_COLS = 'id,user_id,user_email,type,crypto_amount,ngn_amount,rate,status,network,token,payment_screenshot,user_bank_details,admin_bank_details,admin_wallet_address,blockchain_tx_id,rejection_reason,created_at,processed_at';
+    const ORDER_COLS = 'id,user_id,user_email,type,crypto_amount,ngn_amount,rate,status,network,token,payment_screenshot,user_bank_details,admin_bank_details,admin_wallet_address,user_wallet_address,blockchain_tx_id,rejection_reason,created_at,processed_at';
     const fetchOrders = async () => {
       let query = supabase.from('orders').select(ORDER_COLS).order('created_at', { ascending: false });
       if (isTrader) query = query.eq('user_id', currentUser.id);
