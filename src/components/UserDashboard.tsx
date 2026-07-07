@@ -5,6 +5,7 @@ import { TrendingUp, ArrowUpRight, ArrowDownLeft, Clock, CircleCheck as CheckCir
 import { UserProfile, Order, AdminSettings, Announcement, KYCData, CoinListing, Dispute } from '../types';
 import { createOrder, submitKYC, submitDispute } from '../lib/dbHelpers';
 import DisputeChat from './DisputeChat';
+import TradingJourney from './TradingJourney';
 import { compressImage } from '../lib/imageCompressor';
 
 interface UserDashboardProps {
@@ -840,6 +841,13 @@ export default function UserDashboard({
           <div className="w-44 h-44 border-[24px] border-white rounded-full"></div>
         </div>
       </motion.div>
+
+      {/* Trading Journey visualization */}
+      <TradingJourney
+        orders={orders}
+        effectiveSellRate={effectiveSellRate}
+        userProfile={userProfile}
+      />
 
       {/* Grid: Main Panel (left) & Updates notice (right) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
