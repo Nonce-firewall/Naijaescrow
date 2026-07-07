@@ -309,7 +309,7 @@ export default function TradingJourney({
             <span className="relative inline-flex rounded-full h-full w-full bg-[#00FF85]" />
           </span>
           <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.12em] text-[#00FF85]">
-            Trading Journey
+            Price Inflation
           </span>
         </div>
         {/* Buy / Sell mini legend */}
