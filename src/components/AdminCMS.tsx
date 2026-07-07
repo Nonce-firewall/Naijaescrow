@@ -821,7 +821,7 @@ export default function AdminCMS({
                             <span className={`inline-flex items-center gap-1 text-[9px] uppercase px-2 py-0.5 rounded-full font-bold ${
                               ord.type === 'buy' ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'
                             }`}>
-                              {ord.type === 'buy' ? 'Buy USDT' : 'Sell USDT'}
+                              {ord.type === 'buy' ? `Buy ${ord.symbol}/USDT` : `Sell ${ord.symbol}/USDT`}
                             </span>
                             <span className={`inline-flex items-center text-[9px] font-mono px-2 py-0.5 rounded bg-slate-100 text-slate-500`}>
                               {ord.network}

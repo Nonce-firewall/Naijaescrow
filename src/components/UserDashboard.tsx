@@ -1132,7 +1132,7 @@ export default function UserDashboard({
                         <motion.div layoutId="trade-type-indicator" className="absolute inset-0 bg-[#008751] rounded-xl shadow-sm" transition={{ type: 'spring', bounce: 0.2, duration: 0.4 }} />
                       )}
                       <ArrowDownLeft className="relative z-10 w-4 h-4" />
-                      <span className="relative z-10">Buy USDT</span>
+                      <span className="relative z-10">Buy</span>
                     </button>
                     <button
                       type="button"
@@ -1148,7 +1148,7 @@ export default function UserDashboard({
                         <motion.div layoutId="trade-type-indicator" className="absolute inset-0 bg-rose-600 rounded-xl shadow-sm" transition={{ type: 'spring', bounce: 0.2, duration: 0.4 }} />
                       )}
                       <ArrowUpRight className="relative z-10 w-4 h-4" />
-                      <span className="relative z-10">Sell USDT</span>
+                      <span className="relative z-10">Sell</span>
                     </button>
                   </div>
 
@@ -1729,7 +1729,7 @@ export default function UserDashboard({
                                   ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' 
                                   : 'bg-rose-50 text-rose-700 border border-rose-100'
                               }`}>
-                                {isBuy ? 'Buy USDT' : 'Sell USDT'}
+                                {isBuy ? `Buy ${ord.symbol}/USDT` : `Sell ${ord.symbol}/USDT`}
                               </span>
                             </td>
                             <td className="py-4 px-6 font-semibold text-slate-700">
@@ -2384,7 +2384,7 @@ export default function UserDashboard({
                 <div className="border-t border-dashed border-[#E0E7E0] pt-4 space-y-2 text-xs">
                   <div className="flex justify-between">
                     <span className="text-gray-400 font-mono">ORDER TYPE:</span>
-                    <span className="font-bold text-[#1A1A1A] uppercase">{viewReceipt.type === 'buy' ? 'Buy USDT' : 'Sell USDT'}</span>
+                    <span className="font-bold text-[#1A1A1A] uppercase">{viewReceipt.type === 'buy' ? `Buy ${viewReceipt.symbol}/USDT` : `Sell ${viewReceipt.symbol}/USDT`}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-400 font-mono">ACCOUNT CORRESPONDENT:</span>

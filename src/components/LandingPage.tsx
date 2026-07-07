@@ -554,7 +554,7 @@ function TradingWidget({
               className="relative flex-1 py-2 text-[11px] font-bold uppercase tracking-wider z-10 transition-colors cursor-pointer rounded-lg"
               style={{ color: tab === t ? (t === 'buy' ? '#4ade80' : '#f87171') : '#64748b' }}
             >
-              {t === 'buy' ? '▲ Buy USDT' : '▼ Sell USDT'}
+              {t === 'buy' ? '▲ Buy' : '▼ Sell'}
               {tab === t && (
                 <motion.div
                   layoutId="tab-pill"
