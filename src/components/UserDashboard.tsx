@@ -819,7 +819,7 @@ export default function UserDashboard({
             <span className="text-xs sm:text-sm text-gray-400 font-mono">/USDT</span>
           </div>
           <p className="hidden sm:block text-xs text-gray-400 max-w-xl">
-            Standard blockchain mining fees covered. Zero additional escrow charges. Verified by 9ija Escrow Ledger.
+            Seamless local bank transfers of Naira for USDT with guaranteed dispute resolution. Verified by 9ija Escrow Ledger.
           </p>
         </div>
 
@@ -1825,7 +1825,7 @@ export default function UserDashboard({
                         <p className="text-xs text-gray-600 mt-1">
                           <span className="font-bold text-rose-900">Reason:</span> {userProfile.kycData?.rejectionReason || 'Uploaded document was blurry. Please upload a high-resolution screenshot.'}
                         </p>
-                        <p className="text-xs text-gray-400 mt-1">Please update your values below and re-submit for review.</p>
+                        <p className="text-xs text-gray-400 mt-1">Please update your details below and re-submit for review.</p>
                       </div>
                     </div>
                   )}
@@ -2184,7 +2184,7 @@ export default function UserDashboard({
                   <span className="absolute -top-1 -right-1 w-2 h-2 bg-rose-500 rounded-full border border-white" />
                 )}
               </div>
-              <h4 className="font-bold text-xs uppercase tracking-wider">System Bulletin</h4>
+              <h4 className="font-bold text-xs uppercase tracking-wider">Notifications</h4>
               {(localNotifs.length + privateAnnouncements.length) > 0 && (
                 <span className="ml-auto shrink-0 bg-rose-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full leading-none">
                   {localNotifs.length + privateAnnouncements.length}
@@ -2356,12 +2356,12 @@ export default function UserDashboard({
                     <span className="font-bold text-[#1A1A1A]">{viewReceipt.userEmail}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-400 font-mono">CREATION TIMESTAMP:</span>
+                    <span className="text-gray-400 font-mono">SUBMISSION TIME:</span>
                     <span className="font-mono text-gray-600">{formatNGT(viewReceipt.createdAt)}</span>
                   </div>
                   {viewReceipt.processedAt && (
                     <div className="flex justify-between">
-                      <span className="text-gray-400 font-mono">PROCESSING TIMESTAMP:</span>
+                      <span className="text-gray-400 font-mono">PROCESSED TIME:</span>
                       <span className="font-mono text-gray-600">{formatNGT(viewReceipt.processedAt)}</span>
                     </div>
                   )}
