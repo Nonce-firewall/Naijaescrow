@@ -162,6 +162,7 @@ export function rowToOrder(row: any): Order {
     userBankDetails: row.user_bank_details || undefined,
     adminBankDetails: row.admin_bank_details || undefined,
     adminWalletAddress: row.admin_wallet_address || undefined,
+    userWalletAddress: row.user_wallet_address || undefined,
     blockchainTxId: row.blockchain_tx_id || undefined,
     rejectionReason: row.rejection_reason || undefined,
     createdAt: row.created_at,
@@ -301,7 +302,8 @@ export async function createOrder(
   adminBankDetails?: Order['adminBankDetails'],
   adminWalletAddress?: string,
   token: string = 'USDT',
-  blockchainTxId?: string
+  blockchainTxId?: string,
+  userWalletAddress?: string
 ) {
   const ngnAmount = cryptoAmount * rate;
   const { data, error } = await supabase.from('orders').insert({
@@ -319,6 +321,7 @@ export async function createOrder(
     admin_bank_details: adminBankDetails || null,
     admin_wallet_address: adminWalletAddress || null,
     blockchain_tx_id: blockchainTxId || null,
+    user_wallet_address: userWalletAddress || null,
     created_at: Date.now()
   }).select().single();
   if (error) throw new Error(error.message);

@@ -2209,6 +2209,25 @@ export default function AdminCMS({
                   </div>
                 )}
 
+                {/* User crypto receiving address for buy orders */}
+                {selectedOrder.type === 'buy' && selectedOrder.userWalletAddress && (
+                  <div className="space-y-1.5 text-xs bg-emerald-50/50 border border-emerald-100 rounded-xl p-4">
+                    <span className="text-[10px] text-emerald-800 font-bold block uppercase tracking-wider">User Crypto Receiving Address (Send crypto here)</span>
+                    <div className="flex items-start gap-2 text-[11px] font-mono font-bold text-slate-800">
+                      <span className="break-all flex-1">{selectedOrder.userWalletAddress}</span>
+                      <button
+                        type="button"
+                        onClick={() => navigator.clipboard.writeText(selectedOrder!.userWalletAddress!)}
+                        className="p-0.5 rounded text-emerald-600 hover:text-emerald-800 transition cursor-pointer shrink-0 mt-0.5"
+                        title="Copy wallet address"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                      </button>
+                    </div>
+                    <div className="text-[10px] text-emerald-700">Network: {selectedOrder.network}</div>
+                  </div>
+                )}
+
                 {/* Screenshot view */}
                 <div className="space-y-2">
                   <span className="text-[10px] text-slate-400 font-mono uppercase block">Uploaded Receipt Verification Screenshot</span>

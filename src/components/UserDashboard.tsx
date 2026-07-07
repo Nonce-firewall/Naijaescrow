@@ -235,6 +235,7 @@ export default function UserDashboard({
   const [userAccountNumber, setUserAccountNumber] = useState('');
   const [userAccountName, setUserAccountName] = useState('');
   const [sellTxHash, setSellTxHash] = useState('');
+  const [userWalletAddress, setUserWalletAddress] = useState('');
 
   // Order history pagination
   const [ordersLimit, setOrdersLimit] = useState(5);
@@ -508,6 +509,11 @@ export default function UserDashboard({
       return;
     }
 
+    if (tradeType === 'buy' && !userWalletAddress.trim()) {
+      addToast('Please enter your crypto receiving wallet address.', 'error');
+      return;
+    }
+
     if (!screenshot) {
       addToast('Please upload a screenshot to verify your transfer.', 'error');
       return;
@@ -576,7 +582,8 @@ export default function UserDashboard({
         adminBank,
         adminWallet,
         orderToken,
-        tradeType === 'sell' ? sellTxHash.trim() : undefined
+        tradeType === 'sell' ? sellTxHash.trim() : undefined,
+        tradeType === 'buy' ? userWalletAddress.trim() : undefined
       );
 
       addToast('Escrow order submitted successfully!', 'success');
@@ -587,6 +594,7 @@ export default function UserDashboard({
       setUserAccountNumber('');
       setUserAccountName('');
       setSellTxHash('');
+      setUserWalletAddress('');
       setActiveTab('history');
       onRefresh();
     } catch (err: any) {
@@ -1506,6 +1514,24 @@ export default function UserDashboard({
                     )}
                   </div>
 
+                  {/* If buying, user must input their crypto wallet address to receive crypto */}
+                  {tradeType === 'buy' && (
+                    <div className="space-y-2">
+                      <h4 className="font-bold text-[#1A1A1A] text-sm">Step 2: Enter Your Crypto Receiving Address</h4>
+                      <p className="text-xs text-gray-500">
+                        Provide the {activeCoin ? activeCoin.network : network} wallet address where you want to receive your {activeCoin ? activeCoin.symbol : 'USDT'} after admin approval.
+                      </p>
+                      <input
+                        type="text"
+                        required
+                        value={userWalletAddress}
+                        onChange={(e) => setUserWalletAddress(e.target.value)}
+                        placeholder={`Your ${activeCoin ? activeCoin.network : network} wallet address`}
+                        className="block w-full px-3 py-2.5 border border-[#E0E7E0] rounded-xl text-xs font-mono bg-[#F7F9F7] text-[#1A1A1A]"
+                      />
+                    </div>
+                  )}
+
                   {/* If selling, user must input NGN details to receive cash */}
                   {tradeType === 'sell' && (
                     <div className="space-y-4">
@@ -1568,7 +1594,7 @@ export default function UserDashboard({
                   {/* Step 3/4: Screenshot Upload (Drag & Drop + Click) */}
                   <div className="space-y-2">
                     <h4 className="font-bold text-[#1A1A1A] text-sm">
-                      {tradeType === 'buy' ? 'Step 2: Upload NGN Transfer Receipt' : 'Step 4: Upload Crypto Transfer Receipt'}
+                      {tradeType === 'buy' ? 'Step 3: Upload NGN Transfer Receipt' : 'Step 4: Upload Crypto Transfer Receipt'}
                     </h4>
                     <p className="text-xs text-gray-500">Provide an authentic screenshot proof of the transfer to trigger admin approval.</p>
                     
@@ -2377,6 +2403,20 @@ export default function UserDashboard({
                           <button type="button" onClick={() => copyToClipboard(viewReceipt!.adminBankDetails!.accountNumber, 'Account number')} className="p-0.5 rounded text-slate-400 hover:text-[#008751] transition cursor-pointer" title="Copy"><Copy className="w-3 h-3" /></button>
                         </div>
                         <div className="text-gray-500">{viewReceipt.adminBankDetails.accountName}</div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* User Crypto Receiving Address displayed for buy receipts */}
+                  {viewReceipt.type === 'buy' && viewReceipt.userWalletAddress && (
+                    <div className="pt-2 border-t border-[#E0E7E0] space-y-1">
+                      <span className="text-[9px] text-gray-400 font-mono block">YOUR CRYPTO RECEIVING ADDRESS:</span>
+                      <div className="bg-[#F0F7F2] border border-[#D1E6D8] p-3 rounded-xl text-[11px] font-mono">
+                        <div className="flex items-start gap-1.5 text-[#1A1A1A]">
+                          <span className="break-all flex-1 font-bold">{viewReceipt.userWalletAddress}</span>
+                          <button type="button" onClick={() => copyToClipboard(viewReceipt!.userWalletAddress!, 'Wallet address')} className="p-0.5 rounded text-slate-400 hover:text-[#008751] transition cursor-pointer shrink-0 mt-0.5" title="Copy"><Copy className="w-3 h-3" /></button>
+                        </div>
+                        <div className="text-[10px] text-gray-500 mt-1">Network: {viewReceipt.network}</div>
                       </div>
                     </div>
                   )}

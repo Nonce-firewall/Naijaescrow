@@ -72,6 +72,7 @@ export interface Order {
     accountName: string;
   };
   adminWalletAddress?: string;
+  userWalletAddress?: string;
   blockchainTxId?: string;
   rejectionReason?: string;
   createdAt: number;
