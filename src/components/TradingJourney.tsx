@@ -4,30 +4,39 @@ import { Order, UserProfile } from '../types'; // UserProfile reserved for futur
 
 interface TradingJourneyProps {
   orders: Order[];
+  effectiveBuyRate: number;
   effectiveSellRate: number;
   userProfile: UserProfile;
 }
 
 // ── SVG chart constants ───────────────────────────────────────────────────────
-const W   = 280;  // logical viewBox width  (scales to 100% via width="100%")
-const H   = 60;   // logical viewBox height per panel
-const PAD = 6;    // inner padding so strokes don't clip at edges
+const W       = 280;  // logical viewBox width  (scales to 100% via width="100%")
+const H_TOTAL = 120;  // logical viewBox height for the unified chart
+const PAD     = 6;    // inner padding so strokes don't clip at edges
+
+// BUY series occupies the upper 45%, SELL the lower 45%, leaving a natural gap
+const BUY_Y_MIN  = PAD;
+const BUY_Y_MAX  = H_TOTAL * 0.45;
+const SELL_Y_MIN = H_TOTAL * 0.55;
+const SELL_Y_MAX = H_TOTAL - PAD;
 
 interface SeriesResult {
   line: string;
   fill: string;
-  lastPt: { x: number; y: number } | null;
+  firstPt: { x: number; y: number } | null;
+  lastPt:  { x: number; y: number } | null;
 }
 
-// ── Build a smooth bezier line + fill path for a single series.
-//    fillToTop=false → BUY panel: fill closes at y=H (downward toward divider)
-//    fillToTop=true  → SELL panel: fill closes at y=0 (upward toward divider)
-//
-//    Each series uses its own independent Y scale so the full panel height
-//    is utilised regardless of how many trades the other side has.
+// ── Build smooth bezier line + fill path for a series within a Y zone.
+//    fillClosesAt: y=0 for BUY (fill flows to top), y=H_TOTAL for SELL (fill flows to bottom)
 // ─────────────────────────────────────────────────────────────────────────────
-function buildSeriesPaths(seriesOrders: Order[], fillToTop: boolean): SeriesResult {
-  if (seriesOrders.length === 0) return { line: '', fill: '', lastPt: null };
+function buildSeriesPaths(
+  seriesOrders: Order[],
+  yMin: number,
+  yMax: number,
+  fillClosesAt: number,
+): SeriesResult {
+  if (seriesOrders.length === 0) return { line: '', fill: '', firstPt: null, lastPt: null };
 
   const sorted = [...seriesOrders].sort((a, b) => a.createdAt - b.createdAt);
 
@@ -42,27 +51,26 @@ function buildSeriesPaths(seriesOrders: Order[], fillToTop: boolean): SeriesResu
   const timeRange = timeMax - timeMin;
 
   const xRange = W - PAD * 2;
-  const yRange = H - PAD * 2;
+  const yRange = yMax - yMin;
 
+  // Higher rate → closer to yMin (top of zone)
   const toCoord = (o: Order) => ({
     x: timeRange === 0
       ? W / 2
       : PAD + ((o.createdAt - timeMin) / timeRange) * xRange,
-    y: H - PAD - ((o.rate - rateMin) / (rateRange || 1)) * yRange,
+    y: yMax - ((o.rate - rateMin) / (rateRange || 1)) * yRange,
   });
 
   const coords = sorted.map(toCoord);
 
   let line: string;
-  // firstPt / lastPt track the actual *visual* endpoints of the drawn line
-  // (may differ from coords[0]/last for the single-point case)
   let firstPt: { x: number; y: number };
-  let lastPt: { x: number; y: number };
+  let lastPt:  { x: number; y: number };
 
   if (coords.length === 1) {
-    // Single trade → flat horizontal line spanning the full panel width
-    const midY = H / 2;
-    line = `M ${PAD} ${midY.toFixed(1)} L ${(W - PAD).toFixed(1)} ${midY.toFixed(1)}`;
+    // Single trade → flat horizontal line at mid-zone
+    const midY = (yMin + yMax) / 2;
+    line    = `M ${PAD} ${midY.toFixed(1)} L ${(W - PAD).toFixed(1)} ${midY.toFixed(1)}`;
     firstPt = { x: PAD,     y: midY };
     lastPt  = { x: W - PAD, y: midY };
   } else {
@@ -76,10 +84,9 @@ function buildSeriesPaths(seriesOrders: Order[], fillToTop: boolean): SeriesResu
     lastPt  = coords[coords.length - 1];
   }
 
-  const closeY = fillToTop ? 0 : H;
-  const fill = `${line} L ${lastPt.x.toFixed(1)} ${closeY} L ${firstPt.x.toFixed(1)} ${closeY} Z`;
+  const fill = `${line} L ${lastPt.x.toFixed(1)} ${fillClosesAt} L ${firstPt.x.toFixed(1)} ${fillClosesAt} Z`;
 
-  return { line, fill, lastPt };
+  return { line, fill, firstPt, lastPt };
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -96,104 +103,137 @@ function formatTime(ts: number): string {
   });
 }
 
-// ── Reusable mini-chart panel ─────────────────────────────────────────────────
-interface PanelProps {
-  strokeColor: string;   // e.g. "#10B981"
-  fillColor: string;     // e.g. "#10B981"  (gradient base colour)
-  fillOpacity: number;   // peak gradient opacity
-  gradientId: string;    // must be unique per instance + side
-  line: string;
-  fill: string;
-  lastPt: { x: number; y: number } | null;
-  fillToTop: boolean;    // true → SELL (gradient upward), false → BUY (downward)
-  label: string;
-  isEmpty: boolean;
-  rateLabel?: string;
+// ── Unified chart (single SVG, BUY upper zone + SELL lower zone) ──────────────
+interface UnifiedChartProps {
+  buyLine: string;
+  buyFill: string;
+  buyLastPt:  { x: number; y: number } | null;
+  sellLine: string;
+  sellFill: string;
+  sellLastPt:  { x: number; y: number } | null;
+  buyGradId: string;
+  sellGradId: string;
+  buyEmpty: boolean;
+  sellEmpty: boolean;
+  effectiveBuyRate: number;
+  effectiveSellRate: number;
 }
 
-function ChartPanel({
-  strokeColor, fillColor, fillOpacity, gradientId,
-  line, fill, lastPt, fillToTop,
-  label, isEmpty, rateLabel,
-}: PanelProps) {
-  // For BUY (fillToTop=false): gradient starts strong at the line (y1=0 in SVG coords = top of gradient box = where line is)
-  //   and fades to transparent at the bottom (y2=1). This creates a downward-flowing fill.
-  // For SELL (fillToTop=true): gradient starts strong at y1=1 (bottom of box = the line for SELL)
-  //   and fades upward to y2=0 — i.e., fill grows upward toward the center divider.
-  const gradientProps = fillToTop
-    ? { x1: '0', y1: '1', x2: '0', y2: '0' }
-    : { x1: '0', y1: '0', x2: '0', y2: '1' };
-
+function UnifiedChart({
+  buyLine, buyFill, buyLastPt,
+  sellLine, sellFill, sellLastPt,
+  buyGradId, sellGradId,
+  buyEmpty, sellEmpty,
+  effectiveBuyRate, effectiveSellRate,
+}: UnifiedChartProps) {
+  // BUY gradient: strong at top (y1=0), fades downward (y2=1)
+  // SELL gradient: strong at bottom (y1=1), fades upward (y2=0)
   return (
-    <div className="relative flex-1 min-h-0">
+    <div className="relative w-full h-full">
       <svg
         className="absolute inset-0"
         width="100%"
         height="100%"
-        viewBox={`0 0 ${W} ${H}`}
+        viewBox={`0 0 ${W} ${H_TOTAL}`}
         preserveAspectRatio="none"
         aria-hidden="true"
       >
         <defs>
-          <linearGradient id={gradientId} {...gradientProps}>
-            <stop offset="0%"   stopColor={fillColor} stopOpacity={fillOpacity} />
-            <stop offset="100%" stopColor={fillColor} stopOpacity={0} />
+          {/* BUY gradient: flows from line upward to top edge */}
+          <linearGradient id={buyGradId} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%"   stopColor="#10B981" stopOpacity={0} />
+            <stop offset="100%" stopColor="#10B981" stopOpacity={0.32} />
+          </linearGradient>
+          {/* SELL gradient: flows from line downward to bottom edge */}
+          <linearGradient id={sellGradId} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%"   stopColor="#F43F5E" stopOpacity={0.32} />
+            <stop offset="100%" stopColor="#F43F5E" stopOpacity={0} />
           </linearGradient>
         </defs>
 
-        {/* Subtle grid lines */}
-        {[0.33, 0.66].map(f => (
+        {/* Subtle horizontal grid lines across full height */}
+        {[0.25, 0.5, 0.75].map(f => (
           <line
             key={f}
-            x1={0} y1={H * f} x2={W} y2={H * f}
+            x1={0} y1={H_TOTAL * f} x2={W} y2={H_TOTAL * f}
             stroke="white"
-            strokeOpacity={isEmpty ? 0.05 : 0.035}
+            strokeOpacity={0.03}
             strokeWidth="1"
-            strokeDasharray={isEmpty ? '4 6' : undefined}
           />
         ))}
 
-        {!isEmpty && fill && <path d={fill} fill={`url(#${gradientId})`} />}
-        {!isEmpty && line && (
+        {/* ── BUY series ── */}
+        {!buyEmpty && buyFill  && <path d={buyFill}  fill={`url(#${buyGradId})`} />}
+        {!buyEmpty && buyLine  && (
           <path
-            d={line}
+            d={buyLine}
             fill="none"
-            stroke={strokeColor}
+            stroke="#10B981"
             strokeWidth="1.8"
             strokeLinecap="round"
             strokeLinejoin="round"
             vectorEffect="non-scaling-stroke"
           />
         )}
-        {!isEmpty && lastPt && (
+        {!buyEmpty && buyLastPt && (
           <>
-            <circle cx={lastPt.x} cy={lastPt.y} r="4.5" fill={strokeColor} fillOpacity="0.18" className="animate-pulse" />
-            <circle cx={lastPt.x} cy={lastPt.y} r="2.2" fill={strokeColor} />
+            <circle cx={buyLastPt.x} cy={buyLastPt.y} r="4.5" fill="#10B981" fillOpacity="0.18" className="animate-pulse" />
+            <circle cx={buyLastPt.x} cy={buyLastPt.y} r="2.2" fill="#10B981" />
+          </>
+        )}
+
+        {/* ── SELL series ── */}
+        {!sellEmpty && sellFill  && <path d={sellFill}  fill={`url(#${sellGradId})`} />}
+        {!sellEmpty && sellLine  && (
+          <path
+            d={sellLine}
+            fill="none"
+            stroke="#F43F5E"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            vectorEffect="non-scaling-stroke"
+          />
+        )}
+        {!sellEmpty && sellLastPt && (
+          <>
+            <circle cx={sellLastPt.x} cy={sellLastPt.y} r="4.5" fill="#F43F5E" fillOpacity="0.18" className="animate-pulse" />
+            <circle cx={sellLastPt.x} cy={sellLastPt.y} r="2.2" fill="#F43F5E" />
           </>
         )}
       </svg>
 
-      {/* Panel label — BUY sits top-left, SELL sits bottom-left */}
-      <span
-        className={`absolute ${fillToTop ? 'bottom-1.5' : 'top-1.5'} left-2.5 text-[8px] font-mono font-bold tracking-widest pointer-events-none`}
-        style={{ color: `${strokeColor}99` }}
-      >
-        {label}
+      {/* BUY label — top-left */}
+      <span className="absolute top-1.5 left-2.5 text-[8px] font-mono font-bold tracking-widest pointer-events-none text-[#10B981]/60">
+        BUY
       </span>
 
-      {/* Rate label — BUY panel top-right */}
-      {rateLabel && (
-        <span className="absolute top-1.5 right-2.5 text-[8px] font-mono tabular-nums pointer-events-none text-[#00FF85]/45">
-          {rateLabel}
-        </span>
-      )}
+      {/* BUY effective rate — top-right (green) */}
+      <span className="absolute top-1.5 right-2.5 text-[8px] font-mono tabular-nums pointer-events-none text-[#10B981]/60">
+        ₦{effectiveBuyRate.toLocaleString()}
+      </span>
 
-      {/* Empty state label */}
-      {isEmpty && (
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <span className="text-[8px] text-gray-800 font-mono uppercase tracking-widest">
-            no {label.toLowerCase()} trades yet
-          </span>
+      {/* SELL label — bottom-left */}
+      <span className="absolute bottom-1.5 left-2.5 text-[8px] font-mono font-bold tracking-widest pointer-events-none text-[#F43F5E]/60">
+        SELL
+      </span>
+
+      {/* SELL effective rate — bottom-right (red) */}
+      <span className="absolute bottom-1.5 right-2.5 text-[8px] font-mono tabular-nums pointer-events-none text-[#F43F5E]/60">
+        ₦{effectiveSellRate.toLocaleString()}
+      </span>
+
+      {/* Empty state hints */}
+      {buyEmpty && (
+        <div className="absolute flex items-center justify-center pointer-events-none"
+          style={{ top: `${BUY_Y_MIN / H_TOTAL * 100}%`, height: `${(BUY_Y_MAX - BUY_Y_MIN) / H_TOTAL * 100}%`, left: 0, right: 0 }}>
+          <span className="text-[8px] text-gray-800 font-mono uppercase tracking-widest">no buy trades yet</span>
+        </div>
+      )}
+      {sellEmpty && (
+        <div className="absolute flex items-center justify-center pointer-events-none"
+          style={{ top: `${SELL_Y_MIN / H_TOTAL * 100}%`, height: `${(SELL_Y_MAX - SELL_Y_MIN) / H_TOTAL * 100}%`, left: 0, right: 0 }}>
+          <span className="text-[8px] text-gray-800 font-mono uppercase tracking-widest">no sell trades yet</span>
         </div>
       )}
     </div>
@@ -203,6 +243,7 @@ function ChartPanel({
 // ── Component ─────────────────────────────────────────────────────────────────
 export default function TradingJourney({
   orders,
+  effectiveBuyRate,
   effectiveSellRate,
 }: TradingJourneyProps) {
 
@@ -219,9 +260,10 @@ export default function TradingJourney({
   const buyOrders  = useMemo(() => completedOrders.filter(o => o.type === 'buy'),  [completedOrders]);
   const sellOrders = useMemo(() => completedOrders.filter(o => o.type === 'sell'), [completedOrders]);
 
-  // Each series is plotted with its own independent Y scale
-  const buy  = useMemo(() => buildSeriesPaths(buyOrders,  false), [buyOrders]);
-  const sell = useMemo(() => buildSeriesPaths(sellOrders, true),  [sellOrders]);
+  // BUY: upper zone, fill closes at y=0 (top edge)
+  // SELL: lower zone, fill closes at y=H_TOTAL (bottom edge)
+  const buy  = useMemo(() => buildSeriesPaths(buyOrders,  BUY_Y_MIN,  BUY_Y_MAX,  0),       [buyOrders]);
+  const sell = useMemo(() => buildSeriesPaths(sellOrders, SELL_Y_MIN, SELL_Y_MAX, H_TOTAL), [sellOrders]);
 
   const stats = useMemo(() => {
     const volume = completedOrders.reduce((s, o) => s + o.ngnAmount, 0);
@@ -274,42 +316,25 @@ export default function TradingJourney({
       {/* ── Body: split chart + stats ────────────────────────────────────────── */}
       <div className="flex flex-col sm:flex-row">
 
-        {/* Split chart area — BUY on top, SELL on bottom, no empty space */}
+        {/* Unified chart area — BUY (upper zone) + SELL (lower zone) in one SVG */}
         <div className="flex-1 px-3 sm:px-6 pt-2.5 sm:pt-3 pb-3 sm:pb-5 min-w-0">
           <div
-            className="relative rounded-xl bg-[#0A0A0A] border border-white/[0.04] overflow-hidden flex flex-col"
-            style={{ height: '136px' }}   /* 67px BUY + 1px divider + 68px SELL */
+            className="relative rounded-xl bg-[#0A0A0A] border border-white/[0.04] overflow-hidden"
+            style={{ height: '136px' }}
           >
-            {/* ── BUY panel (green, top half) ─────────────────────────────── */}
-            <ChartPanel
-              strokeColor="#10B981"
-              fillColor="#10B981"
-              fillOpacity={0.30}
-              gradientId={buyGradId}
-              line={buy.line}
-              fill={buy.fill}
-              lastPt={buy.lastPt}
-              fillToTop={false}
-              label="BUY"
-              isEmpty={buyOrders.length === 0}
-              rateLabel={`₦${effectiveSellRate.toLocaleString()}`}
-            />
-
-            {/* ── Center divider ──────────────────────────────────────────── */}
-            <div className="shrink-0 h-px bg-white/[0.08]" />
-
-            {/* ── SELL panel (red, bottom half) ───────────────────────────── */}
-            <ChartPanel
-              strokeColor="#F43F5E"
-              fillColor="#F43F5E"
-              fillOpacity={0.28}
-              gradientId={sellGradId}
-              line={sell.line}
-              fill={sell.fill}
-              lastPt={sell.lastPt}
-              fillToTop={true}
-              label="SELL"
-              isEmpty={sellOrders.length === 0}
+            <UnifiedChart
+              buyLine={buy.line}
+              buyFill={buy.fill}
+              buyLastPt={buy.lastPt}
+              sellLine={sell.line}
+              sellFill={sell.fill}
+              sellLastPt={sell.lastPt}
+              buyGradId={buyGradId}
+              sellGradId={sellGradId}
+              buyEmpty={buyOrders.length === 0}
+              sellEmpty={sellOrders.length === 0}
+              effectiveBuyRate={effectiveBuyRate}
+              effectiveSellRate={effectiveSellRate}
             />
           </div>
         </div>

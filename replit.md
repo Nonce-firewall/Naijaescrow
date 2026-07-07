@@ -49,5 +49,16 @@ Function source: `netlify/functions/delete-account.mts`.
 - `src/lib/dbHelpers.ts` — DB query helpers and row mappers
 - `src/types.ts` — shared TypeScript types
 
+## Replit setup (already done)
+The following one-time steps have been completed to run this project on Replit:
+
+1. **Secrets configured** — `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` are set in Replit Secrets (Tools → Secrets). Vite exposes these to the frontend via `import.meta.env.VITE_*`.
+2. **Workflow** — the `Start application` workflow runs `npm install && npm run dev`, which starts the Vite dev server on port 5000 (`--port=5000 --host=0.0.0.0`). The app is accessible in the Replit preview pane.
+3. **Database** — the Supabase project used is the owner's existing instance; no new schema migration was required for the initial setup.
+
+To hand this project to someone else on Replit, they need to supply their own `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` secrets and run the schema SQL files listed above.
+
+See `.env.example` for a full list of environment variables.
+
 ## Instructions
 For the first time code import, don't modify any parts of the code, ask for the user's approval

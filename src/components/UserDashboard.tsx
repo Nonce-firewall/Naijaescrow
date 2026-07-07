@@ -845,6 +845,7 @@ export default function UserDashboard({
       {/* Trading Journey visualization */}
       <TradingJourney
         orders={orders}
+        effectiveBuyRate={effectiveBuyRate}
         effectiveSellRate={effectiveSellRate}
         userProfile={userProfile}
       />
