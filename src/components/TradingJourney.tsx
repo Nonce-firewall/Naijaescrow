@@ -1,4 +1,4 @@
-import React, { useId, useMemo } from 'react';
+import React, { memo, useId, useMemo } from 'react';
 import { motion } from 'motion/react';
 import { Order, UserProfile } from '../types'; // UserProfile reserved for future milestones
 
@@ -14,11 +14,11 @@ const W       = 280;  // logical viewBox width  (scales to 100% via width="100%"
 const H_TOTAL = 120;  // logical viewBox height for the unified chart
 const PAD     = 6;    // inner padding so strokes don't clip at edges
 
-// BUY series occupies the upper 45%, SELL the lower 45%, leaving a natural gap
+// BUY series: upper 45% of chart; SELL: lower 45%, reaching the very bottom edge
 const BUY_Y_MIN  = PAD;
 const BUY_Y_MAX  = H_TOTAL * 0.45;
 const SELL_Y_MIN = H_TOTAL * 0.55;
-const SELL_Y_MAX = H_TOTAL - PAD;
+const SELL_Y_MAX = H_TOTAL;          // no bottom PAD — SELL line can reach the bottom edge
 
 interface SeriesResult {
   line: string;
@@ -52,13 +52,16 @@ function buildSeriesPaths(
 
   const xRange = W - PAD * 2;
   const yRange = yMax - yMin;
+  const midY   = (yMin + yMax) / 2;
 
-  // Higher rate → closer to yMin (top of zone)
+  // Higher rate → closer to yMin (top of zone).
+  // When all orders share the same rate (rateRange=0), centre the line in the zone
+  // so it renders at the visual midpoint rather than collapsing to the zone edge.
   const toCoord = (o: Order) => ({
     x: timeRange === 0
       ? W / 2
       : PAD + ((o.createdAt - timeMin) / timeRange) * xRange,
-    y: yMax - ((o.rate - rateMin) / (rateRange || 1)) * yRange,
+    y: rateRange === 0 ? midY : yMax - ((o.rate - rateMin) / rateRange) * yRange,
   });
 
   const coords = sorted.map(toCoord);
@@ -67,12 +70,13 @@ function buildSeriesPaths(
   let firstPt: { x: number; y: number };
   let lastPt:  { x: number; y: number };
 
-  if (coords.length === 1) {
-    // Single trade → flat horizontal line at mid-zone
-    const midY = (yMin + yMax) / 2;
-    line    = `M ${PAD} ${midY.toFixed(1)} L ${(W - PAD).toFixed(1)} ${midY.toFixed(1)}`;
-    firstPt = { x: PAD,     y: midY };
-    lastPt  = { x: W - PAD, y: midY };
+  if (coords.length === 1 || timeRange === 0) {
+    // Single trade, or all trades at the same timestamp → flat horizontal line
+    // Uses midY (already set in toCoord when rateRange=0, or the single rate's y)
+    const flatY = coords[0].y;
+    line    = `M ${PAD} ${flatY.toFixed(1)} L ${(W - PAD).toFixed(1)} ${flatY.toFixed(1)}`;
+    firstPt = { x: PAD,     y: flatY };
+    lastPt  = { x: W - PAD, y: flatY };
   } else {
     line = `M ${coords[0].x.toFixed(1)} ${coords[0].y.toFixed(1)}`;
     for (let i = 1; i < coords.length; i++) {
@@ -119,7 +123,7 @@ interface UnifiedChartProps {
   effectiveSellRate: number;
 }
 
-function UnifiedChart({
+const UnifiedChart = memo(function UnifiedChart({
   buyLine, buyFill, buyLastPt,
   sellLine, sellFill, sellLastPt,
   buyGradId, sellGradId,
@@ -139,15 +143,15 @@ function UnifiedChart({
         aria-hidden="true"
       >
         <defs>
-          {/* BUY gradient: flows from line upward to top edge */}
+          {/* BUY fill: transparent at top edge, opaque near the line */}
           <linearGradient id={buyGradId} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%"   stopColor="#10B981" stopOpacity={0} />
-            <stop offset="100%" stopColor="#10B981" stopOpacity={0.32} />
+            <stop offset="0%"   stopColor="#10B981" stopOpacity={0.04} />
+            <stop offset="100%" stopColor="#10B981" stopOpacity={0.35} />
           </linearGradient>
-          {/* SELL gradient: flows from line downward to bottom edge */}
+          {/* SELL fill: opaque near the line, retains a faint tint at the bottom edge */}
           <linearGradient id={sellGradId} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%"   stopColor="#F43F5E" stopOpacity={0.32} />
-            <stop offset="100%" stopColor="#F43F5E" stopOpacity={0} />
+            <stop offset="0%"   stopColor="#F43F5E" stopOpacity={0.35} />
+            <stop offset="100%" stopColor="#F43F5E" stopOpacity={0.10} />
           </linearGradient>
         </defs>
 
@@ -176,8 +180,9 @@ function UnifiedChart({
           />
         )}
         {!buyEmpty && buyLastPt && (
+          // Outer glow ring — static (no CSS animation to avoid continuous repaints)
           <>
-            <circle cx={buyLastPt.x} cy={buyLastPt.y} r="4.5" fill="#10B981" fillOpacity="0.18" className="animate-pulse" />
+            <circle cx={buyLastPt.x} cy={buyLastPt.y} r="5" fill="#10B981" fillOpacity="0.15" />
             <circle cx={buyLastPt.x} cy={buyLastPt.y} r="2.2" fill="#10B981" />
           </>
         )}
@@ -197,7 +202,7 @@ function UnifiedChart({
         )}
         {!sellEmpty && sellLastPt && (
           <>
-            <circle cx={sellLastPt.x} cy={sellLastPt.y} r="4.5" fill="#F43F5E" fillOpacity="0.18" className="animate-pulse" />
+            <circle cx={sellLastPt.x} cy={sellLastPt.y} r="5" fill="#F43F5E" fillOpacity="0.15" />
             <circle cx={sellLastPt.x} cy={sellLastPt.y} r="2.2" fill="#F43F5E" />
           </>
         )}
@@ -238,7 +243,7 @@ function UnifiedChart({
       )}
     </div>
   );
-}
+});
 
 // ── Component ─────────────────────────────────────────────────────────────────
 export default function TradingJourney({
@@ -285,6 +290,7 @@ export default function TradingJourney({
   return (
     <motion.div
       className="mb-5 sm:mb-8 rounded-2xl sm:rounded-3xl overflow-hidden border border-white/[0.06] bg-[#111111]"
+      style={{ contain: 'layout style paint' }}
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.38, ease: 'easeOut', delay: 0.08 }}
