@@ -74,6 +74,16 @@ export default function AdminCMS({
   const [kycRejectionReason, setKycRejectionReason] = useState('');
   const [isProcessingKyc, setIsProcessingKyc] = useState(false);
 
+  // Copy to clipboard helper — shows toast on success or failure
+  const copyToClipboard = async (text: string, label: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      addToast(`${label} copied!`, 'success');
+    } catch {
+      addToast('Copy failed — please select and copy manually.', 'error');
+    }
+  };
+
   // Settings form states
   const [bankName, setBankName] = useState(settings.ngnBankName);
   const [accountNumber, setAccountNumber] = useState(settings.ngnAccountNumber);
@@ -2336,7 +2346,7 @@ export default function AdminCMS({
                           <span className="break-all flex-1">{selectedOrder.userWalletAddress}</span>
                           <button
                             type="button"
-                            onClick={() => navigator.clipboard.writeText(selectedOrder!.userWalletAddress!)}
+                            onClick={() => copyToClipboard(selectedOrder!.userWalletAddress!, 'Wallet address')}
                             className="p-0.5 rounded text-emerald-600 hover:text-emerald-800 transition cursor-pointer shrink-0 mt-0.5"
                             title="Copy wallet address"
                           >
@@ -2459,7 +2469,7 @@ export default function AdminCMS({
                           <span className="flex-1">{selectedOrder.userWalletAddress}</span>
                           <button
                             type="button"
-                            onClick={() => navigator.clipboard.writeText(selectedOrder!.userWalletAddress!)}
+                            onClick={() => copyToClipboard(selectedOrder!.userWalletAddress!, 'Wallet address')}
                             className="p-0.5 rounded text-emerald-600 hover:text-emerald-800 transition cursor-pointer shrink-0"
                             title="Copy wallet address"
                           >
