@@ -38,4 +38,13 @@
     Referrer-Policy = "strict-origin-when-cross-origin"
     # Disable browser features that are not needed by this app
     Permissions-Policy = "camera=(), microphone=(), geolocation=(), payment=(), usb=(), bluetooth=()"
+    # Content Security Policy — prevents XSS by restricting sources of scripts, styles, etc.
+    # - script-src: allow inline scripts (vite builds), but require scripts from our origin and trusted CDNs
+    # - style-src: allow inline styles (Tailwind JIT), styles from our origin
+    # - img-src: allow images from anywhere (user uploads on external hosts, Supabase storage)
+    # - connect-src: allow fetch/XHR to Supabase API and CoinGecko for live rates
+    # - font-src: allow fonts from our origin
+    # - default-src: fallback to 'self' for unlisted directives
+    # - object-src: block plugins (Flash, Java)
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://klatbnznamwmshqfrzep.supabase.co https://api.coingecko.com wss://klatbnznamwmshqfrzep.supabase.co; font-src 'self'; object-src 'none';"
     
