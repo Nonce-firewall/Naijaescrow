@@ -357,19 +357,19 @@ export default function TradingJourney({
         {/* Stats ── 3-col on mobile, 1-col on desktop */}
         <div className="grid grid-cols-3 sm:grid-cols-1 sm:w-40">
           <div className="px-3 sm:px-5 py-2.5 sm:py-3.5 border-r sm:border-r-0 sm:border-b border-white/[0.05]">
-            <div className="text-[8px] sm:text-[9px] text-gray-600 uppercase tracking-wider mb-0.5 sm:mb-1">Done</div>
+            <div className="text-[8px] sm:text-[9px] text-gray-600 uppercase tracking-wider mb-0.5 sm:mb-1">Completed</div>
             <div className="text-base sm:text-xl font-bold text-white tabular-nums leading-none">{stats.completed}</div>
             <div className="text-[8px] text-gray-700 font-mono mt-0.5 sm:mt-1">{stats.rate}% success</div>
           </div>
 
           <div className="px-3 sm:px-5 py-2.5 sm:py-3.5 border-r sm:border-r-0 sm:border-b border-white/[0.05]">
-            <div className="text-[8px] sm:text-[9px] text-gray-600 uppercase tracking-wider mb-0.5 sm:mb-1">Volume</div>
+            <div className="text-[8px] sm:text-[9px] text-gray-600 uppercase tracking-wider mb-0.5 sm:mb-1">Total Volume</div>
             <div className="text-base sm:text-xl font-bold text-white tabular-nums leading-none">{formatVolume(stats.volume)}</div>
             <div className="text-[8px] text-gray-700 font-mono mt-0.5 sm:mt-1">NGN</div>
           </div>
 
           <div className="px-3 sm:px-5 py-2.5 sm:py-3.5">
-            <div className="text-[8px] sm:text-[9px] text-gray-600 uppercase tracking-wider mb-0.5 sm:mb-1">Split</div>
+            <div className="text-[8px] sm:text-[9px] text-gray-600 uppercase tracking-wider mb-0.5 sm:mb-1">Order Type</div>
             <div className="text-base sm:text-xl font-bold text-white tabular-nums leading-none flex items-baseline gap-1">
               <span className="text-emerald-400">{stats.buyCount}</span>
               <span className="text-gray-700 text-xs">/</span>
