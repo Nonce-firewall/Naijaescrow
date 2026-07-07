@@ -314,13 +314,13 @@ export default function TradingJourney({
         </div>
         {/* Buy / Sell mini legend */}
         <div className="flex items-center gap-3">
-          <span className="flex items-center gap-1 text-[9px] text-emerald-400 font-mono font-bold">
-            <span className="w-4 h-[2px] bg-emerald-500 rounded-full inline-block" />
-            BUY
+          <span className="flex items-center gap-1.5 text-[9px] text-emerald-400 font-mono font-bold">
+            <span className="w-3 h-[2px] bg-emerald-500 rounded-full inline-block shrink-0" />
+            <span>BUY</span>
           </span>
-          <span className="flex items-center gap-1 text-[9px] text-rose-400 font-mono font-bold">
-            <span className="w-4 h-[2px] bg-rose-500 rounded-full inline-block" />
-            SELL
+          <span className="flex items-center gap-1.5 text-[9px] text-rose-400 font-mono font-bold">
+            <span className="w-3 h-[2px] bg-rose-500 rounded-full inline-block shrink-0" />
+            <span>SELL</span>
           </span>
         </div>
       </div>
