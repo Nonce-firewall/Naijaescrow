@@ -533,19 +533,27 @@ export default function UserDashboard({
         addToast('Please provide the blockchain transaction hash for your crypto transfer.', 'error');
         return;
       }
-      // Validate TX hash format per network
+      // Validate TX hash format per network family
       const effectiveNetwork = (activeCoin?.network ?? network).toLowerCase();
       const isTron = effectiveNetwork.includes('tron');
-      const evmTxOk  = /^0x[0-9a-fA-F]{64}$/.test(sellTxHash.trim());
-      const tronTxOk = /^[0-9a-fA-F]{64}$/.test(sellTxHash.trim());
-      if (isTron ? !tronTxOk : !evmTxOk) {
-        addToast(
-          isTron
-            ? 'Invalid Tron TxID — must be exactly 64 hex characters (no 0x prefix).'
-            : 'Invalid TX hash — BSC/Polygon hashes start with 0x followed by 64 hex characters.',
-          'error'
-        );
-        return;
+      const isEvm = ['bsc', 'bep20', 'polygon', 'ethereum', 'eth', 'arbitrum', 'optimism', 'avalanche', 'evm'].some(k => effectiveNetwork.includes(k));
+      const tx = sellTxHash.trim();
+      if (isTron) {
+        if (!/^[0-9a-fA-F]{64}$/.test(tx)) {
+          addToast('Invalid Tron TxID — must be exactly 64 hex characters (no 0x prefix).', 'error');
+          return;
+        }
+      } else if (isEvm) {
+        if (!/^0x[0-9a-fA-F]{64}$/.test(tx)) {
+          addToast('Invalid TX hash — EVM hashes start with 0x followed by 64 hex characters.', 'error');
+          return;
+        }
+      } else {
+        // Custom / non-EVM, non-Tron blockchain: accept any plausible tx hash
+        if (tx.length < 10 || !/^[A-Za-z0-9]+$/.test(tx)) {
+          addToast('Invalid transaction hash — enter the valid TxID from your wallet for this blockchain network.', 'error');
+          return;
+        }
       }
     }
 
