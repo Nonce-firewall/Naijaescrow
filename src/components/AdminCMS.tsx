@@ -2805,32 +2805,21 @@ export default function AdminCMS({
               {/* Body — scrollable */}
               <div className="overflow-y-auto flex-1 min-h-0 p-5 space-y-4 text-xs">
 
-                {/* Initial dispute message + evidence */}
-                <div className="bg-slate-50 border border-slate-100 rounded-xl p-3 space-y-2">
-                  <span className="text-slate-400 font-mono block text-[9px] uppercase">Initial Dispute · {formatNGT(selectedDispute.createdAt)}</span>
-                  <p className="text-slate-800 leading-relaxed">{selectedDispute.message}</p>
-                  {selectedDispute.imageUrls && selectedDispute.imageUrls.length > 0 && (
-                    <div className="flex gap-2 flex-wrap pt-1">
-                      {selectedDispute.imageUrls.map((url, idx) => (
-                        <button key={idx} type="button" onClick={() => setLightboxUrl(url)}>
-                          <img src={url} alt={`Proof ${idx + 1}`} className="h-16 w-20 object-cover rounded-lg border border-slate-200 hover:opacity-80 transition cursor-pointer" />
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* Live chat thread */}
-                <div>
-                  <span className="text-slate-400 font-mono block text-[9px] uppercase mb-2">Chat Thread</span>
-                  <DisputeChat
-                    disputeId={selectedDispute.id}
-                    currentUserId={userProfile.uid}
-                    currentUserEmail={userProfile.email}
-                    currentUserRole="admin"
-                    isOpen={selectedDispute.status === 'open'}
-                  />
-                </div>
+                {/* Unified chat thread (initial message + evidence + live chat + resolution) */}
+                <DisputeChat
+                  disputeId={selectedDispute.id}
+                  currentUserId={userProfile.uid}
+                  currentUserEmail={userProfile.email}
+                  currentUserRole="admin"
+                  isOpen={selectedDispute.status === 'open'}
+                  initialMessage={selectedDispute.message}
+                  initialMessageAt={selectedDispute.createdAt}
+                  initialMessageEmail={selectedDispute.userEmail}
+                  evidenceUrls={selectedDispute.imageUrls}
+                  adminResponse={selectedDispute.adminResponse}
+                  resolvedAt={selectedDispute.resolvedAt}
+                  onEvidenceClick={(url) => setLightboxUrl(url)}
+                />
 
                 {/* Resolve section — only when open */}
                 {selectedDispute.status === 'open' && (

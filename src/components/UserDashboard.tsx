@@ -2116,53 +2116,21 @@ export default function UserDashboard({
 
                         {/* Expanded body */}
                         {isExpanded && (
-                          <div className={`px-4 pb-4 pt-3 space-y-3 border-t ${isOpen ? 'border-amber-200/60 bg-amber-50/20' : 'border-[#E0E7E0] bg-white'}`}>
-                            {/* Initial message */}
-                            <div className="bg-white rounded-xl px-3.5 py-3 text-xs text-gray-700 leading-relaxed border border-[#E0E7E0]">
-                              <span className="text-[9px] font-bold uppercase tracking-wider text-gray-400 block mb-1.5">Your Initial Message</span>
-                              {d.message}
-                            </div>
-
-                            {/* Dispute images */}
-                            {d.imageUrls && d.imageUrls.length > 0 && (
-                              <div>
-                                <span className="text-[9px] font-bold uppercase tracking-wider text-gray-400 block mb-1.5">Attached Evidence</span>
-                                <div className="flex gap-2 flex-wrap">
-                                  {d.imageUrls.map((url, idx) => (
-                                    <button key={idx} type="button" onClick={() => setLightboxUrl(url)}>
-                                      <img
-                                        src={url}
-                                        alt={`Evidence ${idx + 1}`}
-                                        className="w-20 h-20 object-cover rounded-xl border border-[#E0E7E0] hover:opacity-80 transition cursor-pointer"
-                                      />
-                                    </button>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-
-                            {/* Admin resolution note */}
-                            {d.adminResponse && (
-                              <div className="bg-emerald-50 rounded-xl px-3.5 py-3 text-xs text-emerald-900 leading-relaxed border border-emerald-200">
-                                <span className="text-[9px] font-bold uppercase tracking-wider text-emerald-600 block mb-1.5 flex items-center gap-1">
-                                  <span>Admin Resolution</span>
-                                  {d.resolvedAt && <span className="font-mono text-emerald-500 font-normal">· {formatNGT(d.resolvedAt)}</span>}
-                                </span>
-                                {d.adminResponse}
-                              </div>
-                            )}
-
-                            {/* Live chat thread */}
-                            <div>
-                              <span className="text-[9px] font-bold uppercase tracking-wider text-gray-400 block mb-2">Chat Thread</span>
-                              <DisputeChat
-                                disputeId={d.id}
-                                currentUserId={userProfile.uid}
-                                currentUserEmail={userProfile.email}
-                                currentUserRole="user"
-                                isOpen={isOpen}
-                              />
-                            </div>
+                          <div className={`px-4 pb-4 pt-3 border-t ${isOpen ? 'border-amber-200/60 bg-amber-50/20' : 'border-[#E0E7E0] bg-white'}`}>
+                            <DisputeChat
+                              disputeId={d.id}
+                              currentUserId={userProfile.uid}
+                              currentUserEmail={userProfile.email}
+                              currentUserRole="user"
+                              isOpen={isOpen}
+                              initialMessage={d.message}
+                              initialMessageAt={d.createdAt}
+                              initialMessageEmail={userProfile.email}
+                              evidenceUrls={d.imageUrls}
+                              adminResponse={d.adminResponse}
+                              resolvedAt={d.resolvedAt}
+                              onEvidenceClick={(url) => setLightboxUrl(url)}
+                            />
                           </div>
                         )}
                       </div>
@@ -2522,41 +2490,21 @@ export default function UserDashboard({
                                       transition={{ duration: 0.2, ease: 'easeInOut' }}
                                       className="overflow-hidden"
                                     >
-                                      <div className="px-3 pb-3 space-y-2.5 border-t border-[#E0E7E0]">
-                                        {/* Initial message + evidence */}
-                                        <p className="text-gray-700 leading-relaxed pt-2">{d.message}</p>
-                                        {d.imageUrls && d.imageUrls.length > 0 && (
-                                          <div className="flex gap-2 flex-wrap">
-                                            {d.imageUrls.map((url, idx) => (
-                                              <button key={idx} type="button" onClick={() => setLightboxUrl(url)} className="cursor-pointer">
-                                                <img src={url} alt={`proof ${idx + 1}`} className="h-16 w-20 object-cover rounded-lg border border-[#E0E7E0] hover:opacity-80 transition" />
-                                              </button>
-                                            ))}
-                                          </div>
-                                        )}
-                                        {/* Live chat thread */}
-                                        <div className="border-t border-[#E0E7E0] pt-2.5">
-                                          <span className="text-[9px] font-bold text-gray-500 uppercase tracking-wider block mb-2">Chat Thread</span>
-                                          <DisputeChat
-                                            disputeId={d.id}
-                                            currentUserId={userProfile.uid}
-                                            currentUserEmail={userProfile.email}
-                                            currentUserRole="user"
-                                            isOpen={d.status === 'open'}
-                                          />
-                                        </div>
-                                        {/* Resolution note */}
-                                        {d.adminResponse && (
-                                          <div className="bg-emerald-50 border border-emerald-200 p-2.5 rounded-lg">
-                                            <span className="text-[9px] font-bold text-emerald-700 uppercase tracking-wider block mb-1">✅ Resolution Note</span>
-                                            <p className="text-emerald-900 leading-relaxed text-[11px]">{d.adminResponse}</p>
-                                            {d.resolvedAt && (
-                                              <span className="text-[9px] text-emerald-500 font-mono block mt-1">
-                                                Resolved {formatNGT(d.resolvedAt)}
-                                              </span>
-                                            )}
-                                          </div>
-                                        )}
+                                      <div className="px-3 pb-3 pt-2 border-t border-[#E0E7E0]">
+                                        <DisputeChat
+                                          disputeId={d.id}
+                                          currentUserId={userProfile.uid}
+                                          currentUserEmail={userProfile.email}
+                                          currentUserRole="user"
+                                          isOpen={d.status === 'open'}
+                                          initialMessage={d.message}
+                                          initialMessageAt={d.createdAt}
+                                          initialMessageEmail={userProfile.email}
+                                          evidenceUrls={d.imageUrls}
+                                          adminResponse={d.adminResponse}
+                                          resolvedAt={d.resolvedAt}
+                                          onEvidenceClick={(url) => setLightboxUrl(url)}
+                                        />
                                       </div>
                                     </motion.div>
                                   )}
