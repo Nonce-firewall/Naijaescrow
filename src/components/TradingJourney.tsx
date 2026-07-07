@@ -274,7 +274,7 @@ export default function TradingJourney({
   // BUY: upper zone, fill closes at y=0 (top edge), S-curve goes up when rates are flat
   // SELL: lower zone, fill closes at y=H_TOTAL (bottom edge), S-curve goes down when flat
   const buy  = useMemo(() => buildSeriesPaths(buyOrders,  BUY_Y_MIN,  BUY_Y_MAX,  0,       'up'),   [buyOrders]);
-  const sell = useMemo(() => buildSeriesPaths(sellOrders, SELL_Y_MIN, SELL_Y_MAX, H_TOTAL, 'down'), [sellOrders]);
+  const sell = useMemo(() => buildSeriesPaths(sellOrders, SELL_Y_MIN, SELL_Y_MAX, H_TOTAL, 'up'), [sellOrders]);
 
   const stats = useMemo(() => {
     const volume = completedOrders.reduce((s, o) => s + o.ngnAmount, 0);
