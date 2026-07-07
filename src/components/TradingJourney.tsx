@@ -130,8 +130,8 @@ const UnifiedChart = memo(function UnifiedChart({
   buyEmpty, sellEmpty,
   effectiveBuyRate, effectiveSellRate,
 }: UnifiedChartProps) {
-  // BUY gradient: strong at top (y1=0), fades downward (y2=1)
-  // SELL gradient: strong at bottom (y1=1), fades upward (y2=0)
+  // BUY gradient: faint at top edge (y=0), grows opaque toward the line (y=1 direction)
+  // SELL gradient: opaque near the line (y=0 direction), faint toward bottom edge (y=1)
   return (
     <div className="relative w-full h-full">
       <svg
@@ -323,10 +323,9 @@ export default function TradingJourney({
       <div className="flex flex-col sm:flex-row">
 
         {/* Unified chart area — BUY (upper zone) + SELL (lower zone) in one SVG */}
-        <div className="flex-1 px-3 sm:px-6 pt-2.5 sm:pt-3 pb-3 sm:pb-5 min-w-0">
+        <div className="flex-1 flex flex-col px-3 sm:px-6 pt-2.5 sm:pt-3 pb-3 sm:pb-5 min-w-0">
           <div
-            className="relative rounded-xl bg-[#0A0A0A] border border-white/[0.04] overflow-hidden"
-            style={{ height: '136px' }}
+            className="relative flex-1 min-h-[120px] rounded-xl bg-[#0A0A0A] border border-white/[0.04] overflow-hidden"
           >
             <UnifiedChart
               buyLine={buy.line}
