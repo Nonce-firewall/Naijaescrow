@@ -28,3 +28,13 @@
   animation: pulse-dot 1.8s ease-in-out infinite;
 }
 
+/* Forex signal scroll — GPU-composited transform only, safe on low-end devices */
+@keyframes forex-scroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.forex-signal {
+  animation: forex-scroll 16s linear infinite;
+  will-change: transform;
+}
+
