@@ -331,8 +331,7 @@ export default function TradingJourney({
         {/* Unified chart area — BUY (upper zone) + SELL (lower zone) in one SVG */}
         <div className="flex-1 flex flex-col px-3 sm:px-6 pt-2.5 sm:pt-3 pb-3 sm:pb-5 min-w-0">
           <div
-            className="relative rounded-xl bg-[#0A0A0A] border border-white/[0.04] overflow-hidden"
-            style={{ height: 'clamp(130px, 22vw, 160px)' }}
+            className="relative h-[130px] sm:h-auto sm:flex-1 sm:min-h-[120px] rounded-xl bg-[#0A0A0A] border border-white/[0.04] overflow-hidden"
           >
             <UnifiedChart
               buyLine={buy.line}
