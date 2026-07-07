@@ -2812,9 +2812,14 @@ export default function AdminCMS({
                   currentUserEmail={userProfile.email}
                   currentUserRole="admin"
                   isOpen={selectedDispute.status === 'open'}
+                  currentUserDisplayName={userProfile.kycData?.fullName?.trim().split(/\s+/).slice(0, 2).join(' ') || 'Admin'}
                   initialMessage={selectedDispute.message}
                   initialMessageAt={selectedDispute.createdAt}
                   initialMessageEmail={selectedDispute.userEmail}
+                  initialMessageDisplayName={(() => {
+                    const filer = kycUsers.find(u => u.email === selectedDispute.userEmail);
+                    return filer?.kycData?.fullName?.trim().split(/\s+/).slice(0, 2).join(' ') || undefined;
+                  })()}
                   evidenceUrls={selectedDispute.imageUrls}
                   adminResponse={selectedDispute.adminResponse}
                   resolvedAt={selectedDispute.resolvedAt}

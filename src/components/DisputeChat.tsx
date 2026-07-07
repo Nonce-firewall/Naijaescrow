@@ -35,6 +35,8 @@ interface DisputeChatProps {
   initialMessageAt?: number;
   /** Email of the person who filed the dispute */
   initialMessageEmail?: string;
+  /** Legal / display name of the person who filed the dispute (overrides email prefix) */
+  initialMessageDisplayName?: string;
   /** Evidence image URLs attached to the dispute */
   evidenceUrls?: string[];
   /** Admin's final resolution note (shown as system event at thread end) */
@@ -42,6 +44,8 @@ interface DisputeChatProps {
   resolvedAt?: number;
   /** Called when user clicks an evidence thumbnail */
   onEvidenceClick?: (url: string) => void;
+  /** Legal / display name for the current user's own message labels */
+  currentUserDisplayName?: string;
 }
 
 export default function DisputeChat({
@@ -55,10 +59,12 @@ export default function DisputeChat({
   initialMessage,
   initialMessageAt,
   initialMessageEmail,
+  initialMessageDisplayName,
   evidenceUrls,
   adminResponse,
   resolvedAt,
   onEvidenceClick,
+  currentUserDisplayName,
 }: DisputeChatProps) {
   const [messages, setMessages] = useState<DisputeMessage[]>([]);
   const [loading, setLoading] = useState(true);
@@ -190,7 +196,11 @@ export default function DisputeChat({
   }) {
     const isMine = msg.senderId === currentUserId;
     const isAdminMsg = msg.senderRole === 'admin';
-    const displayName = isAdminMsg ? 'Admin' : (msg.senderEmail || '').split('@')[0];
+    const displayName = isAdminMsg
+      ? 'Admin'
+      : isMine
+        ? (currentUserDisplayName || (msg.senderEmail || '').split('@')[0])
+        : (msg.senderEmail || '').split('@')[0];
 
     return (
       <div className={`flex items-end gap-2 ${isMine ? 'flex-row-reverse' : 'flex-row'}`}>
@@ -272,7 +282,7 @@ export default function DisputeChat({
                   {initialMessage}
                 </div>
                 <span className="text-[10px] text-slate-400 font-mono px-1 text-right">
-                  {(initialMessageEmail || currentUserEmail).split('@')[0]} · {initialMessageAt ? formatNGT(initialMessageAt) : ''}
+                  {initialMessageDisplayName || (initialMessageEmail || currentUserEmail).split('@')[0]} · {initialMessageAt ? formatNGT(initialMessageAt) : ''}
                 </span>
               </div>
             </div>

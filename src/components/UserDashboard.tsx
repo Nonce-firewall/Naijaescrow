@@ -2123,9 +2123,11 @@ export default function UserDashboard({
                               currentUserEmail={userProfile.email}
                               currentUserRole="user"
                               isOpen={isOpen}
+                              currentUserDisplayName={userProfile.kycData?.fullName?.trim().split(/\s+/).slice(0, 2).join(' ') || undefined}
                               initialMessage={d.message}
                               initialMessageAt={d.createdAt}
                               initialMessageEmail={userProfile.email}
+                              initialMessageDisplayName={userProfile.kycData?.fullName?.trim().split(/\s+/).slice(0, 2).join(' ') || undefined}
                               evidenceUrls={d.imageUrls}
                               adminResponse={d.adminResponse}
                               resolvedAt={d.resolvedAt}
@@ -2497,9 +2499,11 @@ export default function UserDashboard({
                                           currentUserEmail={userProfile.email}
                                           currentUserRole="user"
                                           isOpen={d.status === 'open'}
+                                          currentUserDisplayName={userProfile.kycData?.fullName?.trim().split(/\s+/).slice(0, 2).join(' ') || undefined}
                                           initialMessage={d.message}
                                           initialMessageAt={d.createdAt}
                                           initialMessageEmail={userProfile.email}
+                                          initialMessageDisplayName={userProfile.kycData?.fullName?.trim().split(/\s+/).slice(0, 2).join(' ') || undefined}
                                           evidenceUrls={d.imageUrls}
                                           adminResponse={d.adminResponse}
                                           resolvedAt={d.resolvedAt}
