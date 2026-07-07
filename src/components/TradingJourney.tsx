@@ -14,11 +14,12 @@ const W       = 280;  // logical viewBox width  (scales to 100% via width="100%"
 const H_TOTAL = 120;  // logical viewBox height for the unified chart
 const PAD     = 6;    // inner padding so strokes don't clip at edges
 
-// BUY series: upper 45% of chart; SELL: lower 45%, reaching the very bottom edge
+// BUY series: upper 50% of chart; SELL: lower 50%, reaching the very bottom edge
+// BUY_Y_MAX pushed to 50% so the green zone gets symmetric height to SELL
 const BUY_Y_MIN  = PAD;
-const BUY_Y_MAX  = H_TOTAL * 0.45;
+const BUY_Y_MAX  = H_TOTAL * 0.50;
 const SELL_Y_MIN = H_TOTAL * 0.55;
-const SELL_Y_MAX = H_TOTAL;          // no bottom PAD — SELL line can reach the bottom edge
+const SELL_Y_MAX = H_TOTAL;
 
 interface SeriesResult {
   line: string;
@@ -35,6 +36,7 @@ function buildSeriesPaths(
   yMin: number,
   yMax: number,
   fillClosesAt: number,
+  flatDirection: 'up' | 'down',   // direction of the S-curve when all rates are identical
 ): SeriesResult {
   if (seriesOrders.length === 0) return { line: '', fill: '', firstPt: null, lastPt: null };
 
@@ -52,32 +54,34 @@ function buildSeriesPaths(
 
   const xRange = W - PAD * 2;
   const yRange = yMax - yMin;
-  const midY   = (yMin + yMax) / 2;
 
   // Higher rate → closer to yMin (top of zone).
-  // When all orders share the same rate (rateRange=0), centre the line in the zone
-  // so it renders at the visual midpoint rather than collapsing to the zone edge.
   const toCoord = (o: Order) => ({
     x: timeRange === 0
       ? W / 2
       : PAD + ((o.createdAt - timeMin) / timeRange) * xRange,
-    y: rateRange === 0 ? midY : yMax - ((o.rate - rateMin) / rateRange) * yRange,
+    y: yMax - ((o.rate - rateMin) / rateRange) * yRange,
   });
-
-  const coords = sorted.map(toCoord);
 
   let line: string;
   let firstPt: { x: number; y: number };
   let lastPt:  { x: number; y: number };
 
-  if (coords.length === 1 || timeRange === 0) {
-    // Single trade, or all trades at the same timestamp → flat horizontal line
-    // Uses midY (already set in toCoord when rateRange=0, or the single rate's y)
-    const flatY = coords[0].y;
-    line    = `M ${PAD} ${flatY.toFixed(1)} L ${(W - PAD).toFixed(1)} ${flatY.toFixed(1)}`;
-    firstPt = { x: PAD,     y: flatY };
-    lastPt  = { x: W - PAD, y: flatY };
+  if (rateRange === 0 || timeRange === 0 || sorted.length === 1) {
+    // All orders at the same rate (or only one order / all same timestamp).
+    // Instead of a flat horizontal line, generate a smooth S-curve in the
+    // direction that reflects this series' typical market direction:
+    //   BUY  flatDirection='up'   → curves from bottom of zone → top
+    //   SELL flatDirection='down' → curves from top of zone    → bottom
+    const yStart = flatDirection === 'up'   ? yMax : yMin;
+    const yEnd   = flatDirection === 'up'   ? yMin : yMax;
+    const cp1x   = (PAD + xRange * 0.38).toFixed(1);
+    const cp2x   = (PAD + xRange * 0.62).toFixed(1);
+    line    = `M ${PAD} ${yStart.toFixed(1)} C ${cp1x} ${yStart.toFixed(1)}, ${cp2x} ${yEnd.toFixed(1)}, ${(W - PAD).toFixed(1)} ${yEnd.toFixed(1)}`;
+    firstPt = { x: PAD,     y: yStart };
+    lastPt  = { x: W - PAD, y: yEnd   };
   } else {
+    const coords = sorted.map(toCoord);
     line = `M ${coords[0].x.toFixed(1)} ${coords[0].y.toFixed(1)}`;
     for (let i = 1; i < coords.length; i++) {
       const p = coords[i - 1], c = coords[i];
@@ -265,10 +269,10 @@ export default function TradingJourney({
   const buyOrders  = useMemo(() => completedOrders.filter(o => o.type === 'buy'),  [completedOrders]);
   const sellOrders = useMemo(() => completedOrders.filter(o => o.type === 'sell'), [completedOrders]);
 
-  // BUY: upper zone, fill closes at y=0 (top edge)
-  // SELL: lower zone, fill closes at y=H_TOTAL (bottom edge)
-  const buy  = useMemo(() => buildSeriesPaths(buyOrders,  BUY_Y_MIN,  BUY_Y_MAX,  0),       [buyOrders]);
-  const sell = useMemo(() => buildSeriesPaths(sellOrders, SELL_Y_MIN, SELL_Y_MAX, H_TOTAL), [sellOrders]);
+  // BUY: upper zone, fill closes at y=0 (top edge), S-curve goes up when rates are flat
+  // SELL: lower zone, fill closes at y=H_TOTAL (bottom edge), S-curve goes down when flat
+  const buy  = useMemo(() => buildSeriesPaths(buyOrders,  BUY_Y_MIN,  BUY_Y_MAX,  0,       'up'),   [buyOrders]);
+  const sell = useMemo(() => buildSeriesPaths(sellOrders, SELL_Y_MIN, SELL_Y_MAX, H_TOTAL, 'down'), [sellOrders]);
 
   const stats = useMemo(() => {
     const volume = completedOrders.reduce((s, o) => s + o.ngnAmount, 0);
