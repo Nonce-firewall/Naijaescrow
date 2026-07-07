@@ -73,8 +73,10 @@ function buildSeriesPaths(
     // direction that reflects this series' typical market direction:
     //   BUY  flatDirection='up'   → curves from bottom of zone → top
     //   SELL flatDirection='down' → curves from top of zone    → bottom
-    const yStart = flatDirection === 'up'   ? yMax : yMin;
-    const yEnd   = flatDirection === 'up'   ? yMin : yMax;
+    const yStart = flatDirection === 'up'   ? yMax        : yMin;
+    // Pull the endpoint 14 units away from the zone edge so the endpoint dot
+    // doesn't land on top of the corner rate label (top-right for BUY, bottom-right for SELL)
+    const yEnd   = flatDirection === 'up'   ? yMin + 14   : yMax - 14;
     const cp1x   = (PAD + xRange * 0.38).toFixed(1);
     const cp2x   = (PAD + xRange * 0.62).toFixed(1);
     line    = `M ${PAD} ${yStart.toFixed(1)} C ${cp1x} ${yStart.toFixed(1)}, ${cp2x} ${yEnd.toFixed(1)}, ${(W - PAD).toFixed(1)} ${yEnd.toFixed(1)}`;
