@@ -1729,7 +1729,7 @@ export default function UserDashboard({
                                   ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' 
                                   : 'bg-rose-50 text-rose-700 border border-rose-100'
                               }`}>
-                                {isBuy ? `Buy ${ord.token}/USDT` : `Sell ${ord.token}/USDT`}
+                                {isBuy ? ord.token === "USDT" ? `Buy USDT` : `Buy ${ord.token}/USDT` : ord.token === "USDT" ? `Sell USDT` : `Sell ${ord.token}/USDT`}
                               </span>
                             </td>
                             <td className="py-4 px-6 font-semibold text-slate-700">
@@ -2384,7 +2384,7 @@ export default function UserDashboard({
                 <div className="border-t border-dashed border-[#E0E7E0] pt-4 space-y-2 text-xs">
                   <div className="flex justify-between">
                     <span className="text-gray-400 font-mono">ORDER TYPE:</span>
-                    <span className="font-bold text-[#1A1A1A] uppercase">{viewReceipt.type === 'buy' ? `Buy ${viewReceipt.token}/USDT` : `Sell ${viewReceipt.token}/USDT`}</span>
+                    <span className="font-bold text-[#1A1A1A] uppercase">{viewReceipt.type === 'buy' ? viewReceipt.token === "USDT" ? `Buy USDT` : `Buy ${viewReceipt.token}/USDT` : viewReceipt.token === "USDT" ? `Sell USDT` : `Sell ${viewReceipt.token}/USDT`}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-400 font-mono">ACCOUNT CORRESPONDENT:</span>
