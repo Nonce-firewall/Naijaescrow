@@ -1095,7 +1095,7 @@ export default function UserDashboard({
               ) : (
                 <form onSubmit={handleTradeSubmit} className="space-y-6">
                   <div>
-                    <h3 className="text-lg font-bold text-[#1A1A1A] tracking-tight">Create NGN/USDT Escrow Contract</h3>
+                    <h3 className="text-lg font-bold text-[#1A1A1A] tracking-tight">Create Escrow Contract</h3>
                     <p className="text-xs text-gray-500">Set up a secure transfer that locks assets until verified.</p>
                   </div>
 
