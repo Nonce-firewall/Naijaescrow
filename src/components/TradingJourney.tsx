@@ -154,10 +154,11 @@ const UnifiedChart = memo(function UnifiedChart({
             <stop offset="0%"   stopColor="#10B981" stopOpacity={0.04} />
             <stop offset="100%" stopColor="#10B981" stopOpacity={0.35} />
           </linearGradient>
-          {/* SELL fill: opaque near the line, retains a faint tint at the bottom edge */}
+          {/* SELL fill: peaks at the line (≈55% = SELL_Y_MIN/H_TOTAL), fades toward bottom edge */}
           <linearGradient id={sellGradId} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%"   stopColor="#F43F5E" stopOpacity={0.35} />
-            <stop offset="100%" stopColor="#F43F5E" stopOpacity={0.10} />
+            <stop offset="0%"   stopColor="#F43F5E" stopOpacity={0.04} />
+            <stop offset="55%"  stopColor="#F43F5E" stopOpacity={0.38} />
+            <stop offset="100%" stopColor="#F43F5E" stopOpacity={0.04} />
           </linearGradient>
         </defs>
 
@@ -283,10 +284,12 @@ export default function TradingJourney({
     [sellOrders, effectiveSellRate],
   );
 
-  // BUY: upper zone, fill closes at y=0 (top edge), S-curve goes up when rates are flat
-  // SELL: lower zone, fill closes at y=H_TOTAL (bottom edge), S-curve goes down when flat
-  const buy  = useMemo(() => buildSeriesPaths(buySeriesInput,  BUY_Y_MIN,  BUY_Y_MAX,  0,       'up'), [buySeriesInput]);
-  const sell = useMemo(() => buildSeriesPaths(sellSeriesInput, SELL_Y_MIN, SELL_Y_MAX, H_TOTAL, 'up'), [sellSeriesInput]);
+  // BUY:  upper zone, fill closes at y=0       (top edge),    S-curve ascends  when rates are flat
+  // SELL: lower zone, fill closes at y=H_TOTAL (bottom edge), S-curve descends when rates are flat
+  //       flatDirection:'down' starts the line at SELL_Y_MIN (top of zone, far from fillClosesAt=120)
+  //       giving a large fill on the left that tapers right — mirrors the BUY fill shape.
+  const buy  = useMemo(() => buildSeriesPaths(buySeriesInput,  BUY_Y_MIN,  BUY_Y_MAX,  0,       'up'),   [buySeriesInput]);
+  const sell = useMemo(() => buildSeriesPaths(sellSeriesInput, SELL_Y_MIN, SELL_Y_MAX, H_TOTAL, 'down'), [sellSeriesInput]);
 
   const stats = useMemo(() => {
     const volume = completedOrders.reduce((s, o) => s + o.ngnAmount, 0);
