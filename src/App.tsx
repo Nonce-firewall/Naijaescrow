@@ -340,18 +340,22 @@ export default function App() {
     return () => { supabase.removeChannel(channel); };
   }, []);
 
-  // Realtime: Disputes (admin only)
+  // Realtime: Disputes (admin sees all, user sees own)
   useEffect(() => {
-    if (userProfile?.role !== 'admin') {
+    if (!userProfile) {
       setDisputes([]);
       return;
     }
 
     const DISPUTE_COLS = 'id,order_id,user_id,user_email,message,image_urls,status,admin_response,created_at,resolved_at';
+    const isAdmin = userProfile.role === 'admin';
+
+    // Initial fetch
     supabase.from('disputes').select(DISPUTE_COLS).order('created_at', { ascending: false }).then(({ data }) => {
       if (data) setDisputes(data.map(rowToDispute));
     });
 
+    // Realtime subscription - same query for both (RLS filters what each user sees)
     const channel = supabase
       .channel('disputes-changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'disputes' }, () => {
