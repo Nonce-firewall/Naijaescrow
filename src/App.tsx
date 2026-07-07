@@ -77,6 +77,9 @@ export default function App() {
   const [kycUsers, setKycUsers] = useState<UserProfile[]>([]);
   const [coins, setCoins] = useState<CoinListing[]>([]);
   const [disputes, setDisputes] = useState<Dispute[]>([]);
+  const [disputesPage, setDisputesPage] = useState(0);
+  const [hasMoreDisputes, setHasMoreDisputes] = useState(true);
+  const DISPUTES_PAGE_SIZE = 20;
   /** Live NGN/USDT market price from CoinGecko — refreshed every 5 minutes */
   const [liveNgnRate, setLiveNgnRate] = useState<number | null>(null);
 
@@ -340,33 +343,53 @@ export default function App() {
     return () => { supabase.removeChannel(channel); };
   }, []);
 
-  // Realtime: Disputes (admin sees all, user sees own)
+  // Realtime: Disputes (admin sees all, user sees own) with pagination
+  const fetchDisputesPage = useCallback(async (page: number, append = false) => {
+    const DISPUTE_COLS = 'id,order_id,user_id,user_email,message,image_urls,status,admin_response,created_at,resolved_at';
+    const offset = page * DISPUTES_PAGE_SIZE;
+
+    const { data, count } = await supabase
+      .from('disputes')
+      .select(DISPUTE_COLS, { count: 'exact' })
+      .order('created_at', { ascending: false })
+      .range(offset, offset + DISPUTES_PAGE_SIZE - 1);
+
+    if (data) {
+      const mapped = data.map(rowToDispute);
+      setDisputes(prev => append ? [...prev, ...mapped] : mapped);
+      setHasMoreDisputes(offset + data.length < (count || 0));
+    }
+  }, []);
+
   useEffect(() => {
     if (!userProfile) {
       setDisputes([]);
+      setDisputesPage(0);
+      setHasMoreDisputes(true);
       return;
     }
 
-    const DISPUTE_COLS = 'id,order_id,user_id,user_email,message,image_urls,status,admin_response,created_at,resolved_at';
-    const isAdmin = userProfile.role === 'admin';
+    // Initial fetch (page 0)
+    setDisputesPage(0);
+    fetchDisputesPage(0, false);
 
-    // Initial fetch
-    supabase.from('disputes').select(DISPUTE_COLS).order('created_at', { ascending: false }).then(({ data }) => {
-      if (data) setDisputes(data.map(rowToDispute));
-    });
-
-    // Realtime subscription - same query for both (RLS filters what each user sees)
+    // Realtime subscription - refetch current page when changes occur
     const channel = supabase
       .channel('disputes-changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'disputes' }, () => {
-        supabase.from('disputes').select(DISPUTE_COLS).order('created_at', { ascending: false }).then(({ data }) => {
-          if (data) setDisputes(data.map(rowToDispute));
-        });
+        fetchDisputesPage(0, false);
+        setDisputesPage(0);
       })
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [userProfile]);
+  }, [userProfile, fetchDisputesPage]);
+
+  const loadMoreDisputes = useCallback(() => {
+    const nextPage = disputesPage + 1;
+    setDisputesPage(nextPage);
+    fetchDisputesPage(nextPage, true);
+  }, [disputesPage, fetchDisputesPage]);
 
   // Realtime: User profile changes (for KYC status updates)
   useEffect(() => {
@@ -596,6 +619,8 @@ export default function App() {
                     announcements={announcements}
                     coins={coins}
                     disputes={disputes}
+                    hasMoreDisputes={hasMoreDisputes}
+                    onLoadMoreDisputes={loadMoreDisputes}
                     liveNgnRate={liveNgnRate}
                     addToast={addToast}
                     onRefresh={handleDatabaseRefresh}
@@ -608,6 +633,8 @@ export default function App() {
                     announcements={announcements}
                     coins={coins}
                     disputes={disputes}
+                    hasMoreDisputes={hasMoreDisputes}
+                    onLoadMoreDisputes={loadMoreDisputes}
                     liveNgnRate={liveNgnRate}
                     addToast={addToast}
                     onRefresh={handleDatabaseRefresh}

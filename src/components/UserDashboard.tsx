@@ -14,6 +14,8 @@ interface UserDashboardProps {
   announcements: Announcement[];
   coins: CoinListing[];
   disputes?: Dispute[];
+  hasMoreDisputes?: boolean;
+  onLoadMoreDisputes?: () => void;
   liveNgnRate?: number | null;
   addToast: (msg: string, type: 'success' | 'error' | 'info') => void;
   onRefresh: () => void;
@@ -22,13 +24,15 @@ interface UserDashboardProps {
   onBulletinCountChange?: (count: number) => void;
 }
 
-export default function UserDashboard({ 
-  userProfile, 
-  orders, 
-  settings, 
-  announcements, 
+export default function UserDashboard({
+  userProfile,
+  orders,
+  settings,
+  announcements,
   coins = [],
   disputes = [],
+  hasMoreDisputes = false,
+  onLoadMoreDisputes,
   liveNgnRate = null,
   addToast,
   onRefresh,
@@ -2164,6 +2168,15 @@ export default function UserDashboard({
                       </div>
                     );
                   })}
+                  {/* Load more disputes button */}
+                  {hasMoreDisputes && onLoadMoreDisputes && (
+                    <button
+                      onClick={onLoadMoreDisputes}
+                      className="w-full py-3 text-xs font-bold text-[#008751] border border-[#008751]/30 rounded-xl hover:bg-[#F0F7F2] transition cursor-pointer uppercase tracking-wide"
+                    >
+                      Load More Disputes
+                    </button>
+                  )}
                 </div>
               )}
             </div>

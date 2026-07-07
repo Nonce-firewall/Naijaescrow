@@ -31,19 +31,23 @@ interface AdminCMSProps {
   announcements: Announcement[];
   coins: CoinListing[];
   disputes: Dispute[];
+  hasMoreDisputes?: boolean;
+  onLoadMoreDisputes?: () => void;
   liveNgnRate?: number | null;
   addToast: (msg: string, type: 'success' | 'error' | 'info') => void;
   onRefresh: () => void;
 }
 
-export default function AdminCMS({ 
-  userProfile, 
-  orders, 
-  kycUsers, 
-  settings, 
-  announcements, 
+export default function AdminCMS({
+  userProfile,
+  orders,
+  kycUsers,
+  settings,
+  announcements,
   coins,
   disputes,
+  hasMoreDisputes = false,
+  onLoadMoreDisputes,
   liveNgnRate,
   addToast,
   onRefresh
@@ -1524,6 +1528,15 @@ export default function AdminCMS({
                       </div>
                     </div>
                   ))}
+                  {/* Load more disputes button */}
+                  {hasMoreDisputes && onLoadMoreDisputes && (
+                    <button
+                      onClick={onLoadMoreDisputes}
+                      className="w-full py-3 text-xs font-bold text-slate-600 border border-slate-200 rounded-xl hover:bg-slate-50 transition cursor-pointer uppercase tracking-wide"
+                    >
+                      Load More Disputes
+                    </button>
+                  )}
                 </div>
               )}
             </div>
