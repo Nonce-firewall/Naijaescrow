@@ -922,7 +922,10 @@ export default function LandingPage({ announcements, settings, liveNgnRate, onNa
                     <button onClick={() => setActiveModal('privacy')} className="hover:text-emerald-400 transition cursor-pointer">Privacy Policy</button>
                     <a href="/privacy" aria-label="Privacy Policy standalone page" className="text-slate-700 hover:text-slate-500 transition text-[10px] leading-none" tabIndex={-1}>↗</a>
                   </span> */}
-              <a href="/privacy" className="hover:text-emerald-400 transition cursor-pointer">Privacy Policy</a>
+              <span className="flex items-center gap-1">
+                    <button onClick={() => setActiveModal('privacy')} className="hover:text-emerald-400 transition cursor-pointer">Privacy Policy</button>
+                    <a href="/privacy" aria-label="Privacy Policy standalone page" className="text-slate-700 hover:text-slate-500 transition text-[10px] leading-none" tabIndex={-1}>↗</a>
+                  </span>
               <span className="flex items-center gap-1">
                 <button onClick={() => setActiveModal('terms')} className="hover:text-emerald-400 transition cursor-pointer">Terms of Use</button>
                 <a href="/terms" aria-label="Terms of Use standalone page" className="text-slate-700 hover:text-slate-500 transition text-[10px] leading-none" tabIndex={-1}>↗</a>
