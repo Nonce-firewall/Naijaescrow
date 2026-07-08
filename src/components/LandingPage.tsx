@@ -56,7 +56,7 @@ function Modal({ type, onClose }: { type: ModalType; onClose: () => void }) {
               </section>
               <section>
                 <h3 className="font-bold text-[#1A1A1A] mb-1">5. Your Rights</h3>
-                <p>You may request the deletion of your account from your dashboard settings, however your account activities, KYC data and transaction records may be retained for regulatory compliance after account your deletion is in effect.</p>
+                <p>You may request the deletion of your account from your dashboard settings, however your account activities, KYC data and transaction records may be retained for regulatory compliance after your account deletion is in effect.</p>
               </section>
               <section>
                 <h3 className="font-bold text-[#1A1A1A] mb-1">6. Contact</h3>
