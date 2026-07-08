@@ -2354,7 +2354,7 @@ export default function UserDashboard({
               <li className="flex gap-2 items-start">
                 <span className="text-[#008751] font-bold mt-0.5">•</span>
                 <div>
-                  <strong className="text-[#1A1A1A]">Network Accuracy</strong>: Always double-check blockchain networks. Depositing BEP20 USDT to a TRC20 address will lead to irreversible asset loss.
+                  <strong className="text-[#1A1A1A]">Network Accuracy</strong>: Always double-check blockchain networks. For instance, depositing BEP20 USDT to a TRC20 address will lead to irreversible asset loss.
                 </div>
               </li>
               <li className="flex gap-2 items-start">
