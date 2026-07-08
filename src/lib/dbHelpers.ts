@@ -226,7 +226,7 @@ export async function getOrCreateUserProfile(uid: string, email: string): Promis
   // Select only the columns needed by rowToUserProfile — avoids pulling unused data.
   const USER_COLS = 'id,email,role,kyc_status,kyc_data,account_status,suspend_reason,terminate_reason,notification_preferences,created_at,deleted_at';
 
-  const { data: existing } = await supabase.from('users').select(USER_COLS).eq('id', uid).single();
+  const { data: existing } = await supabase.from('users').select(USER_COLS).eq('id', uid).maybeSingle();
 
   if (existing) {
     if (isAdmin && existing.role !== 'admin') {
@@ -236,6 +236,28 @@ export async function getOrCreateUserProfile(uid: string, email: string): Promis
     return rowToUserProfile(existing);
   }
 
+  // No row for this UID yet. Before creating a brand-new profile, check whether
+  // this person previously deleted their account — if so, reactivate their
+  // retained row (preserving KYC status, order history, disputes) and repoint
+  // its id to the new auth UID. This prevents duplicate `users` rows for the
+  // same email and stops deleted users from being treated as fresh unverified
+  // traders on re-registration. The RPC is SECURITY DEFINER and only matches
+  // rows where account_status='deleted' AND deleted_email matches.
+  const { data: restored, error: restoreError } = await supabase
+    .rpc('restore_deleted_user', { p_new_uid: uid, p_email: email });
+
+  if (restoreError) {
+    console.error('restore_deleted_user RPC error:', restoreError.message);
+  } else if (restored && restored.length > 0) {
+    const restoredRow = restored[0];
+    if (isAdmin && restoredRow.role !== 'admin') {
+      await supabase.from('users').update({ role: 'admin' }).eq('id', uid);
+      restoredRow.role = 'admin';
+    }
+    return rowToUserProfile(restoredRow);
+  }
+
+  // Genuinely new user — create a fresh profile row.
   const newRow = {
     id: uid,
     email,
@@ -255,7 +277,7 @@ export async function getOrCreateUserProfile(uid: string, email: string): Promis
   }
 
   // Race-condition retry: the concurrent insert won, so the row must now exist.
-  const { data: retried, error: retryError } = await supabase.from('users').select(USER_COLS).eq('id', uid).single();
+  const { data: retried, error: retryError } = await supabase.from('users').select(USER_COLS).eq('id', uid).maybeSingle();
   if (retried) return rowToUserProfile(retried);
 
   throw new Error(`Failed to retrieve user profile after insert race: ${retryError?.message ?? 'unknown'}`);

@@ -69,12 +69,14 @@ export default async (req: Request) => {
     const uid = user.id;
 
     // 2. Scrub the profile row but retain KYC data for fraud/legal records.
-    //    Use new Date().toISOString() rather than Date.now() — Postgres
-    //    timestamptz columns reject raw millisecond integers.
+    //    deleted_email stores the original email so a future re-registration
+    //    with the same address can reactivate this row (and its retained KYC /
+    //    order / dispute history) instead of creating a duplicate.
     const { error: scrubError } = await admin
       .from('users')
       .update({
         email: `deleted-${uid}@removed.local`,
+        deleted_email: user.email,
         account_status: 'deleted',
         notification_preferences: null,
         deleted_at: Date.now(),   // bigint milliseconds — matches schema convention
