@@ -2761,7 +2761,7 @@ export default function UserDashboard({
               <div className="flex items-center justify-between px-6 py-3 border-b border-[#E0E7E0] shrink-0">
                 <div className="flex items-center gap-2">
                   <Bell className="w-4 h-4 text-[#008751]" />
-                  <h4 className="font-bold text-sm text-[#1A1A1A] uppercase tracking-wider">System Bulletin</h4>
+                  <h4 className="font-bold text-sm text-[#1A1A1A] uppercase tracking-wider">Notification</h4>
                   {(localNotifs.length + privateAnnouncements.length) > 0 && (
                     <span className="bg-rose-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full leading-none">
                       {localNotifs.length + privateAnnouncements.length}
