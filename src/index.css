@@ -31,8 +31,10 @@ html {
 }
 
 @keyframes ticker-scroll {
-  0%   { transform: translateX(100%); }
-  100% { transform: translateX(-100%); }
+  /* Start visible at position 0, scroll left by exactly half (the duplicated copy),
+     then snap back to 0 — seamless infinite loop. Content is always visible. */
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
 }
 .ticker-track {
   display: flex;

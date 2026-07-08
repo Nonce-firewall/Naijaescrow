@@ -573,23 +573,20 @@ function TradingWidget({
           </div>
         </div>
 
-        {/* BUY / SELL tabs */}
+        {/* BUY / SELL tabs — CSS-only indicator, no layout measurement */}
         <div className="relative flex bg-slate-950 rounded-xl p-0.5 border border-slate-800">
           {(['buy', 'sell'] as const).map((t) => (
             <button
               key={t}
               onClick={() => { setTab(t); setAmount(''); }}
-              className="relative flex-1 py-2 text-[11px] font-bold uppercase tracking-wider z-10 transition-colors cursor-pointer rounded-lg"
+              className="relative flex-1 py-2 text-[11px] font-bold uppercase tracking-wider z-10 transition-colors duration-200 cursor-pointer rounded-lg"
               style={{ color: tab === t ? (t === 'buy' ? '#4ade80' : '#f87171') : '#64748b' }}
             >
+              {/* Per-button background that fades in/out — opacity-only, compositor-driven */}
+              <span className={`absolute inset-0 rounded-[10px] pointer-events-none transition-opacity duration-200 ${
+                t === 'buy' ? 'bg-emerald-500/10 border border-emerald-500/20' : 'bg-rose-500/10 border border-rose-500/20'
+              } ${tab === t ? 'opacity-100' : 'opacity-0'}`} />
               {t === 'buy' ? '▲ Buy' : '▼ Sell'}
-              {tab === t && (
-                <motion.div
-                  layoutId="tab-pill"
-                  className={`absolute inset-0 rounded-[10px] ${t === 'buy' ? 'bg-emerald-500/10 border border-emerald-500/20' : 'bg-rose-500/10 border border-rose-500/20'}`}
-                  transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                />
-              )}
             </button>
           ))}
         </div>
