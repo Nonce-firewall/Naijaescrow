@@ -144,6 +144,16 @@ export default function AuthPage({ onBack, onAuthSuccess, addToast, initialMode 
           setAuthErrorAlert(`Your account has been permanently terminated by the platform.${reason} Contact support for assistance.`);
           return;
         }
+        if (profile.accountStatus === 'pending_reactivation') {
+          await supabase.auth.signOut();
+          setAuthErrorAlert('This account was previously deleted and is awaiting reactivation. Please contact the administrator to restore your access.');
+          return;
+        }
+        if (profile.accountStatus === 'deleted') {
+          await supabase.auth.signOut();
+          setAuthErrorAlert('This account has been deleted. Please contact the administrator if you believe this is an error or would like to request reactivation.');
+          return;
+        }
         addToast('Sign in successful!', 'success');
         onAuthSuccess();
       } else {
@@ -165,6 +175,16 @@ export default function AuthPage({ onBack, onAuthSuccess, addToast, initialMode 
             setAuthErrorAlert(`Your account has been permanently terminated by the platform.${reason} Contact support for assistance.`);
             return;
           }
+          if (profile.accountStatus === 'pending_reactivation') {
+            await supabase.auth.signOut();
+            setAuthErrorAlert('This account was previously deleted and is awaiting reactivation. Please contact the administrator to restore your access.');
+            return;
+          }
+          if (profile.accountStatus === 'deleted') {
+            await supabase.auth.signOut();
+            setAuthErrorAlert('This account has been deleted. Please contact the administrator if you believe this is an error or would like to request reactivation.');
+            return;
+          }
           addToast('Welcome back! You already have an account — signed in successfully.', 'success');
           onAuthSuccess();
           return;
@@ -180,8 +200,17 @@ export default function AuthPage({ onBack, onAuthSuccess, addToast, initialMode 
         });
         if (error) throw error;
         if (data.session) {
-          // Email confirmation is disabled in Supabase — user is immediately active
-          await getOrCreateUserProfile(data.user!.id, data.user!.email || '');
+          // Email confirmation is disabled in Supabase — user is immediately active.
+          // IMPORTANT: must check the returned profile — if this email belonged to a
+          // previously deleted account, restore_deleted_user RPC sets it to
+          // pending_reactivation. Ignoring the return value would let them straight
+          // through to the dashboard with the wrong status.
+          const newProfile = await getOrCreateUserProfile(data.user!.id, data.user!.email || '');
+          if (newProfile.accountStatus === 'pending_reactivation' || newProfile.accountStatus === 'deleted') {
+            await supabase.auth.signOut();
+            setAuthErrorAlert('This email address belongs to a previously deleted account. Please contact the administrator to request reactivation — your trade history and KYC records are on file.');
+            return;
+          }
           addToast('Account created successfully!', 'success');
           onAuthSuccess();
         } else if (data.user) {
@@ -202,9 +231,19 @@ export default function AuthPage({ onBack, onAuthSuccess, addToast, initialMode 
     } catch (err: any) {
       console.error(err);
       let msg = 'Authentication failed. Please check your details.';
-      if (err.message?.includes('Invalid login credentials')) msg = 'Invalid email or password.';
-      else if (err.message?.includes('already registered') || err.message?.includes('already been registered')) msg = 'Email already registered. Please sign in.';
-      else if (err.message?.includes('valid email')) msg = 'Please enter a valid email address.';
+      if (err.message?.includes('Invalid login credentials')) {
+        // "Invalid login credentials" also fires when the Supabase auth user no longer
+        // exists (e.g. the account was deleted). Guide the user toward the sign-up form
+        // which will detect the deletion via restore_deleted_user and show the correct
+        // reactivation message, rather than leaving them wondering if they mistyped.
+        msg = isLogin
+          ? 'Invalid email or password. If you previously deleted this account, your credentials are no longer valid — use Sign Up and our system will detect it and guide you through reactivation.'
+          : 'Invalid email or password.';
+      } else if (err.message?.includes('already registered') || err.message?.includes('already been registered')) {
+        msg = 'Email already registered. Please sign in.';
+      } else if (err.message?.includes('valid email')) {
+        msg = 'Please enter a valid email address.';
+      }
       addToast(msg, 'error');
     } finally {
       setIsLoading(false);

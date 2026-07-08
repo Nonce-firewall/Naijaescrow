@@ -132,6 +132,29 @@ export default function App() {
         }
         try {
           const profile = await getOrCreateUserProfile(session.user.id, session.user.email || '');
+          // Mirror the same status gates used in onAuthStateChange — this path
+          // runs on page reload / tab restore when a JWT is still valid. Without
+          // these checks a deleted/terminated user whose token hasn't expired yet
+          // would briefly see their dashboard before onAuthStateChange corrects it.
+          if (profile.accountStatus === 'terminated') {
+            await supabase.auth.signOut();
+            const reason = profile.terminateReason ? ` Reason: ${profile.terminateReason}` : '';
+            addToast(`Your account has been permanently terminated.${reason}`, 'error');
+            setIsInitializing(false);
+            return;
+          }
+          if (profile.accountStatus === 'pending_reactivation') {
+            await supabase.auth.signOut();
+            addToast('Our records show you previously deleted this account. Please contact admin to reactivate it before you can access the platform.', 'error');
+            setIsInitializing(false);
+            return;
+          }
+          if (profile.accountStatus === 'deleted') {
+            await supabase.auth.signOut();
+            addToast('Your account has been deleted. Please contact support if you believe this is an error.', 'error');
+            setIsInitializing(false);
+            return;
+          }
           setUserProfile(profile);
           setIsAdminMode(profile.role === 'admin');
           setCurrentPage('dashboard');
