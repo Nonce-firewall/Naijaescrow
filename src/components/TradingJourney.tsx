@@ -174,8 +174,11 @@ const UnifiedChart = memo(function UnifiedChart({
         ))}
 
         {/* ── BUY series ── */}
-        {!buyEmpty && buyFill  && <path d={buyFill}  fill={`url(#${buyGradId})`} />}
-        {!buyEmpty && buyLine  && (
+        {/* Line/fill/dot always render — buyLine is either real order data or a
+            synthesised seed point at the current rate, so new/non-trading users
+            still see the curve. buyEmpty only controls the dimmed style + hint text below. */}
+        {buyFill  && <path d={buyFill}  fill={`url(#${buyGradId})`} opacity={buyEmpty ? 0.5 : 1} />}
+        {buyLine  && (
           <path
             d={buyLine}
             fill="none"
@@ -183,20 +186,22 @@ const UnifiedChart = memo(function UnifiedChart({
             strokeWidth="1.8"
             strokeLinecap="round"
             strokeLinejoin="round"
+            strokeDasharray={buyEmpty ? '3 3' : undefined}
             vectorEffect="non-scaling-stroke"
+            opacity={buyEmpty ? 0.5 : 1}
           />
         )}
-        {!buyEmpty && buyLastPt && (
+        {buyLastPt && (
           // Outer glow ring — static (no CSS animation to avoid continuous repaints)
-          <>
+          <g opacity={buyEmpty ? 0.5 : 1}>
             <circle cx={buyLastPt.x} cy={buyLastPt.y} r="5" fill="#10B981" fillOpacity="0.15" />
             <circle cx={buyLastPt.x} cy={buyLastPt.y} r="2.2" fill="#10B981" />
-          </>
+          </g>
         )}
 
         {/* ── SELL series ── */}
-        {!sellEmpty && sellFill  && <path d={sellFill}  fill={`url(#${sellGradId})`} />}
-        {!sellEmpty && sellLine  && (
+        {sellFill  && <path d={sellFill}  fill={`url(#${sellGradId})`} opacity={sellEmpty ? 0.5 : 1} />}
+        {sellLine  && (
           <path
             d={sellLine}
             fill="none"
@@ -204,14 +209,16 @@ const UnifiedChart = memo(function UnifiedChart({
             strokeWidth="1.8"
             strokeLinecap="round"
             strokeLinejoin="round"
+            strokeDasharray={sellEmpty ? '3 3' : undefined}
             vectorEffect="non-scaling-stroke"
+            opacity={sellEmpty ? 0.5 : 1}
           />
         )}
-        {!sellEmpty && sellLastPt && (
-          <>
+        {sellLastPt && (
+          <g opacity={sellEmpty ? 0.5 : 1}>
             <circle cx={sellLastPt.x} cy={sellLastPt.y} r="5" fill="#F43F5E" fillOpacity="0.15" />
             <circle cx={sellLastPt.x} cy={sellLastPt.y} r="2.2" fill="#F43F5E" />
-          </>
+          </g>
         )}
       </svg>
 
