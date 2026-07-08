@@ -39,7 +39,7 @@ html {
 .ticker-track {
   display: flex;
   white-space: nowrap;
-  animation: ticker-scroll 28s linear infinite;
+  animation: ticker-scroll 14s linear infinite;
   will-change: transform;
 }
 .ticker-track:hover {
