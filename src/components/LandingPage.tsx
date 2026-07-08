@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { ShieldCheck, TrendingUp, Lock, ArrowRight, Bell, UserCheck, X, Mail, MessageCircle, Zap, ChevronRight, Activity, BarChart3, Users, UserPlus, ScanFace, ReceiptText, Banknote } from 'lucide-react';
 import { Announcement, AdminSettings } from '../types';
 import { getPublicStats, PublicStats } from '../lib/dbHelpers';
@@ -22,7 +22,7 @@ function Modal({ type, onClose }: { type: ModalType; onClose: () => void }) {
         initial={{ scale: 0.95, y: 24, opacity: 0 }}
         animate={{ scale: 1, y: 0, opacity: 1 }}
         exit={{ scale: 0.95, y: 12, opacity: 0 }}
-        transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+        transition={{ duration: 0.25, ease: 'easeOut' }}
       >
         <div className="flex items-center justify-between px-6 py-4 border-b border-[#E0E7E0] shrink-0">
           <h2 className="font-bold text-[#1A1A1A] text-base">
@@ -210,7 +210,7 @@ function HowItWorks({ onNavigate }: { onNavigate: () => void }) {
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-60px' }}
-          transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: 0.55, ease: 'easeOut' }}
         >
           <span className="inline-block text-[10px] font-bold uppercase tracking-widest text-[#008751] bg-[#E6F4EA] border border-[#C5DFC9] px-3 py-1.5 rounded-full mb-4 font-mono">
             Simple · Secure · Fast
@@ -235,7 +235,7 @@ function HowItWorks({ onNavigate }: { onNavigate: () => void }) {
                 initial={{ opacity: 0, y: 28 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: '-40px' }}
-                transition={{ duration: 0.5, delay: i * 0.12, ease: [0.16, 1, 0.3, 1] }}
+                transition={{ duration: 0.5, delay: i * 0.12, ease: 'easeOut' }}
                 className="flex flex-col items-center text-center group"
               >
                 {/* Icon circle */}
@@ -270,7 +270,7 @@ function HowItWorks({ onNavigate }: { onNavigate: () => void }) {
                 initial={{ opacity: 0, x: -20 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true, margin: '-30px' }}
-                transition={{ duration: 0.45, delay: i * 0.1, ease: [0.16, 1, 0.3, 1] }}
+                transition={{ duration: 0.45, delay: i * 0.1, ease: 'easeOut' }}
                 className="relative"
               >
                 {/* Timeline dot */}
@@ -319,39 +319,63 @@ function HowItWorks({ onNavigate }: { onNavigate: () => void }) {
 }
 // ─────────────────────────────────────────────────────────────────────────────
 
-// ── Animated count-up hook ────────────────────────────────────────────────────
-function useCountUp(target: number, duration = 1200) {
-  const [value, setValue] = useState(0);
-  const raf = useRef<number | null>(null);
-  const prev = useRef(0);
+// ── Animated count-up hook (single RAF loop for all three values) ─────────────
+// One requestAnimationFrame + one setState per frame instead of 3 separate loops.
+function useCountUps(t0: number, t1: number, t2: number, duration = 1200): [number, number, number] {
+  const [vals, setVals] = useState<[number, number, number]>([0, 0, 0]);
+  const raf  = useRef<number | null>(null);
+  const prev = useRef<[number, number, number]>([0, 0, 0]);
+  const prefersReduced = useReducedMotion();
 
   useEffect(() => {
-    if (target === 0) { setValue(0); return; }
+    if (raf.current) cancelAnimationFrame(raf.current);
+    // If all targets are still zero (data not loaded yet) do nothing
+    if (t0 === 0 && t1 === 0 && t2 === 0) { setVals([0, 0, 0]); return; }
+    // Skip animation on reduced-motion preference — jump straight to target
+    if (prefersReduced) { prev.current = [t0, t1, t2]; setVals([t0, t1, t2]); return; }
+
     const start = performance.now();
-    const from = prev.current;
-    const delta = target - from;
+    const [f0, f1, f2] = prev.current;
+    const [d0, d1, d2] = [t0 - f0, t1 - f1, t2 - f2];
 
     const tick = (now: number) => {
-      const p = Math.min((now - start) / duration, 1);
-      // ease-out cubic
-      const ease = 1 - Math.pow(1 - p, 3);
-      setValue(Math.round(from + delta * ease));
+      const p    = Math.min((now - start) / duration, 1);
+      const ease = 1 - Math.pow(1 - p, 3); // ease-out cubic
+      setVals([
+        Math.round(f0 + d0 * ease),
+        Math.round(f1 + d1 * ease),
+        Math.round(f2 + d2 * ease),
+      ]);
       if (p < 1) { raf.current = requestAnimationFrame(tick); }
-      else { prev.current = target; }
+      else       { prev.current = [t0, t1, t2]; }
     };
     raf.current = requestAnimationFrame(tick);
     return () => { if (raf.current) cancelAnimationFrame(raf.current); };
-  }, [target, duration]);
+  }, [t0, t1, t2, duration, prefersReduced]);
 
-  return value;
+  return vals;
 }
 
 // ── Live stats strip ──────────────────────────────────────────────────────────
 function StatsStrip() {
-  const [stats, setStats]   = useState<PublicStats | null>(null);
+  const [stats, setStats]     = useState<PublicStats | null>(null);
   const [loading, setLoading] = useState(true);
-  // Only update on each 30-second poll — eliminates the old 1-state-update-per-second timer
   const [fetchedAt, setFetchedAt] = useState<number | null>(null);
+  // Defer the network fetch until the section is near the viewport — avoids a
+  // burst of work (network response + RAF count-up) coinciding with the scroll.
+  const sectionRef = useRef<HTMLElement>(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const el = sectionRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setVisible(true); obs.disconnect(); } },
+      { rootMargin: '300px' }, // start loading 300 px before it enters view
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
 
   const doFetch = async () => {
     try {
@@ -363,14 +387,18 @@ function StatsStrip() {
   };
 
   useEffect(() => {
+    if (!visible) return;
     doFetch();
     const poll = setInterval(doFetch, 30_000);
     return () => clearInterval(poll);
-  }, []);
+  }, [visible]);
 
-  const trades  = useCountUp(stats?.tradesCompleted ?? 0);
-  const volume  = useCountUp(stats?.usdtVolume      ?? 0);
-  const traders = useCountUp(stats?.activeTraders   ?? 0);
+  // Single RAF loop — one setState per frame instead of three separate loops.
+  const [trades, volume, traders] = useCountUps(
+    stats?.tradesCompleted ?? 0,
+    stats?.usdtVolume      ?? 0,
+    stats?.activeTraders   ?? 0,
+  );
 
   const items = [
     {
@@ -405,7 +433,7 @@ function StatsStrip() {
   ];
 
   return (
-    <section className="bg-[#0d1a0f] border-y border-[#008751]/20 py-8 px-4 sm:px-6">
+    <section ref={sectionRef} className="bg-[#0d1a0f] border-y border-[#008751]/20 py-8 px-4 sm:px-6">
       <div className="max-w-5xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
@@ -429,7 +457,7 @@ function StatsStrip() {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.45, delay: i * 0.1, ease: [0.16, 1, 0.3, 1] }}
+              transition={{ duration: 0.45, delay: i * 0.1, ease: 'easeOut' }}
             >
               <div className={`p-2.5 rounded-xl bg-slate-900/60 ${item.color} shrink-0`}>
                 {item.icon}
@@ -721,7 +749,7 @@ export default function LandingPage({ announcements, settings, liveNgnRate, onNa
               className="inline-flex items-center gap-2 bg-[#008751]/20 border border-[#008751]/30 px-3 py-1.5 rounded-full text-[#00FF85] text-[11px] font-bold uppercase tracking-wider"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
+              transition={{ duration: 0.55, ease: 'easeOut' }}
             >
               <ShieldCheck className="w-3.5 h-3.5" />
               Direct NGN/USDT P2P Escrow
@@ -731,7 +759,7 @@ export default function LandingPage({ announcements, settings, liveNgnRate, onNa
               className="text-2xl sm:text-4xl md:text-3xl font-bold tracking-tight leading-tight"
               initial={{ opacity: 0, y: 22 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
+              transition={{ duration: 0.6, delay: 0.08, ease: 'easeOut' }}
             >
               Nigeria's Premier<br />
               <span className="text-[#00FF85]">P2P Escrow</span> Ledger
@@ -741,7 +769,7 @@ export default function LandingPage({ announcements, settings, liveNgnRate, onNa
               className="text-sm sm:text-base text-gray-300 max-w-md leading-relaxed"
               initial={{ opacity: 0, y: 18 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.55, delay: 0.16, ease: [0.16, 1, 0.3, 1] }}
+              transition={{ duration: 0.55, delay: 0.16, ease: 'easeOut' }}
             >
               The safest way to trade your Naira & other cryptocurrencies for USDT. Trusted and guaranteed p2p transaction tracking, rigorous KYC, and instant admin approvals.
             </motion.p>
@@ -751,7 +779,7 @@ export default function LandingPage({ announcements, settings, liveNgnRate, onNa
               className="bg-[#111] border border-white/10 rounded-2xl p-4 flex items-center justify-between max-w-sm"
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.55, delay: 0.24, ease: [0.16, 1, 0.3, 1] }}
+              transition={{ duration: 0.55, delay: 0.24, ease: 'easeOut' }}
             >
               <div>
                 <span className="text-gray-400 text-[10px] font-bold uppercase tracking-wider block mb-1">Live Exchange Rate</span>
@@ -769,7 +797,7 @@ export default function LandingPage({ announcements, settings, liveNgnRate, onNa
               className="flex flex-col sm:flex-row gap-3 pt-1"
               initial={{ opacity: 0, y: 14 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.32, ease: [0.16, 1, 0.3, 1] }}
+              transition={{ duration: 0.5, delay: 0.32, ease: 'easeOut' }}
             >
               <button
                 onClick={() => onNavigate('auth', 'signup')}
@@ -792,7 +820,7 @@ export default function LandingPage({ announcements, settings, liveNgnRate, onNa
             className="w-full max-w-sm mx-auto md:max-w-none"
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.22, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ duration: 0.6, delay: 0.22, ease: 'easeOut' }}
             style={{ willChange: 'transform, opacity' }}
           >
             <TradingWidget
