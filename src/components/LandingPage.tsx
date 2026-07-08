@@ -56,7 +56,7 @@ function Modal({ type, onClose }: { type: ModalType; onClose: () => void }) {
               </section>
               <section>
                 <h3 className="font-bold text-[#1A1A1A] mb-1">5. Your Rights</h3>
-                <p>You may request deletion of your account and associated data by contacting support. Note that transaction records may be retained for regulatory compliance even after account deletion.</p>
+                <p>You may request the deletion of your account from your dashboard settings, however your account activities, KYC data and transaction records may be retained for regulatory compliance after account your deletion is in effect.</p>
               </section>
               <section>
                 <h3 className="font-bold text-[#1A1A1A] mb-1">6. Contact</h3>
@@ -77,15 +77,15 @@ function Modal({ type, onClose }: { type: ModalType; onClose: () => void }) {
               </section>
               <section>
                 <h3 className="font-bold text-[#1A1A1A] mb-1">3. Trade Rules</h3>
-                <p>You must provide legitimate bank payment proofs. Fake screenshots, reversed payments, or third-party transfers are strictly prohibited and result in permanent KYC cancellation and order forfeiture.</p>
+                <p>You must provide legitimate bank payment proofs that reflected your verified legal name, Fake screenshots, reversed payments, or third-party transfers are strictly prohibited and it may result in permanent KYC cancellation and order forfeiture.</p>
               </section>
               <section>
                 <h3 className="font-bold text-[#1A1A1A] mb-1">4. Rates & Fees</h3>
-                <p>The exchange rate locked at order creation is your guaranteed payout rate. Standard blockchain network (mining) fees are covered by 9ija Escrow. No hidden charges apply.</p>
+                <p>The exchange rate locked at order creation is your guaranteed payout rate. Standard blockchain network (mining) fees are covered by 9ija Escrow, however some transactions may attract little fraction of network fees to ease the fluctuation of the blockchain validation charges.</p>
               </section>
               <section>
                 <h3 className="font-bold text-[#1A1A1A] mb-1">5. Liability</h3>
-                <p>9ija Escrow acts as an intermediary and is not liable for losses arising from user-provided incorrect wallet addresses, bank details, or payment delays caused by third-party banks.</p>
+                <p>9ija Escrow acts as an intermediary and is not liable for losses arising from user-provided incorrect wallet addresses, bank details, blockchain congestion and payment delays caused by third-party banks.</p>
               </section>
               <section>
                 <h3 className="font-bold text-[#1A1A1A] mb-1">6. Termination</h3>
@@ -95,7 +95,7 @@ function Modal({ type, onClose }: { type: ModalType; onClose: () => void }) {
           )}
           {type === 'support' && (
             <div className="space-y-4">
-              <p className="text-xs text-gray-500">Our support team is available Monday–Friday, 9 AM–6 PM WAT. We typically respond within 2–4 business hours.</p>
+              <p className="text-xs text-gray-500">Our support team is available Monday–Sunday, 9 AM–6 PM. We typically respond within 1–2 business hours.</p>
 
               {/* WhatsApp */}
               <a href="https://wa.me/2349165501298" target="_blank" rel="noopener noreferrer"
@@ -161,7 +161,7 @@ const STEPS = [
     num: '01',
     icon: <UserPlus className="w-5 h-5" />,
     title: 'Create Free Account',
-    desc: 'Sign up with your email in under 60 seconds. No initial deposit or fee required.',
+    desc: 'Sign up with your Google Account or Email in under 60 seconds, stress free and smooth experience',
     color: 'emerald',
     accent: 'bg-emerald-500/10 border-emerald-500/25 text-emerald-400',
     numColor: 'text-emerald-600',
@@ -191,7 +191,7 @@ const STEPS = [
     num: '04',
     icon: <Banknote className="w-5 h-5" />,
     title: 'Receive Your Funds',
-    desc: 'Admin verifies payment and releases your USDT or NGN directly to your wallet or bank account.',
+    desc: 'Admin verifies payment and releases your transactions directly into your provided wallet address or bank account.',
     color: 'amber',
     accent: 'bg-amber-500/10 border-amber-500/25 text-amber-400',
     numColor: 'text-amber-600',
@@ -219,7 +219,7 @@ function HowItWorks({ onNavigate }: { onNavigate: () => void }) {
             Trade in 4 Simple Steps
           </h2>
           <p className="text-gray-500 max-w-lg mx-auto text-sm mt-3 leading-relaxed">
-            From account creation to receiving funds — the whole process is transparent, guided, and admin-verified at every stage.
+            From account creation to receiving funds — the whole process is transparent, convenient, and admin-verified.
           </p>
         </motion.div>
 
@@ -520,7 +520,7 @@ function TradingWidget({
         <span className="w-2.5 h-2.5 rounded-full bg-amber-500/80" />
         <span className="w-2.5 h-2.5 rounded-full bg-emerald-500/80" />
         <div className="mx-auto text-[10px] text-slate-500 font-mono bg-slate-900 px-3 py-0.5 rounded-full border border-slate-800">
-          9ijaescrow.com.ng/dashboard
+          9ijaescrow.com.ng
         </div>
       </div>
 
@@ -800,7 +800,7 @@ export default function LandingPage({ announcements, settings, liveNgnRate, onNa
                 onClick={() => onNavigate('auth', 'signup')}
                 className="inline-flex items-center justify-center gap-2 bg-[#008751] hover:bg-[#007043] text-white font-bold px-4 py-2 md:py-2 rounded-xl cursor-pointer text-sm hover:scale-[1.03] active:scale-[0.97] transition-[transform,background-color] duration-150"
               >
-                Create Free Account
+                Create Account
                 <ArrowRight className="w-4 h-4" />
               </button>
               <button
