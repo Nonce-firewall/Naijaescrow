@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ShieldCheck, TrendingUp, Users, Layers, Settings, Bell, FileCheck, X, CircleCheck as CheckCircle, Circle as XCircle, TriangleAlert as AlertTriangle, SquareCheck as CheckSquare, ExternalLink, Wallet, Circle as HelpCircle, Clock, Lock, Plus, Coins, Trash, Camera, Eye, EyeOff, MessageSquare, Ban, UserX, UserCheck, RotateCcw, ChevronRight, CreditCard as Edit2, Percent, Link2 } from 'lucide-react';
+import { ShieldCheck, TrendingUp, Users, Layers, Settings, Bell, FileCheck, X, CircleCheck as CheckCircle, Circle as XCircle, TriangleAlert as AlertTriangle, SquareCheck as CheckSquare, ExternalLink, Wallet, Circle as HelpCircle, Clock, Lock, Plus, Coins, Trash, Camera, Eye, EyeOff, MessageSquare, Ban, UserX, UserCheck, RotateCcw, ChevronRight, CreditCard as Edit2, Percent, Link2, Search } from 'lucide-react';
 import { UserProfile, Order, AdminSettings, Announcement, KYCData, CoinListing, Dispute } from '../types';
 import { formatNGT, formatNGTDate } from '../lib/dateUtils';
 import DisputeChat from './DisputeChat';
