@@ -843,7 +843,7 @@ export default function LandingPage({ announcements, settings, liveNgnRate, onNa
             How 9ija Escrow Safeguards Your Trades
           </h2>
           <p className="text-gray-500 max-w-xl mx-auto text-sm mt-3 leading-relaxed">
-            Assets are locked in a regulated setup until payment is verified by our admin specialists.
+            Orders value are locked in a regulated setup price, until payment is verified by our admin specialists.
           </p>
         </div>
 
@@ -852,7 +852,7 @@ export default function LandingPage({ announcements, settings, liveNgnRate, onNa
             {
               icon: <Lock className="w-5 h-5" />,
               title: 'Ironclad Escrow',
-              desc: 'Crypto assets are deposited into dedicated BSC, Tron, or Polygon wallets and never released until payment is fully verified.'
+              desc: 'Crypto transactions are deposited into dedicated BSC, Tron, Polygon or any provided wallet address and never released until payment is fully verified.'
             },
             {
               icon: <UserCheck className="w-5 h-5" />,
@@ -862,7 +862,7 @@ export default function LandingPage({ announcements, settings, liveNgnRate, onNa
             {
               icon: <TrendingUp className="w-5 h-5" />,
               title: 'Zero Slippage',
-              desc: 'The rate locked at order creation is your exact payout rate. Standard network mining fees are covered by 9ija Escrow.'
+              desc: 'The rate locked at order creation is your exact payout rate, while standard network mining fees are covered by 9ija Escrow in some cases.'
             }
           ].map((f, i) => (
             <motion.div
