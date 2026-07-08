@@ -13,7 +13,7 @@ export default function TermsPage() {
             className="flex items-center gap-2 text-sm font-semibold text-gray-500 hover:text-[#008751] transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
-            Back to 9ija Escrow
+            Back to Home
           </a>
           <div className="flex items-center gap-2 text-sm font-bold text-[#008751]">
             <FileText className="w-4 h-4" />
@@ -60,27 +60,27 @@ export default function TermsPage() {
             {
               num: '4',
               title: 'Rates & Fees',
-              body: 'The exchange rate locked at order creation is your guaranteed payout rate. Network fees are covered by 9ija Escrow for USDT trades. For other listed tokens, a small trade fee (displayed before order confirmation) may apply. No hidden charges.',
+              body: 'The exchange rate locked at order creation is your guaranteed payout rate. Network fees are covered by 9ija Escrow for USDT trades. However in some cases for other listed tokens, a small trade fee (displayed before order confirmation) may apply. No hidden charges.',
             },
             {
               num: '5',
               title: 'Supported Networks',
-              body: 'We support trading on BSC (BNB Smart Chain), Tron, and Polygon networks. You are responsible for providing correct wallet addresses for your chosen network. Funds sent to incorrect addresses are irrecoverable.',
+              body: 'We support trading on BSC (BNB Smart Chain), Tron, Polygon and many other blockchain networks. You are responsible for providing correct wallet addresses for your chosen network. Funds sent to incorrect addresses are irrecoverable.',
             },
             {
               num: '6',
               title: 'Dispute Resolution',
-              body: 'If you have an issue with a trade, you may submit a dispute with evidence (screenshots, transaction IDs). Admin will review and respond within 48 hours. Once resolved, disputes are marked with the admin\'s decision and cannot be reopened. Abuse of the dispute system (spam submissions, false claims) may result in account suspension.',
+              body: 'If you have an issue with a trade, you may submit a dispute with evidence (screenshots, transaction IDs). Admin will review and respond within 10-20 minutes. Once resolved, disputes are marked with the admin\'s decision and cannot be reopened. Abuse of the dispute system (spam submissions, false claims) may result in account suspension.',
             },
             {
               num: '7',
               title: 'Account Status',
-              body: 'Accounts may be active, suspended, or terminated. Suspended accounts cannot place new orders but retain read access to history. Terminated accounts are permanently restricted. You may request account deletion via support; your data will be scrubbed except for transaction records retained for regulatory compliance.',
+              body: 'Accounts may be active, suspended, or terminated. Suspended accounts cannot place new orders but retain read access to history. Terminated accounts are permanently restricted. You may request the deletion of your account, however all your account activities, KYC data and transaction records are retained for regulatory compliance.',
             },
             {
               num: '8',
               title: 'Liability',
-              body: '9ija Escrow acts as an intermediary and is not liable for losses arising from user-provided incorrect wallet addresses, bank details, or payment delays caused by third-party banks.',
+              body: '9ija Escrow acts as an intermediary and is not liable for losses arising from user-provided incorrect wallet addresses, bank details, or payment delays caused by third-party banks and blockchain congestion',
             },
             {
               num: '9',
