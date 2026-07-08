@@ -527,6 +527,17 @@ export async function reinstateUser(uid: string) {
   if (error) throw new Error(error.message);
 }
 
+// Reactivates a user whose account_status is 'pending_reactivation' (a deleted
+// user who re-registered and is waiting for admin approval to reclaim their
+// retained KYC/order history). Calls the SECURITY DEFINER RPC which verifies
+// the caller is an admin and only flips rows in the pending_reactivation state.
+export async function reactivatePendingUser(uid: string) {
+  const { data, error } = await supabase.rpc('reactivate_pending_user', { p_uid: uid });
+  if (error) throw new Error(error.message);
+  if (!data || data.length === 0) throw new Error('No pending account found for this user.');
+  return data[0];
+}
+
 export async function submitDispute(orderId: string, userId: string, userEmail: string, message: string, imageUrls?: string[]) {
   const { error } = await supabase.from('disputes').insert({
     order_id: orderId,

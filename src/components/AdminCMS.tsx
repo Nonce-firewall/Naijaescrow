@@ -20,6 +20,7 @@ import {
   suspendUser,
   terminateUser,
   reinstateUser,
+  reactivatePendingUser,
   resolveDispute
 } from '../lib/dbHelpers';
 
@@ -56,6 +57,8 @@ export default function AdminCMS({
   // Tabs
   const [activeTab, setActiveTab] = useState<'analytics' | 'orders' | 'kyc' | 'settings' | 'bulletins' | 'coins' | 'accounts' | 'disputes' | 'compliance'>('analytics');
   const [complianceViewUser, setComplianceViewUser] = useState<UserProfile | null>(null);
+  const [reactivationSearchEmail, setReactivationSearchEmail] = useState('');
+  const [isReactivating, setIsReactivating] = useState(false);
 
   // Pagination for order queue
   const [ordersQueueLimit, setOrdersQueueLimit] = useState(5);
@@ -289,6 +292,21 @@ export default function AdminCMS({
       addToast('Failed to reinstate: ' + err.message, 'error');
     } finally {
       setIsActioningTrader(false);
+    }
+  };
+
+  // Reactivate a pending_reactivation account (deleted user who re-registered)
+  const handleReactivatePendingUser = async (uid: string, email: string) => {
+    setIsReactivating(true);
+    try {
+      await reactivatePendingUser(uid);
+      addToast(`${email} has been reactivated. They can now sign in and access the platform.`, 'success');
+      setReactivationSearchEmail('');
+      onRefresh();
+    } catch (err: any) {
+      addToast('Failed to reactivate: ' + err.message, 'error');
+    } finally {
+      setIsReactivating(false);
     }
   };
 
@@ -1358,6 +1376,8 @@ export default function AdminCMS({
                               <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase ${
                                 t.accountStatus === 'active' ? 'bg-emerald-100 text-emerald-700' :
                                 t.accountStatus === 'suspended' ? 'bg-amber-100 text-amber-700' :
+                                t.accountStatus === 'pending_reactivation' ? 'bg-blue-100 text-blue-700' :
+                                t.accountStatus === 'deleted' ? 'bg-slate-200 text-slate-600' :
                                 'bg-rose-100 text-rose-700'
                               }`}>{t.accountStatus}</span>
                               <span className="text-[9px] font-bold px-2 py-0.5 rounded-full uppercase bg-slate-100 text-slate-500">KYC: {t.kycStatus}</span>
@@ -1720,6 +1740,97 @@ export default function AdminCMS({
                 <p className="text-xs text-slate-500 font-medium">
                   Accounts that requested deletion have had their login and personal profile data scrubbed. Their KYC identity documents are retained here for fraud/legal review, as disclosed to the user at deletion time.
                 </p>
+              </div>
+
+              {/* PENDING REACTIVATION — deleted users who re-registered, awaiting admin approval */}
+              <div className="bg-blue-50 border border-blue-200 rounded-2xl p-5">
+                <div className="flex items-center gap-2 mb-3">
+                  <UserCheck className="w-5 h-5 text-blue-600" />
+                  <h4 className="text-sm font-bold text-blue-900">Pending Reactivation Requests</h4>
+                  {kycUsers.filter(u => u.accountStatus === 'pending_reactivation').length > 0 && (
+                    <span className="bg-blue-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                      {kycUsers.filter(u => u.accountStatus === 'pending_reactivation').length} awaiting
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-blue-800 mb-4">
+                  These users previously deleted their account and have signed up again with the same email. Their retained KYC status and order history are preserved, but they are blocked from accessing the platform until you approve reactivation. Search by email to find a specific user, then click Reactivate.
+                </p>
+
+                {/* Email search */}
+                <div className="flex gap-2 mb-4">
+                  <div className="relative flex-1">
+                    <Search className="w-4 h-4 text-blue-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="email"
+                      placeholder="Enter user's email to look up pending account..."
+                      value={reactivationSearchEmail}
+                      onChange={(e) => setReactivationSearchEmail(e.target.value)}
+                      className="w-full pl-9 pr-3 py-2.5 text-xs border border-blue-200 rounded-xl bg-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
+
+                {/* Pending accounts list — filtered by search email if provided */}
+                <div className="border border-blue-100 rounded-xl overflow-hidden bg-white">
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-blue-50 text-left text-xs">
+                      <thead className="bg-blue-50 text-blue-400 font-mono text-[10px] uppercase tracking-wider">
+                        <tr>
+                          <th className="px-4 py-3 font-bold">Email</th>
+                          <th className="px-4 py-3 font-bold">KYC Status</th>
+                          <th className="px-4 py-3 font-bold">Role</th>
+                          <th className="px-4 py-3 font-bold">Registered</th>
+                          <th className="px-4 py-3 font-bold text-right">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-blue-50 text-slate-700">
+                        {(() => {
+                          const pending = kycUsers
+                            .filter(u => u.accountStatus === 'pending_reactivation')
+                            .filter(u => !reactivationSearchEmail.trim() ||
+                              u.email.toLowerCase().includes(reactivationSearchEmail.trim().toLowerCase()));
+                          if (pending.length === 0) {
+                            return (
+                              <tr>
+                                <td colSpan={5} className="px-4 py-8 text-center text-blue-400">
+                                  {reactivationSearchEmail.trim()
+                                    ? 'No pending reactivation account matches that email.'
+                                    : 'No pending reactivation requests right now.'}
+                                </td>
+                              </tr>
+                            );
+                          }
+                          return pending.map((usr) => (
+                            <tr key={usr.uid} className="hover:bg-blue-50/50">
+                              <td className="px-4 py-3 font-medium text-slate-800 break-all">{usr.email}</td>
+                              <td className="px-4 py-3">
+                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                                  usr.kycStatus === 'approved' ? 'bg-emerald-100 text-emerald-700' :
+                                  usr.kycStatus === 'pending' ? 'bg-amber-100 text-amber-700' :
+                                  usr.kycStatus === 'rejected' ? 'bg-rose-100 text-rose-700' :
+                                  'bg-slate-100 text-slate-600'
+                                }`}>{usr.kycStatus}</span>
+                              </td>
+                              <td className="px-4 py-3 text-slate-500">{usr.role}</td>
+                              <td className="px-4 py-3 text-slate-500">{formatNGT(usr.createdAt)}</td>
+                              <td className="px-4 py-3 text-right">
+                                <button
+                                  onClick={() => handleReactivatePendingUser(usr.uid, usr.email)}
+                                  disabled={isReactivating}
+                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white text-[11px] font-bold rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                                >
+                                  <UserCheck className="w-3.5 h-3.5" />
+                                  {isReactivating ? 'Reactivating...' : 'Reactivate'}
+                                </button>
+                              </td>
+                            </tr>
+                          ));
+                        })()}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
               </div>
 
               <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 flex flex-col sm:flex-row gap-4 items-center justify-between">
@@ -2516,6 +2627,8 @@ export default function AdminCMS({
                   <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase ${
                     selectedTrader.accountStatus === 'active' ? 'bg-emerald-100 text-emerald-800' :
                     selectedTrader.accountStatus === 'suspended' ? 'bg-amber-100 text-amber-800' :
+                    selectedTrader.accountStatus === 'pending_reactivation' ? 'bg-blue-100 text-blue-800' :
+                    selectedTrader.accountStatus === 'deleted' ? 'bg-slate-200 text-slate-700' :
                     'bg-rose-100 text-rose-800'
                   }`}>{selectedTrader.accountStatus}</span>
                   <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase bg-slate-100 text-slate-600">{selectedTrader.role}</span>

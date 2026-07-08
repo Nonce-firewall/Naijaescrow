@@ -504,6 +504,11 @@ export default function UserDashboard({
       return;
     }
 
+    if (userProfile.accountStatus === 'pending_reactivation') {
+      addToast('Your account is pending admin reactivation. Contact support to reclaim your account.', 'error');
+      return;
+    }
+
     if (!cryptoAmount || cryptoAmount <= 0) {
       addToast('Please provide a valid USDT amount.', 'error');
       return;
@@ -705,6 +710,10 @@ export default function UserDashboard({
         notifs.push({ id: `unsusp-${Date.now()}`, message: '✅ Suspension lifted! Your account is active and you can trade again.', type: 'success', timestamp: Date.now() });
       } else if (userProfile.accountStatus === 'terminated') {
         notifs.push({ id: `term-${Date.now()}`, message: '❌ Your account has been permanently terminated. Contact support.', type: 'error', timestamp: Date.now() });
+      } else if (userProfile.accountStatus === 'pending_reactivation') {
+        notifs.push({ id: `react-${Date.now()}`, message: '⏳ Your account is pending admin reactivation. Contact support.', type: 'info', timestamp: Date.now() });
+      } else if (userProfile.accountStatus === 'active' && prev.accountStatus === 'pending_reactivation') {
+        notifs.push({ id: `reactdone-${Date.now()}`, message: '✅ Account reactivated! You can trade again.', type: 'success', timestamp: Date.now() });
       }
     }
 
@@ -792,6 +801,23 @@ export default function UserDashboard({
               </div>
             )}
             <div className="mt-2 text-xs text-amber-700">Contact support to appeal or resolve the issue.</div>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Pending reactivation account banner */}
+      {userProfile.accountStatus === 'pending_reactivation' && (
+        <motion.div
+          className="mb-6 bg-blue-50 border border-blue-300 rounded-2xl p-5 flex gap-4 items-start"
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          <Clock className="w-6 h-6 text-blue-600 shrink-0 mt-0.5" />
+          <div>
+            <div className="font-bold text-blue-900 text-sm">Account Reactivation Required</div>
+            <div className="text-xs text-blue-800 mt-1">Our records show you previously deleted this account. For your security, an administrator must approve reactivation before you can access the platform. Please contact admin to reclaim your account and trading history.</div>
+            <div className="mt-2 text-xs text-blue-700">Use the Support button (bottom-right) to reach the admin team.</div>
           </div>
         </motion.div>
       )}

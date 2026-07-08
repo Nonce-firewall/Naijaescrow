@@ -168,6 +168,12 @@ export default function App() {
             setIsInitializing(false);
             return;
           }
+          if (profile.accountStatus === 'pending_reactivation') {
+            await supabase.auth.signOut();
+            addToast('Our records show you previously deleted this account. Please contact admin to reactivate it before you can access the platform.', 'error');
+            setIsInitializing(false);
+            return;
+          }
           setUserProfile(profile);
           setIsAdminMode(profile.role === 'admin');
           setCurrentPage('dashboard');
@@ -445,6 +451,10 @@ export default function App() {
             addToast('✅ Account suspension lifted! You can place orders again.', 'success');
           } else if (newProfile.accountStatus === 'terminated') {
             addToast('❌ Your account has been permanently terminated.', 'error');
+          } else if (newProfile.accountStatus === 'pending_reactivation') {
+            addToast('⏳ Your account is pending admin reactivation. Please contact support.', 'info');
+          } else if (newProfile.accountStatus === 'active' && old.accountStatus === 'pending_reactivation') {
+            addToast('✅ Your account has been reactivated! You can now access the platform.', 'success');
           }
         }
 
