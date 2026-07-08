@@ -3,3 +3,4 @@
 - [Account deletion architecture](account-deletion.md) — client can't delete Supabase auth users; must use a server-side function with service-role key; KYC data retained for fraud/legal compliance.
 - [Motion animation patterns](motion-animation-patterns.md) — Reduced-motion, Vite HMR stale-URL recovery, and AnimatePresence conventions used in this codebase.
 - [RLS and security hardening](rls-security.md) — Full RLS + column-level trigger written to supabase/migrations/20260706_rls_indexes.sql; must be run in Supabase SQL Editor.
+- [TradingJourney seed-curve render gate](trading-journey-seed-curve.md) — an empty-state boolean can silently gate a fallback data path's rendering, not just its hint text; check all usages.
