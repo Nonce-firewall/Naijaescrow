@@ -174,6 +174,16 @@ export default function App() {
             setIsInitializing(false);
             return;
           }
+          if (profile.accountStatus === 'deleted') {
+            await supabase.auth.signOut();
+            addToast('Your account has been deleted. Please contact support if you believe this is an error.', 'error');
+            setIsInitializing(false);
+            return;
+          }
+          if (profile.accountStatus === 'suspended') {
+            // Suspended users may still sign in to see their dashboard & appeal,
+            // but trading is blocked in UserDashboard. Do NOT sign them out.
+          }
           setUserProfile(profile);
           setIsAdminMode(profile.role === 'admin');
           setCurrentPage('dashboard');
@@ -458,11 +468,116 @@ export default function App() {
           }
         }
 
+        // Lockout enforcement: if admin just deleted/terminated/marked-pending
+        // this account, sign the user out immediately so they cannot continue
+        // using the dashboard or perform transactions. The realtime event fires
+        // even while the tab is open and the JWT is still cached.
+        if (newProfile.accountStatus === 'deleted' ||
+            newProfile.accountStatus === 'terminated' ||
+            newProfile.accountStatus === 'pending_reactivation') {
+          (async () => {
+            await supabase.auth.signOut();
+            setUserProfile(null);
+            setCurrentUser(null);
+            setIsAdminMode(false);
+            if (newProfile.accountStatus === 'deleted') {
+              addToast('Your account has been deleted. Please contact support if you believe this is an error.', 'error');
+            } else if (newProfile.accountStatus === 'terminated') {
+              const reason = newProfile.terminateReason ? ` Reason: ${newProfile.terminateReason}` : '';
+              addToast(`Your account has been permanently terminated.${reason}`, 'error');
+            } else {
+              addToast('Our records show you previously deleted this account. Please contact admin to reactivate it before you can access the platform.', 'error');
+            }
+          })();
+          return;
+        }
+
         setUserProfile(newProfile);
       })
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
+  }, [currentUser]);
+
+  // Re-validate session on tab focus / window show. When admin deletes a user's
+  // auth account while the user's tab is in the background, the cached JWT in
+  // localStorage keeps the dashboard alive. Re-fetching the profile on focus
+  // catches this: if the profile is gone or the account is deleted/terminated/
+  // pending, we sign the user out immediately. Also handles the plain refresh
+  // case where getSession() returns a stale token for a deleted auth account.
+  useEffect(() => {
+    if (!currentUser) return;
+
+    const revalidate = () => {
+      (async () => {
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (!session) {
+            // Auth account gone — token invalidated server-side.
+            await supabase.auth.signOut();
+            setUserProfile(null);
+            setCurrentUser(null);
+            setIsAdminMode(false);
+            addToast('Your session is no longer valid. Please sign in again.', 'error');
+            return;
+          }
+          // Session still valid — re-fetch profile to catch admin status changes
+          // (deleted/terminated/pending) that happened while the tab was hidden.
+          const { data: row } = await supabase
+            .from('users')
+            .select('id,email,role,kyc_status,kyc_data,account_status,suspend_reason,terminate_reason,notification_preferences,created_at,deleted_at')
+            .eq('id', session.user.id)
+            .maybeSingle();
+          if (!row) {
+            // Profile row deleted entirely (e.g. admin hard-deleted via SQL).
+            await supabase.auth.signOut();
+            setUserProfile(null);
+            setCurrentUser(null);
+            setIsAdminMode(false);
+            addToast('Your account is no longer available. Please contact support.', 'error');
+            return;
+          }
+          const p = rowToUserProfile(row);
+          if (p.accountStatus === 'deleted' ||
+              p.accountStatus === 'terminated' ||
+              p.accountStatus === 'pending_reactivation') {
+            await supabase.auth.signOut();
+            setUserProfile(null);
+            setCurrentUser(null);
+            setIsAdminMode(false);
+            if (p.accountStatus === 'deleted') {
+              addToast('Your account has been deleted. Please contact support if you believe this is an error.', 'error');
+            } else if (p.accountStatus === 'terminated') {
+              const reason = p.terminateReason ? ` Reason: ${p.terminateReason}` : '';
+              addToast(`Your account has been permanently terminated.${reason}`, 'error');
+            } else {
+              addToast('Our records show you previously deleted this account. Please contact admin to reactivate it before you can access the platform.', 'error');
+            }
+          } else if (p.accountStatus === 'suspended') {
+            // Suspended users may still view dashboard — just update profile.
+            setUserProfile(p);
+          } else {
+            setUserProfile(p);
+          }
+        } catch {
+          // Network error during revalidation — non-fatal, don't lock out on flaky network.
+        }
+      })();
+    };
+
+    const handleVisibility = () => { if (document.visibilityState === 'visible') revalidate(); };
+    const handleFocus = () => revalidate();
+    const handleOnline = () => revalidate();
+
+    document.addEventListener('visibilitychange', handleVisibility);
+    window.addEventListener('focus', handleFocus);
+    window.addEventListener('online', handleOnline);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibility);
+      window.removeEventListener('focus', handleFocus);
+      window.removeEventListener('online', handleOnline);
+    };
   }, [currentUser]);
 
   const handleDatabaseRefresh = () => {
