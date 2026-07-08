@@ -45,3 +45,4 @@ The `delete-account` Netlify function uses service-role key → it bypasses RLS 
 ## Security headers
 - `netlify.toml` — global headers block with CSP, X-Frame-Options, X-Content-Type-Options, X-XSS-Protection, Referrer-Policy, Permissions-Policy
 - `delete-account.mts` — security headers on success response
+- **Gotcha:** `Permissions-Policy` was originally set to `camera=()`, which blocked the KYC live-camera capture site-wide with no permission prompt at all (not a browser-permission issue — the policy blocks the API before the browser can prompt). Fixed to `camera=(self)`. Any feature this app actually uses (camera, mic, etc.) must be set to `(self)`, not `()`, in this header — audit the full allowlist against real feature usage before hardening it further.

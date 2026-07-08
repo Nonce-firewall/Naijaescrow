@@ -36,5 +36,8 @@
     X-XSS-Protection = "1; mode=block"
     # Only send the origin (no path) as the Referer header on cross-origin requests
     Referrer-Policy = "strict-origin-when-cross-origin"
-    # Disable browser features that are not needed by this app
-    Permissions-Policy = "camera=(), microphone=(), geolocation=(), payment=(), usb=(), bluetooth=()"
+    # Disable browser features that are not needed by this app.
+    # camera=(self) allows the live KYC selfie/ID capture on this origin only —
+    # do not change this back to camera=() or the KYC "Open Camera" step will
+    # be silently blocked (no permission prompt at all, just an immediate error).
+    Permissions-Policy = "camera=(self), microphone=(), geolocation=(), payment=(), usb=(), bluetooth=()"
