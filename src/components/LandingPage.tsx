@@ -160,8 +160,8 @@ const STEPS = [
   {
     num: '01',
     icon: <UserPlus className="w-5 h-5" />,
-    title: 'Create Free Account',
-    desc: 'Sign up with your Google Account or Email in under 60 seconds, stress free and smooth experience',
+    title: 'Create An Account',
+    desc: 'Sign up with your Google Account or Email & Password in under 60 seconds.',
     color: 'emerald',
     accent: 'bg-emerald-500/10 border-emerald-500/25 text-emerald-400',
     numColor: 'text-emerald-600',
