@@ -13,7 +13,7 @@ export default function PrivacyPolicyPage() {
             className="flex items-center gap-2 text-sm font-semibold text-gray-500 hover:text-[#008751] transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
-            Back to 9ija Escrow
+            Back to Home
           </a>
           <div className="flex items-center gap-2 text-sm font-bold text-[#008751]">
             <ShieldCheck className="w-4 h-4" />
@@ -80,7 +80,7 @@ export default function PrivacyPolicyPage() {
             {
               num: '8',
               title: 'Your Rights',
-              body: 'You may request deletion of your account and associated data by contacting support. Note that transaction records, dispute history, and KYC documents may be retained for regulatory compliance even after account deletion.',
+              body: 'You may request the deletion of your account on your dashboard settings. However, your transaction records, dispute history, and KYC documents may be retained for regulatory compliance even after account deletion.',
             },
           ].map((section) => (
             <div key={section.num} className="px-6 py-5">
