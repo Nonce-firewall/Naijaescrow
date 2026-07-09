@@ -141,17 +141,17 @@ export default function AuthPage({ onBack, onAuthSuccess, addToast, initialMode 
         if (profile.accountStatus === 'terminated') {
           await supabase.auth.signOut();
           const reason = profile.terminateReason ? ` Reason: ${profile.terminateReason}` : '';
-          setAuthErrorAlert(`Your account has been permanently terminated by the platform.${reason} Contact support for assistance.`);
+          setAuthErrorAlert(`Your account has been permanently terminated!${reason} Contact support for assistance.`);
           return;
         }
         if (profile.accountStatus === 'pending_reactivation') {
           await supabase.auth.signOut();
-          setAuthErrorAlert('This account was previously deleted and is awaiting reactivation. Please contact the administrator to restore your access.');
+          setAuthErrorAlert('This account was previously deleted! Please contact the administrator to restore your access.');
           return;
         }
         if (profile.accountStatus === 'deleted') {
           await supabase.auth.signOut();
-          setAuthErrorAlert('This account has been deleted. Please contact the administrator if you believe this is an error or would like to request reactivation.');
+          setAuthErrorAlert('This account has been deleted. Please contact the administrator if you believe this is a mistake.');
           return;
         }
         addToast('Sign in successful!', 'success');
@@ -172,17 +172,17 @@ export default function AuthPage({ onBack, onAuthSuccess, addToast, initialMode 
           if (profile.accountStatus === 'terminated') {
             await supabase.auth.signOut();
             const reason = profile.terminateReason ? ` Reason: ${profile.terminateReason}` : '';
-            setAuthErrorAlert(`Your account has been permanently terminated by the platform.${reason} Contact support for assistance.`);
+            setAuthErrorAlert(`Your account has been permanently terminated.${reason} Contact support for assistance.`);
             return;
           }
           if (profile.accountStatus === 'pending_reactivation') {
             await supabase.auth.signOut();
-            setAuthErrorAlert('This account was previously deleted and is awaiting reactivation. Please contact the administrator to restore your access.');
+            setAuthErrorAlert('This account was previously deleted. Please contact the administrator to restore your access.');
             return;
           }
           if (profile.accountStatus === 'deleted') {
             await supabase.auth.signOut();
-            setAuthErrorAlert('This account has been deleted. Please contact the administrator if you believe this is an error or would like to request reactivation.');
+            setAuthErrorAlert('This account has been deleted. Please contact the administrator if you believe this is a mistake.');
             return;
           }
           addToast('Welcome back! You already have an account — signed in successfully.', 'success');
@@ -208,7 +208,7 @@ export default function AuthPage({ onBack, onAuthSuccess, addToast, initialMode 
           const newProfile = await getOrCreateUserProfile(data.user!.id, data.user!.email || '');
           if (newProfile.accountStatus === 'pending_reactivation' || newProfile.accountStatus === 'deleted') {
             await supabase.auth.signOut();
-            setAuthErrorAlert('This email address belongs to a previously deleted account. Please contact the administrator to request reactivation — your trade history and KYC records are on file.');
+            setAuthErrorAlert('This email address belongs to a previously deleted account. Please contact the administrator to request reactivation.');
             return;
           }
           addToast('Account created successfully!', 'success');
@@ -286,7 +286,7 @@ export default function AuthPage({ onBack, onAuthSuccess, addToast, initialMode 
                   <p className="text-sm text-gray-500 leading-relaxed">
                     We sent a password reset link to{' '}
                     <span className="font-semibold text-[#1A1A1A]">{forgotEmail}</span>.
-                    Click the link in that email to set a new password — it expires in 1 hour.
+                    Click the link in your email to set a new password — it expires in 1 hour.
                   </p>
                 </div>
                 <div className="pt-2 space-y-3">
@@ -407,7 +407,7 @@ export default function AuthPage({ onBack, onAuthSuccess, addToast, initialMode 
                   <p className="text-sm text-gray-500 leading-relaxed">
                     We sent a verification link to{' '}
                     <span className="font-semibold text-[#1A1A1A]">{verificationEmail}</span>.
-                    Click the link to activate your account, then come back and sign in.
+                    Click the link to activate your account, then come back to refresh your browser or sign in.
                   </p>
                 </div>
                 <div className="pt-2 space-y-3">
