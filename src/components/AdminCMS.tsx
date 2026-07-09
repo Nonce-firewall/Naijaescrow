@@ -1876,7 +1876,7 @@ export default function AdminCMS({
                           const isPendingReactivation = usr.accountStatus === 'pending_reactivation';
                           const deletedDate = usr.deletedAt
                             ? formatNGT(usr.deletedAt)
-                            : isPendingReactivation ? 'Re-registered (pending approval)' : 'Unknown';
+                            : '—';
                           return (
                             <tr key={usr.uid} className="hover:bg-slate-50/50 transition">
                               <td className="px-6 py-4">
@@ -2855,7 +2855,7 @@ export default function AdminCMS({
                       <span className="font-bold text-amber-900">
                         {complianceViewUser.deletedAt
                           ? formatNGT(complianceViewUser.deletedAt)
-                          : 'Unknown'}
+                          : '—'}
                       </span>
                     </div>
                     <div>
