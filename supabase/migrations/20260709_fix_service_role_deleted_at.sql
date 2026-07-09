@@ -6,39 +6,62 @@ The `guard_user_column_privileges` trigger blocks changes to `deleted_at`,
 `account_status`, `email`, `role`, `suspend_reason`, and `terminate_reason`
 unless `is_admin()` returns true.
 
-`is_admin()` resolves to:
-  SELECT EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role = 'admin')
-
 When the Netlify `delete-account` function (or any server-side Edge Function)
-runs with the **service-role key**, Supabase bypasses RLS policies — but NOT
+runs with the service-role key, Supabase bypasses RLS policies — but NOT
 database triggers. Inside the trigger, `auth.uid()` returns NULL because the
-service-role JWT carries no `sub` claim. So `is_admin()` is false, and the
-trigger raises a permission exception that rolls back the entire UPDATE,
-leaving `deleted_at` as NULL even though the account_status row-scrub appeared
-to succeed (it did not — the whole transaction was silently rolled back by the
-Supabase JS client swallowing the error response body).
+service-role JWT carries no `sub` claim. So `is_admin()` is false, the trigger
+raises a permission exception, and the entire UPDATE rolls back, leaving
+`deleted_at` as NULL.
+
+## Additional root cause discovered
+`is_admin_email()` was never successfully created in the database because the
+original migration (20260706_rls_indexes.sql) used a single `$` dollar-quote
+delimiter instead of the required `$$`, causing a silent parse failure.
+The guard trigger therefore also failed to compile correctly on any execution
+path that reached `is_admin_email()`.
 
 ## Fix
-Add an explicit service-role bypass as the very first check in the trigger so
-that Netlify/Edge Functions using the service-role key can write all columns
-that are otherwise admin-only.
+1. Re-create `is_admin()` and `is_admin_email()` with correct `$$` delimiters.
+2. Add a service-role bypass as the first check in `guard_user_column_privileges`
+   so Netlify/Edge Functions using the service-role key can write `deleted_at`.
 
-`auth.jwt() ->> 'role'` reads from the request JWT claims that PostgREST injects
-into the session. For service-role requests this is always 'service_role'.
-This is the standard Supabase-recommended way to detect service-role inside a
-trigger or RLS function.
-
-## Security
-- This does NOT weaken user-facing RLS. RLS policies already block anon/
-  authenticated from writing these columns; the trigger is a secondary guard
-  for defence in depth.
-- The service-role key is secret and never shipped to the browser. Only
-  trusted server-side code (Netlify functions, Supabase Edge Functions, the
-  Replit server-side endpoint) can present it.
-- No change to any RLS policy or the trigger attachment — only the function
-  body is updated.
+## Security note
+The service-role key is secret and never shipped to the browser. Only trusted
+server-side code can present it. No RLS policy is weakened by this change.
 */
 
+-- ---------------------------------------------------------------------------
+-- 1. Helper — check admin by role (SECURITY DEFINER avoids recursion)
+-- ---------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION is_admin()
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM users WHERE id = auth.uid() AND role = 'admin'
+  );
+$$;
+
+-- ---------------------------------------------------------------------------
+-- 2. Helper — check admin by email
+--    (was broken in 20260706_rls_indexes.sql due to single-$ dollar-quote)
+-- ---------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION is_admin_email()
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT (auth.jwt() ->> 'email') = 'cryptogangstar247@gmail.com';
+$$;
+
+-- ---------------------------------------------------------------------------
+-- 3. Trigger function — updated with service-role bypass
+-- ---------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION guard_user_column_privileges()
 RETURNS trigger
 LANGUAGE plpgsql
@@ -46,21 +69,19 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 BEGIN
-  -- ── Service-role bypass ───────────────────────────────────────────────────
-  -- The service-role key is used exclusively by trusted server-side code
-  -- (Netlify delete-account function, Edge Functions). It bypasses RLS but
-  -- NOT triggers. Allow it through here so scrub + deleted_at writes succeed.
+  -- ── Service-role bypass ────────────────────────────────────────────────
+  -- Service-role key (Netlify delete-account, Edge Functions) bypasses RLS
+  -- but NOT triggers. Allow it through so scrub + deleted_at writes succeed.
   IF (auth.jwt() ->> 'role') = 'service_role' THEN
     RETURN NEW;
   END IF;
 
-  -- ── Admin bypass ─────────────────────────────────────────────────────────
-  -- Admins (by role lookup or hardcoded email) bypass all column restrictions.
+  -- ── Admin bypass ──────────────────────────────────────────────────────
   IF is_admin() OR is_admin_email() THEN
     RETURN NEW;
   END IF;
 
-  -- ── Blocked columns (regular users) ──────────────────────────────────────
+  -- ── Blocked columns (regular users) ───────────────────────────────────
   IF NEW.role IS DISTINCT FROM OLD.role THEN
     RAISE EXCEPTION 'Permission denied: role may only be changed by an admin'
       USING ERRCODE = '42501';
@@ -101,8 +122,9 @@ BEGIN
 END;
 $$;
 
--- Trigger attachment is unchanged (BEFORE UPDATE, FOR EACH ROW) — just
--- re-drop and recreate for idempotency.
+-- ---------------------------------------------------------------------------
+-- 4. Re-attach trigger (idempotent)
+-- ---------------------------------------------------------------------------
 DROP TRIGGER IF EXISTS enforce_user_column_privileges ON users;
 
 CREATE TRIGGER enforce_user_column_privileges
