@@ -68,6 +68,11 @@ export default function App() {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   // Keep a non-stale ref so realtime callbacks can compare old vs new profile without stale closures
   const userProfileRef = useRef<UserProfile | null>(null);
+  // Timestamp of the current auth session start. Realtime order/KYC notifications are
+  // only shown for events that occurred AFTER this timestamp, preventing a flood of
+  // stale toasts when restore_deleted_user cascades a user_id update across all
+  // historical orders (ON UPDATE CASCADE triggers UPDATE events for every past order).
+  const sessionStartRef = useRef<number>(Date.now());
   const [isAdminMode, setIsAdminMode] = useState<boolean>(false);
   const [isInitializing, setIsInitializing] = useState<boolean>(true);
 
@@ -181,6 +186,12 @@ export default function App() {
           setIsInitializing(false);
           return;
         }
+        // Reset the session start boundary so that only realtime events fired
+        // AFTER this moment generate toast notifications. Without this, the
+        // ON UPDATE CASCADE that fires when restore_deleted_user repoints the
+        // user's id to a new auth UID would trigger toasts for every historical
+        // completed/rejected order simultaneously.
+        sessionStartRef.current = Date.now();
         setCurrentUser(session.user);
         try {
           const profile = await getOrCreateUserProfile(session.user.id, session.user.email || '');
@@ -313,14 +324,22 @@ export default function App() {
       .channel('orders-changes')
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders' }, (payload) => {
         const updated = payload.new as any;
-        // Push notification to trader when their order is processed
+        // Push notification to trader when their order is processed.
+        // Guard: only notify if processed_at is AFTER this session started.
+        // When restore_deleted_user repoints users.id to a new auth UID, the
+        // ON UPDATE CASCADE fires UPDATE events on all historical orders (only
+        // user_id changes, not status/processed_at). Those stale events have
+        // processed_at older than sessionStartRef.current and are silently dropped.
         if (isTrader && updated?.user_id === currentUser.id) {
-          if (updated?.status === 'completed') {
-            const label = updated?.type === 'buy' ? `${updated?.crypto_amount} USDT purchase` : `₦${Number(updated?.ngn_amount).toLocaleString()} sell`;
-            addToast(`✅ Order approved! Your ${label} has been completed.`, 'success');
-          } else if (updated?.status === 'rejected') {
-            const reason = updated?.rejection_reason ? ` Reason: ${updated.rejection_reason}` : '';
-            addToast(`❌ Order declined.${reason}`, 'error');
+          const processedAt: number = updated?.processed_at ?? 0;
+          if (processedAt > sessionStartRef.current) {
+            if (updated?.status === 'completed') {
+              const label = updated?.type === 'buy' ? `${updated?.crypto_amount} USDT purchase` : `₦${Number(updated?.ngn_amount).toLocaleString()} sell`;
+              addToast(`✅ Order approved! Your ${label} has been completed.`, 'success');
+            } else if (updated?.status === 'rejected') {
+              const reason = updated?.rejection_reason ? ` Reason: ${updated.rejection_reason}` : '';
+              addToast(`❌ Order declined.${reason}`, 'error');
+            }
           }
         }
         fetchOrders();
