@@ -174,9 +174,9 @@ export default function App() {
                 const reason = profile.terminateReason ? ` Reason: ${profile.terminateReason}` : '';
                 addToast(`Your account has been permanently terminated.${reason}`, 'error');
               } else if (profile.accountStatus === 'pending_reactivation') {
-                addToast('Our records show you previously deleted this account. Please contact admin to reactivate it before you can access the platform.', 'error');
+                addToast('Our records show you previously deleted this account. Please contact admin to reactivate it before you can regain access to your account.', 'error');
               } else {
-                addToast('Your account has been deleted. Please contact support if you believe this is an error.', 'error');
+                addToast('Your account has been deleted. Please contact support if you believe this is a mistake.', 'error');
               }
             }
             setIsInitializing(false);
@@ -228,9 +228,9 @@ export default function App() {
                 const reason = profile.terminateReason ? ` Reason: ${profile.terminateReason}` : '';
                 addToast(`Your account has been permanently terminated.${reason}`, 'error');
               } else if (profile.accountStatus === 'pending_reactivation') {
-                addToast('Our records show you previously deleted this account. Please contact admin to reactivate it before you can access the platform.', 'error');
+                addToast('Our records show you previously deleted this account. Please contact admin to reactivate it before you can regain access to your account.', 'error');
               } else {
-                addToast('Your account has been deleted. Please contact support if you believe this is an error.', 'error');
+                addToast('Your account has been deleted. Please contact support if you believe this is a mistake.', 'error');
               }
             }
             setIsInitializing(false);
@@ -557,7 +557,7 @@ export default function App() {
               const reason = newProfile.terminateReason ? ` Reason: ${newProfile.terminateReason}` : '';
               addToast(`Your account has been permanently terminated.${reason}`, 'error');
             } else {
-              addToast('Our records show you previously deleted this account. Please contact admin to reactivate it before you can access the platform.', 'error');
+              addToast('Our records show you previously deleted this account. Please contact admin to reactivate it before you can regain access to your account.', 'error');
             }
           })();
           return;
@@ -621,12 +621,12 @@ export default function App() {
             // the mount-time getSession() or onAuthStateChange gating above.
             if (shouldHandleAccountGate(session.user?.id)) {
               if (p.accountStatus === 'deleted') {
-                addToast('Your account has been deleted. Please contact support if you believe this is an error.', 'error');
+                addToast('Your account has been deleted. Please contact support if you believe this is a mistake.', 'error');
               } else if (p.accountStatus === 'terminated') {
                 const reason = p.terminateReason ? ` Reason: ${p.terminateReason}` : '';
                 addToast(`Your account has been permanently terminated.${reason}`, 'error');
               } else {
-                addToast('Our records show you previously deleted this account. Please contact admin to reactivate it before you can access the platform.', 'error');
+                addToast('Our records show you previously deleted this account. Please contact admin to reactivate it before you can regain access to your account.', 'error');
               }
             }
           } else if (p.accountStatus === 'suspended') {
