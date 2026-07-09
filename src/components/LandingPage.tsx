@@ -60,7 +60,7 @@ function Modal({ type, onClose }: { type: ModalType; onClose: () => void }) {
               </section>
               <section>
                 <h3 className="font-bold text-[#1A1A1A] mb-1">6. Contact</h3>
-                <p>Privacy inquiries: <span className="text-[#008751] font-semibold">privacy@9ijaescrow.com</span></p>
+                <p>Privacy inquiries: <span className="text-[#008751] font-semibold">privacy@9ijaescrow.com.ng</span></p>
               </section>
             </>
           )}
