@@ -73,6 +73,22 @@ export default function App() {
   // stale toasts when restore_deleted_user cascades a user_id update across all
   // historical orders (ON UPDATE CASCADE triggers UPDATE events for every past order).
   const sessionStartRef = useRef<number>(Date.now());
+  // Supabase v2 fires onAuthStateChange with an initial event (INITIAL_SESSION,
+  // and sometimes SIGNED_IN) for the SAME session that the manual
+  // supabase.auth.getSession() call on mount also resolves. Both paths run the
+  // identical account-status gating (terminated/pending_reactivation/deleted)
+  // and would otherwise each fire their own toast + signOut, producing the
+  // duplicate "account deleted" toasts users saw on login and on landing.
+  // This ref dedupes by access_token so the gating logic — and its toast —
+  // only ever runs once per underlying session, no matter which handler
+  // (mount getSession, onAuthStateChange, focus revalidation) observes it first.
+  const handledGateTokensRef = useRef<Set<string>>(new Set());
+  const shouldHandleAccountGate = (token: string | undefined | null): boolean => {
+    if (!token) return true;
+    if (handledGateTokensRef.current.has(token)) return false;
+    handledGateTokensRef.current.add(token);
+    return true;
+  };
   const [isAdminMode, setIsAdminMode] = useState<boolean>(false);
   const [isInitializing, setIsInitializing] = useState<boolean>(true);
 
@@ -141,22 +157,22 @@ export default function App() {
           // runs on page reload / tab restore when a JWT is still valid. Without
           // these checks a deleted/terminated user whose token hasn't expired yet
           // would briefly see their dashboard before onAuthStateChange corrects it.
-          if (profile.accountStatus === 'terminated') {
+          // Gate on shouldHandleAccountGate so this doesn't fire a second toast
+          // when onAuthStateChange's initial event handles the same session.
+          if (profile.accountStatus === 'terminated' || profile.accountStatus === 'pending_reactivation' || profile.accountStatus === 'deleted') {
+            if (!shouldHandleAccountGate(session.access_token)) {
+              setIsInitializing(false);
+              return;
+            }
             await supabase.auth.signOut();
-            const reason = profile.terminateReason ? ` Reason: ${profile.terminateReason}` : '';
-            addToast(`Your account has been permanently terminated.${reason}`, 'error');
-            setIsInitializing(false);
-            return;
-          }
-          if (profile.accountStatus === 'pending_reactivation') {
-            await supabase.auth.signOut();
-            addToast('Our records show you previously deleted this account. Please contact admin to reactivate it before you can access the platform.', 'error');
-            setIsInitializing(false);
-            return;
-          }
-          if (profile.accountStatus === 'deleted') {
-            await supabase.auth.signOut();
-            addToast('Your account has been deleted. Please contact support if you believe this is an error.', 'error');
+            if (profile.accountStatus === 'terminated') {
+              const reason = profile.terminateReason ? ` Reason: ${profile.terminateReason}` : '';
+              addToast(`Your account has been permanently terminated.${reason}`, 'error');
+            } else if (profile.accountStatus === 'pending_reactivation') {
+              addToast('Our records show you previously deleted this account. Please contact admin to reactivate it before you can access the platform.', 'error');
+            } else {
+              addToast('Your account has been deleted. Please contact support if you believe this is an error.', 'error');
+            }
             setIsInitializing(false);
             return;
           }
@@ -195,22 +211,22 @@ export default function App() {
         setCurrentUser(session.user);
         try {
           const profile = await getOrCreateUserProfile(session.user.id, session.user.email || '');
-          if (profile.accountStatus === 'terminated') {
+          // Gate on shouldHandleAccountGate so this doesn't fire a second toast
+          // when the mount-time getSession() handler already handled the same session.
+          if (profile.accountStatus === 'terminated' || profile.accountStatus === 'pending_reactivation' || profile.accountStatus === 'deleted') {
+            if (!shouldHandleAccountGate(session.access_token)) {
+              setIsInitializing(false);
+              return;
+            }
             await supabase.auth.signOut();
-            const reason = profile.terminateReason ? ` Reason: ${profile.terminateReason}` : '';
-            addToast(`Your account has been permanently terminated.${reason}`, 'error');
-            setIsInitializing(false);
-            return;
-          }
-          if (profile.accountStatus === 'pending_reactivation') {
-            await supabase.auth.signOut();
-            addToast('Our records show you previously deleted this account. Please contact admin to reactivate it before you can access the platform.', 'error');
-            setIsInitializing(false);
-            return;
-          }
-          if (profile.accountStatus === 'deleted') {
-            await supabase.auth.signOut();
-            addToast('Your account has been deleted. Please contact support if you believe this is an error.', 'error');
+            if (profile.accountStatus === 'terminated') {
+              const reason = profile.terminateReason ? ` Reason: ${profile.terminateReason}` : '';
+              addToast(`Your account has been permanently terminated.${reason}`, 'error');
+            } else if (profile.accountStatus === 'pending_reactivation') {
+              addToast('Our records show you previously deleted this account. Please contact admin to reactivate it before you can access the platform.', 'error');
+            } else {
+              addToast('Your account has been deleted. Please contact support if you believe this is an error.', 'error');
+            }
             setIsInitializing(false);
             return;
           }
@@ -235,6 +251,13 @@ export default function App() {
         setIsAdminMode(false);
         setShowPasswordReset(false);
         setCurrentPage('landing');
+        // Deliberately NOT clearing handledGateTokensRef here: a SIGNED_OUT event
+        // fires as part of the gating flow itself (signOut() is called before the
+        // toast), so clearing now would race with any other in-flight callback
+        // still holding a reference to the same now-superseded access_token and
+        // let it re-pass the gate, reintroducing the duplicate toast. The set is
+        // small (one token per completed sign-in attempt) and a full page reload
+        // resets it anyway, so we just let it grow for the tab's lifetime.
       }
       setIsInitializing(false);
     });
@@ -587,13 +610,18 @@ export default function App() {
             setUserProfile(null);
             setCurrentUser(null);
             setIsAdminMode(false);
-            if (p.accountStatus === 'deleted') {
-              addToast('Your account has been deleted. Please contact support if you believe this is an error.', 'error');
-            } else if (p.accountStatus === 'terminated') {
-              const reason = p.terminateReason ? ` Reason: ${p.terminateReason}` : '';
-              addToast(`Your account has been permanently terminated.${reason}`, 'error');
-            } else {
-              addToast('Our records show you previously deleted this account. Please contact admin to reactivate it before you can access the platform.', 'error');
+            // Gate on shouldHandleAccountGate so a focus/visibility revalidation
+            // doesn't fire a duplicate toast for a session already handled by
+            // the mount-time getSession() or onAuthStateChange gating above.
+            if (shouldHandleAccountGate(session.access_token)) {
+              if (p.accountStatus === 'deleted') {
+                addToast('Your account has been deleted. Please contact support if you believe this is an error.', 'error');
+              } else if (p.accountStatus === 'terminated') {
+                const reason = p.terminateReason ? ` Reason: ${p.terminateReason}` : '';
+                addToast(`Your account has been permanently terminated.${reason}`, 'error');
+              } else {
+                addToast('Our records show you previously deleted this account. Please contact admin to reactivate it before you can access the platform.', 'error');
+              }
             }
           } else if (p.accountStatus === 'suspended') {
             // Suspended users may still view dashboard — just update profile.
