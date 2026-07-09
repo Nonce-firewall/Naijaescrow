@@ -4,3 +4,4 @@
 - [Motion animation patterns](motion-animation-patterns.md) — Reduced-motion, Vite HMR stale-URL recovery, and AnimatePresence conventions used in this codebase.
 - [RLS and security hardening](rls-security.md) — Full RLS + column-level trigger written to supabase/migrations/20260706_rls_indexes.sql; must be run in Supabase SQL Editor.
 - [TradingJourney seed-curve render gate](trading-journey-seed-curve.md) — an empty-state boolean can silently gate a fallback data path's rendering, not just its hint text; check all usages.
+- [Disputes/orders cascade on reactivation](disputes-reactivation-cascade.md) — user_id-bearing tables must have ON UPDATE CASCADE FK to users.id or reactivation (id repoint) orphans their rows silently.
