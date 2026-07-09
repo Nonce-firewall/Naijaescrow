@@ -232,12 +232,11 @@ export default function AuthPage({ onBack, onAuthSuccess, addToast, initialMode 
       console.error(err);
       let msg = 'Authentication failed. Please check your details.';
       if (err.message?.includes('Invalid login credentials')) {
-        // "Invalid login credentials" also fires when the Supabase auth user no longer
-        // exists (e.g. the account was deleted). Guide the user toward the sign-up form
-        // which will detect the deletion via restore_deleted_user and show the correct
-        // reactivation message, rather than leaving them wondering if they mistyped.
+        // Fires when password is wrong, auth account doesn't exist, or account was
+        // re-created via Google SSO (Google-only accounts have no email/password identity).
+        // For reactivated accounts: use Forgot Password to set a new password, or sign in with Google.
         msg = isLogin
-          ? 'Invalid email or password. If you previously deleted this account, your credentials are no longer valid — use Sign Up and our system will detect it and guide you through reactivation.'
+          ? "Invalid email or password. If you signed up with Google, use 'Continue with Google'. Otherwise, use 'Forgot password?' to set or reset your password."
           : 'Invalid email or password.';
       } else if (err.message?.includes('already registered') || err.message?.includes('already been registered')) {
         msg = 'Email already registered. Please sign in.';

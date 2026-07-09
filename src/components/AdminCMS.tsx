@@ -619,7 +619,7 @@ export default function AdminCMS({
 
             {/* Compliance */}
             <button onClick={() => setActiveTab('compliance')} className={`relative flex-shrink-0 flex flex-col items-center gap-1.5 px-3.5 py-2.5 rounded-xl border font-bold transition cursor-pointer min-w-[72px] ${activeTab === 'compliance' ? 'bg-[#008751] text-white border-[#008751] shadow-sm' : 'bg-white text-gray-600 border-[#E0E7E0]'}`}>
-              {kycUsers.filter(u => u.accountStatus === 'deleted').length > 0 && <span className="absolute -top-1.5 -right-1.5 w-4 h-4 flex items-center justify-center rounded-full text-[8px] font-extrabold bg-slate-700 text-white">{kycUsers.filter(u => u.accountStatus === 'deleted').length}</span>}
+              {kycUsers.filter(u => u.accountStatus === 'deleted' || u.accountStatus === 'pending_reactivation').length > 0 && <span className="absolute -top-1.5 -right-1.5 w-4 h-4 flex items-center justify-center rounded-full text-[8px] font-extrabold bg-slate-700 text-white">{kycUsers.filter(u => u.accountStatus === 'deleted' || u.accountStatus === 'pending_reactivation').length}</span>}
               <Lock className="w-4 h-4" />
               <span className="text-[9px] uppercase tracking-wide leading-tight text-center">Compliance</span>
             </button>
@@ -695,7 +695,7 @@ export default function AdminCMS({
               className={`w-full text-left px-5 py-3.5 rounded-2xl text-xs font-bold uppercase tracking-wider flex items-center justify-between border transition cursor-pointer ${activeTab === 'compliance' ? 'bg-[#008751] text-white border-[#008751] shadow-sm' : 'bg-white hover:bg-[#F7F9F7] text-gray-700 border-[#E0E7E0] hover:border-gray-400'}`}
             >
               <span className="flex items-center gap-3"><Lock className="w-4 h-4" /> Compliance Audit</span>
-              {kycUsers.filter(u => u.accountStatus === 'deleted').length > 0 && <span className="bg-slate-700 text-white font-extrabold px-2 py-0.5 rounded-full text-[10px]">{kycUsers.filter(u => u.accountStatus === 'deleted').length}</span>}
+              {kycUsers.filter(u => u.accountStatus === 'deleted' || u.accountStatus === 'pending_reactivation').length > 0 && <span className="bg-slate-700 text-white font-extrabold px-2 py-0.5 rounded-full text-[10px]">{kycUsers.filter(u => u.accountStatus === 'deleted' || u.accountStatus === 'pending_reactivation').length}</span>}
             </button>
 
             <button
@@ -1835,10 +1835,10 @@ export default function AdminCMS({
 
               <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 flex flex-col sm:flex-row gap-4 items-center justify-between">
                 <div className="text-xs text-slate-600 font-medium">
-                  Total scrubbed accounts: <strong className="text-slate-900">{kycUsers.filter(u => u.accountStatus === 'deleted').length}</strong>
+                  Total scrubbed accounts: <strong className="text-slate-900">{kycUsers.filter(u => u.accountStatus === 'deleted' || u.accountStatus === 'pending_reactivation').length}</strong>
                 </div>
                 <span className="bg-slate-100 text-slate-600 text-[10px] font-bold px-2.5 py-1 rounded-full border border-slate-200">
-                  With retained KYC: {kycUsers.filter(u => u.accountStatus === 'deleted' && u.kycData).length}
+                  With retained KYC: {kycUsers.filter(u => (u.accountStatus === 'deleted' || u.accountStatus === 'pending_reactivation') && u.kycData).length}
                 </span>
               </div>
 
@@ -1855,22 +1855,26 @@ export default function AdminCMS({
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 text-slate-700">
-                      {kycUsers.filter(u => u.accountStatus === 'deleted').length === 0 ? (
+                      {kycUsers.filter(u => u.accountStatus === 'deleted' || u.accountStatus === 'pending_reactivation').length === 0 ? (
                         <tr>
                           <td colSpan={5} className="px-6 py-12 text-center text-slate-400">
                             No deleted accounts on record.
                           </td>
                         </tr>
                       ) : (
-                        kycUsers.filter(u => u.accountStatus === 'deleted').map((usr) => {
+                        kycUsers.filter(u => u.accountStatus === 'deleted' || u.accountStatus === 'pending_reactivation').map((usr) => {
+                          const isPendingReactivation = usr.accountStatus === 'pending_reactivation';
                           const deletedDate = usr.deletedAt
                             ? formatNGT(usr.deletedAt)
-                            : 'Unknown';
+                            : isPendingReactivation ? 'Re-registered (pending approval)' : 'Unknown';
                           return (
                             <tr key={usr.uid} className="hover:bg-slate-50/50 transition">
                               <td className="px-6 py-4">
                                 <div className="font-bold text-slate-900">{usr.email}</div>
                                 <div className="text-[10px] text-slate-400 font-mono mt-0.5 select-all">ID: {usr.uid}</div>
+                                {isPendingReactivation && (
+                                  <span className="inline-block mt-1 text-[9px] font-bold px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 border border-blue-200">Re-registered · Pending Admin Approval</span>
+                                )}
                               </td>
                               <td className="px-6 py-4 text-slate-600">{deletedDate}</td>
                               <td className="px-6 py-4">

@@ -3,26 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { supabase } from '../lib/supabase';
 import { UserProfile, NotificationPreferences } from '../types';
 import { updateNotificationPreferences, changePassword, deleteAccount } from '../lib/dbHelpers';
-import {
-  LogOut,
-  UserCheck,
-  Clock,
-  XCircle,
-  AlertCircle,
-  ArrowLeftRight,
-  Menu,
-  X,
-  UserCircle2,
-  Bell,
-  Settings,
-  ChevronDown,
-  KeyRound,
-  BellRing,
-  Eye,
-  EyeOff,
-  Trash2,
-  AlertTriangle,
-} from 'lucide-react';
+import { LogOut, UserCheck, Clock, Circle as XCircle, CircleAlert as AlertCircle, ArrowLeftRight, Menu, X, CircleUser as UserCircle2, Bell, Settings, ChevronDown, KeyRound, BellRing, Eye, EyeOff, Trash2, TriangleAlert as AlertTriangle } from 'lucide-react';
 import SupportButton from './SupportButton';
 
 const DEFAULT_NOTIF_PREFS: NotificationPreferences = {
@@ -569,7 +550,6 @@ function DeleteAccountModal({
     try {
       await deleteAccount();
       await supabase.auth.signOut();
-      addToast('Your account has been permanently deleted.', 'info');
       onDeleted();
     } catch (err: any) {
       addToast(err.message || 'Failed to delete account.', 'error');
