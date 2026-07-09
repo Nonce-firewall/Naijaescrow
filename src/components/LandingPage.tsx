@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
-import { ShieldCheck, TrendingUp, Lock, ArrowRight, Bell, UserCheck, X, Mail, MessageCircle, Zap, ChevronRight, Activity, BarChart3, Users, UserPlus, ScanFace, ReceiptText, Banknote } from 'lucide-react';
+import { ShieldCheck, TrendingUp, Lock, ArrowRight, Bell, UserCheck, X, Mail, MessageCircle, Zap, ChevronRight, Activity, ChartBar as BarChart3, Users, UserPlus, ScanFace, ReceiptText, Banknote } from 'lucide-react';
 import { Announcement, AdminSettings } from '../types';
 import { getPublicStats, PublicStats } from '../lib/dbHelpers';
 
@@ -361,17 +361,26 @@ function StatsStrip() {
   const [stats, setStats]     = useState<PublicStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [fetchedAt, setFetchedAt] = useState<number | null>(null);
-  // Defer the network fetch until the section is near the viewport — avoids a
-  // burst of work (network response + RAF count-up) coinciding with the scroll.
+  // Defer the network fetch until the section is near the viewport.
   const sectionRef = useRef<HTMLElement>(null);
   const [visible, setVisible] = useState(false);
+  // revealed drives the CSS fade-in — set true on first intersection so only
+  // one paint/opacity transition fires instead of N simultaneous motion layers.
+  const [revealed, setRevealed] = useState(false);
 
   useEffect(() => {
     const el = sectionRef.current;
     if (!el) return;
     const obs = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) { setVisible(true); obs.disconnect(); } },
-      { rootMargin: '300px' }, // start loading 300 px before it enters view
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVisible(true);
+          // Small delay so the scroll paint settles before we trigger opacity
+          requestAnimationFrame(() => setRevealed(true));
+          obs.disconnect();
+        }
+      },
+      { rootMargin: '200px' },
     );
     obs.observe(el);
     return () => obs.disconnect();
@@ -407,8 +416,9 @@ function StatsStrip() {
       value: loading ? '—' : trades.toLocaleString(),
       sub: 'All-time settled orders',
       color: 'text-emerald-400',
-      border: 'border-emerald-500/20',
-      bg: 'bg-emerald-500/5',
+      // Solid dark green — avoids GPU alpha-compositing artifacts on low-end devices
+      cardStyle: { background: '#0f1f16', borderColor: '#1a3d26' },
+      iconStyle: { background: '#0a1510' },
     },
     {
       icon: <BarChart3 className="w-4 h-4" />,
@@ -418,8 +428,8 @@ function StatsStrip() {
         : volume.toLocaleString(undefined, { maximumFractionDigits: 0 }),
       sub: 'Total USDT exchanged',
       color: 'text-sky-400',
-      border: 'border-sky-500/20',
-      bg: 'bg-sky-500/5',
+      cardStyle: { background: '#0d1c26', borderColor: '#163044' },
+      iconStyle: { background: '#091420' },
     },
     {
       icon: <Users className="w-4 h-4" />,
@@ -427,13 +437,17 @@ function StatsStrip() {
       value: loading ? '—' : traders.toLocaleString(),
       sub: 'Verified platform users',
       color: 'text-violet-400',
-      border: 'border-violet-500/20',
-      bg: 'bg-violet-500/5',
+      cardStyle: { background: '#130f20', borderColor: '#2a1e45' },
+      iconStyle: { background: '#0d0b18' },
     },
   ];
 
   return (
-    <section ref={sectionRef} className="bg-[#0d1a0f] border-y border-[#008751]/20 py-8 px-4 sm:px-6">
+    <section
+      ref={sectionRef}
+      className="bg-[#0d1a0f] border-y border-[#008751]/20 py-8 px-4 sm:px-6"
+      style={{ contain: 'paint' }}
+    >
       <div className="max-w-5xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
@@ -448,18 +462,25 @@ function StatsStrip() {
           </span>
         </div>
 
-        {/* Stat cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-          {items.map((item, i) => (
-            <motion.div
+        {/* Stat cards — single CSS opacity transition on the grid, no per-card motion layers */}
+        <div
+          className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4"
+          style={{
+            opacity: revealed ? 1 : 0,
+            transform: revealed ? 'none' : 'translateY(12px)',
+            transition: 'opacity 0.5s ease-out, transform 0.5s ease-out',
+          }}
+        >
+          {items.map((item) => (
+            <div
               key={item.label}
-              className={`${item.bg} border ${item.border} rounded-2xl px-5 py-4 flex items-center gap-4`}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.45, delay: i * 0.1, ease: 'easeOut' }}
+              className="rounded-2xl px-5 py-4 flex items-center gap-4 border"
+              style={item.cardStyle}
             >
-              <div className={`p-2.5 rounded-xl bg-slate-900/60 ${item.color} shrink-0`}>
+              <div
+                className={`p-2.5 rounded-xl ${item.color} shrink-0`}
+                style={item.iconStyle}
+              >
                 {item.icon}
               </div>
               <div className="min-w-0">
@@ -471,7 +492,7 @@ function StatsStrip() {
                 </div>
                 <div className="text-[10px] text-slate-600 mt-1">{item.sub}</div>
               </div>
-            </motion.div>
+            </div>
           ))}
         </div>
       </div>
