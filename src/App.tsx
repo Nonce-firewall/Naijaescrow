@@ -79,14 +79,20 @@ export default function App() {
   // identical account-status gating (terminated/pending_reactivation/deleted)
   // and would otherwise each fire their own toast + signOut, producing the
   // duplicate "account deleted" toasts users saw on login and on landing.
-  // This ref dedupes by access_token so the gating logic — and its toast —
-  // only ever runs once per underlying session, no matter which handler
-  // (mount getSession, onAuthStateChange, focus revalidation) observes it first.
-  const handledGateTokensRef = useRef<Set<string>>(new Set());
-  const shouldHandleAccountGate = (token: string | undefined | null): boolean => {
-    if (!token) return true;
-    if (handledGateTokensRef.current.has(token)) return false;
-    handledGateTokensRef.current.add(token);
+  // This ref dedupes by the auth user's id (NOT access_token) so the gating
+  // logic — and its toast — only ever runs once per underlying login, no
+  // matter which handler (mount getSession, onAuthStateChange, focus
+  // revalidation) observes it first. access_token was tried first, but OAuth
+  // redirect flows (e.g. Google SSO) can fire the initial getSession() and
+  // onAuthStateChange observations with two DIFFERENT tokens for the same
+  // login (a token refresh lands in between), which let both duplicate
+  // checks pass. The user id is stable across that window, so it's the
+  // correct dedupe key.
+  const handledGateUsersRef = useRef<Set<string>>(new Set());
+  const shouldHandleAccountGate = (userId: string | undefined | null): boolean => {
+    if (!userId) return true;
+    if (handledGateUsersRef.current.has(userId)) return false;
+    handledGateUsersRef.current.add(userId);
     return true;
   };
   const [isAdminMode, setIsAdminMode] = useState<boolean>(false);
@@ -160,18 +166,18 @@ export default function App() {
           // Gate on shouldHandleAccountGate so this doesn't fire a second toast
           // when onAuthStateChange's initial event handles the same session.
           if (profile.accountStatus === 'terminated' || profile.accountStatus === 'pending_reactivation' || profile.accountStatus === 'deleted') {
-            if (!shouldHandleAccountGate(session.access_token)) {
-              setIsInitializing(false);
-              return;
-            }
+            // Enforcement (signOut) must always run regardless of dedupe — only
+            // the toast is deduped, so a blocked account is never left signed in.
             await supabase.auth.signOut();
-            if (profile.accountStatus === 'terminated') {
-              const reason = profile.terminateReason ? ` Reason: ${profile.terminateReason}` : '';
-              addToast(`Your account has been permanently terminated.${reason}`, 'error');
-            } else if (profile.accountStatus === 'pending_reactivation') {
-              addToast('Our records show you previously deleted this account. Please contact admin to reactivate it before you can access the platform.', 'error');
-            } else {
-              addToast('Your account has been deleted. Please contact support if you believe this is an error.', 'error');
+            if (shouldHandleAccountGate(session.user?.id)) {
+              if (profile.accountStatus === 'terminated') {
+                const reason = profile.terminateReason ? ` Reason: ${profile.terminateReason}` : '';
+                addToast(`Your account has been permanently terminated.${reason}`, 'error');
+              } else if (profile.accountStatus === 'pending_reactivation') {
+                addToast('Our records show you previously deleted this account. Please contact admin to reactivate it before you can access the platform.', 'error');
+              } else {
+                addToast('Your account has been deleted. Please contact support if you believe this is an error.', 'error');
+              }
             }
             setIsInitializing(false);
             return;
@@ -214,18 +220,18 @@ export default function App() {
           // Gate on shouldHandleAccountGate so this doesn't fire a second toast
           // when the mount-time getSession() handler already handled the same session.
           if (profile.accountStatus === 'terminated' || profile.accountStatus === 'pending_reactivation' || profile.accountStatus === 'deleted') {
-            if (!shouldHandleAccountGate(session.access_token)) {
-              setIsInitializing(false);
-              return;
-            }
+            // Enforcement (signOut) must always run regardless of dedupe — only
+            // the toast is deduped, so a blocked account is never left signed in.
             await supabase.auth.signOut();
-            if (profile.accountStatus === 'terminated') {
-              const reason = profile.terminateReason ? ` Reason: ${profile.terminateReason}` : '';
-              addToast(`Your account has been permanently terminated.${reason}`, 'error');
-            } else if (profile.accountStatus === 'pending_reactivation') {
-              addToast('Our records show you previously deleted this account. Please contact admin to reactivate it before you can access the platform.', 'error');
-            } else {
-              addToast('Your account has been deleted. Please contact support if you believe this is an error.', 'error');
+            if (shouldHandleAccountGate(session.user?.id)) {
+              if (profile.accountStatus === 'terminated') {
+                const reason = profile.terminateReason ? ` Reason: ${profile.terminateReason}` : '';
+                addToast(`Your account has been permanently terminated.${reason}`, 'error');
+              } else if (profile.accountStatus === 'pending_reactivation') {
+                addToast('Our records show you previously deleted this account. Please contact admin to reactivate it before you can access the platform.', 'error');
+              } else {
+                addToast('Your account has been deleted. Please contact support if you believe this is an error.', 'error');
+              }
             }
             setIsInitializing(false);
             return;
@@ -251,12 +257,12 @@ export default function App() {
         setIsAdminMode(false);
         setShowPasswordReset(false);
         setCurrentPage('landing');
-        // Deliberately NOT clearing handledGateTokensRef here: a SIGNED_OUT event
+        // Deliberately NOT clearing handledGateUsersRef here: a SIGNED_OUT event
         // fires as part of the gating flow itself (signOut() is called before the
         // toast), so clearing now would race with any other in-flight callback
-        // still holding a reference to the same now-superseded access_token and
+        // still holding a reference to the same now-superseded user id and
         // let it re-pass the gate, reintroducing the duplicate toast. The set is
-        // small (one token per completed sign-in attempt) and a full page reload
+        // small (one user id per completed sign-in attempt) and a full page reload
         // resets it anyway, so we just let it grow for the tab's lifetime.
       }
       setIsInitializing(false);
@@ -613,7 +619,7 @@ export default function App() {
             // Gate on shouldHandleAccountGate so a focus/visibility revalidation
             // doesn't fire a duplicate toast for a session already handled by
             // the mount-time getSession() or onAuthStateChange gating above.
-            if (shouldHandleAccountGate(session.access_token)) {
+            if (shouldHandleAccountGate(session.user?.id)) {
               if (p.accountStatus === 'deleted') {
                 addToast('Your account has been deleted. Please contact support if you believe this is an error.', 'error');
               } else if (p.accountStatus === 'terminated') {
