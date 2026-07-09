@@ -586,13 +586,13 @@ function DeleteAccountModal({
 
         <div className="space-y-3 overflow-y-auto flex-1 min-h-0">
           <p className="text-xs text-gray-600 leading-relaxed">
-            This will <span className="font-bold text-rose-600">permanently delete</span> your login and profile.
-            This action cannot be undone.
+            This will <span className="font-bold text-rose-600">temporary denied</span> your access to your dashboard and scrubbed your data.
+            This action is risky!.
           </p>
           <div className="bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5">
             <p className="text-[11px] text-amber-800 leading-relaxed">
-              For fraud and legal compliance purposes, your KYC verification records will be retained
-              even after deletion, as required by regulation.
+              For fraud and legal compliance purposes, your KYC verification and your account activities records will be retained
+              even after deletion, as required by regulation. However you can request to reinstate your account by contacting us if you change your mind later.
             </p>
           </div>
           <div>
@@ -615,7 +615,7 @@ function DeleteAccountModal({
           disabled={!canDelete || deleting}
           className="w-full mt-4 shrink-0 bg-rose-600 hover:bg-rose-700 disabled:opacity-50 disabled:cursor-not-allowed text-white py-2.5 rounded-xl text-sm font-bold transition cursor-pointer"
         >
-          {deleting ? 'Deleting...' : 'Permanently Delete My Account'}
+          {deleting ? 'Deleting...' : 'Delete My Account'}
         </button>
       </motion.div>
     </motion.div>
