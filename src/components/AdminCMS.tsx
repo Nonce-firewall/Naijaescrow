@@ -633,10 +633,10 @@ export default function AdminCMS({
             9IJA ESCROW ADMIN CONSOLE
           </span>
           <h2 className="text-2xl font-bold tracking-tight mt-1.5">
-            Owner CMS Terminal
+            Operation Terminal
           </h2>
           <p className="text-xs text-gray-400">
-            Secure admin portal for role {userProfile.email}
+            Admin portal role for {userProfile.email}
           </p>
         </div>
 
@@ -789,7 +789,7 @@ export default function AdminCMS({
               className={`w-full text-left px-5 py-3.5 rounded-2xl text-xs font-bold uppercase tracking-wider flex items-center gap-3 border transition cursor-pointer ${activeTab === 'bulletins' ? 'bg-[#008751] text-white border-[#008751] shadow-sm' : 'bg-white hover:bg-[#F7F9F7] text-gray-700 border-[#E0E7E0] hover:border-gray-400'}`}
             >
               <Bell className="w-4 h-4" />
-              Announcements CMS
+              Announcements
             </button>
 
             <button
@@ -2339,7 +2339,7 @@ export default function AdminCMS({
                               title="Edit coin details"
                             >
                               <Edit2 className="w-4 h-4" />
-                              <span className="sr-only">Edit details</span>
+                              <span className="sr-only">Edit</span>
                             </button>
                             <button
                               type="button"
