@@ -194,6 +194,7 @@ export function rowToCoin(row: any): CoinListing {
     pricePegged: row.price_pegged ?? false,
     feePercentage: row.fee_percentage ?? 0,
     minTradeAmount: row.min_trade_amount ?? 1,
+    coinGeckoId: row.coin_gecko_id || undefined,
     createdAt: row.created_at
   };
 }
@@ -434,6 +435,7 @@ export async function createCoinListing(coin: Omit<CoinListing, 'id' | 'createdA
     price_pegged: coin.pricePegged ?? false,
     fee_percentage: coin.feePercentage ?? 0,
     min_trade_amount: coin.minTradeAmount ?? 1,
+    coin_gecko_id: coin.coinGeckoId || null,
     created_at: Date.now()
   });
   if (error) throw new Error(error.message);
@@ -445,6 +447,33 @@ export async function updateCoinFees(id: string, feePercentage: number, minTrade
     min_trade_amount: minTradeAmount
   };
   if (pricePegged !== undefined) updates.price_pegged = pricePegged;
+  const { error } = await supabase.from('coins').update(updates).eq('id', id);
+  if (error) throw new Error(error.message);
+}
+
+export async function updateCoinDetails(id: string, fields: {
+  name?: string;
+  symbol?: string;
+  network?: string;
+  walletAddress?: string;
+  rate?: number;
+  logoUrl?: string;
+  feePercentage?: number;
+  minTradeAmount?: number;
+  pricePegged?: boolean;
+  coinGeckoId?: string;
+}) {
+  const updates: any = {};
+  if (fields.name !== undefined) updates.name = fields.name;
+  if (fields.symbol !== undefined) updates.symbol = fields.symbol;
+  if (fields.network !== undefined) updates.network = fields.network;
+  if (fields.walletAddress !== undefined) updates.wallet_address = fields.walletAddress;
+  if (fields.rate !== undefined) updates.rate = fields.rate;
+  if (fields.logoUrl !== undefined) updates.logo_url = fields.logoUrl || null;
+  if (fields.feePercentage !== undefined) updates.fee_percentage = fields.feePercentage;
+  if (fields.minTradeAmount !== undefined) updates.min_trade_amount = fields.minTradeAmount;
+  if (fields.pricePegged !== undefined) updates.price_pegged = fields.pricePegged;
+  if (fields.coinGeckoId !== undefined) updates.coin_gecko_id = fields.coinGeckoId || null;
   const { error } = await supabase.from('coins').update(updates).eq('id', id);
   if (error) throw new Error(error.message);
 }

@@ -16,6 +16,7 @@ import {
   deleteCoinListing,
   toggleCoinPublish,
   updateCoinFees,
+  updateCoinDetails,
   updateUserAdminAction,
   suspendUser,
   terminateUser,
