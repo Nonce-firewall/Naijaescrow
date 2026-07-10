@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ShieldCheck, TrendingUp, Users, Layers, Settings, Bell, FileCheck, X, CircleCheck as CheckCircle, Circle as XCircle, TriangleAlert as AlertTriangle, SquareCheck as CheckSquare, ExternalLink, Wallet, Circle as HelpCircle, Clock, Lock, Plus, Coins, Trash, Camera, Eye, EyeOff, MessageSquare, Ban, UserX, UserCheck, RotateCcw, ChevronRight, CreditCard as Edit2, Percent, Link2, Search } from 'lucide-react';
+import { ShieldCheck, TrendingUp, Users, Layers, Settings, Bell, FileCheck, X, CircleCheck as CheckCircle, Circle as XCircle, TriangleAlert as AlertTriangle, SquareCheck as CheckSquare, ExternalLink, Wallet, Circle as HelpCircle, Clock, Lock, Plus, Coins, Trash, Camera, Eye, EyeOff, MessageSquare, Ban, UserX, UserCheck, RotateCcw, ChevronRight, CreditCard as Edit2, Percent, Link2, Search, Activity } from 'lucide-react';
 import { UserProfile, Order, AdminSettings, Announcement, KYCData, CoinListing, Dispute } from '../types';
 import { formatNGT, formatNGTDate } from '../lib/dateUtils';
 import DisputeChat from './DisputeChat';
@@ -119,6 +119,7 @@ export default function AdminCMS({
   const [coinFeePercentage, setCoinFeePercentage] = useState<number>(0);
   const [coinMinTradeAmount, setCoinMinTradeAmount] = useState<number>(1);
   const [coinPricePegged, setCoinPricePegged] = useState<boolean>(false);
+  const [coinGeckoId, setCoinGeckoId] = useState('');
   const [isCreatingCoin, setIsCreatingCoin] = useState(false);
   const coinLogoInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -127,6 +128,7 @@ export default function AdminCMS({
   const [editFeePercent, setEditFeePercent] = useState<number>(0);
   const [editMinAmount, setEditMinAmount] = useState<number>(1);
   const [editPricePegged, setEditPricePegged] = useState<boolean>(false);
+  const [editCoinGeckoId, setEditCoinGeckoId] = useState('');
   const [isSavingCoinFees, setIsSavingCoinFees] = useState(false);
 
   // Announcement form states
@@ -459,6 +461,7 @@ export default function AdminCMS({
         feePercentage: coinFeePercentage,
         minTradeAmount: coinMinTradeAmount,
         pricePegged: coinPricePegged,
+        coinGeckoId: coinGeckoId.trim() || undefined,
       });
       addToast(`Coin listing "${coinName}" added successfully!`, 'success');
       // Reset form
@@ -471,6 +474,7 @@ export default function AdminCMS({
       setCoinFeePercentage(0);
       setCoinMinTradeAmount(1);
       setCoinPricePegged(false);
+      setCoinGeckoId('');
       onRefresh();
     } catch (err: any) {
       console.error(err);
@@ -484,8 +488,13 @@ export default function AdminCMS({
   const handleSaveCoinFees = async (coinId: string) => {
     setIsSavingCoinFees(true);
     try {
-      await updateCoinFees(coinId, editFeePercent, editMinAmount, editPricePegged);
-      addToast('Fee settings saved!', 'success');
+      await updateCoinDetails(coinId, {
+        feePercentage: editFeePercent,
+        minTradeAmount: editMinAmount,
+        pricePegged: editPricePegged,
+        coinGeckoId: editCoinGeckoId.trim() || undefined,
+      });
+      addToast('Coin settings saved!', 'success');
       setEditingCoinId(null);
       onRefresh();
     } catch (err: any) {
@@ -2067,6 +2076,21 @@ export default function AdminCMS({
                     </div>
                   </label>
 
+                  {/* CoinGecko ID for live price */}
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                      <Activity className="w-3.5 h-3.5 text-emerald-500" /> CoinGecko ID (optional, for live price)
+                    </label>
+                    <input
+                      type="text"
+                      value={coinGeckoId}
+                      onChange={(e) => setCoinGeckoId(e.target.value)}
+                      placeholder="e.g. bitcoin, ethereum, solana"
+                      className="block w-full px-3 py-2 border border-emerald-200 rounded-lg text-xs bg-white"
+                    />
+                    <p className="text-[9px] text-emerald-600 mt-1">When set, this coin's USDT value is fetched live from CoinGecko and multiplied by the effective NGN/USDT rate. Leave empty for static rate.</p>
+                  </div>
+
                   {/* Logo upload (512x512) */}
                   <div>
                     <label className="block text-[10px] text-slate-500 mb-1 font-mono uppercase">Coin Logo (Ideal: 512x512 px)</label>
@@ -2178,7 +2202,15 @@ export default function AdminCMS({
                                   <>
                                     <span>•</span>
                                     <span className="inline-flex items-center gap-0.5 bg-sky-50 text-sky-700 text-[8px] px-1.5 py-0.5 rounded-full font-extrabold border border-sky-200/50">
-                                      <Link2 className="w-2.5 h-2.5" /> PEGGED
+                                      ⚓ Pegged
+                                    </span>
+                                  </>
+                                )}
+                                {coin.coinGeckoId && (
+                                  <>
+                                    <span>•</span>
+                                    <span className="inline-flex items-center gap-0.5 bg-emerald-50 text-emerald-700 text-[8px] px-1.5 py-0.5 rounded-full font-extrabold border border-emerald-200/50">
+                                      ⚡ Live
                                     </span>
                                   </>
                                 )}
@@ -2214,6 +2246,13 @@ export default function AdminCMS({
                                     />
                                     Price Peg
                                   </label>
+                                  <input
+                                    type="text"
+                                    value={editCoinGeckoId}
+                                    onChange={(e) => setEditCoinGeckoId(e.target.value)}
+                                    placeholder="CoinGecko ID (e.g. bitcoin)"
+                                    className="w-full px-2 py-1.5 border border-emerald-200 rounded-lg text-[10px] bg-white"
+                                  />
                                   <button
                                     type="button"
                                     onClick={() => handleSaveCoinFees(coin.id!)}
@@ -2242,6 +2281,7 @@ export default function AdminCMS({
                                 setEditFeePercent(coin.feePercentage ?? 0);
                                 setEditMinAmount(coin.minTradeAmount ?? 1);
                                 setEditPricePegged(coin.pricePegged ?? false);
+                                setEditCoinGeckoId(coin.coinGeckoId ?? '');
                               }}
                               className="p-2 rounded-xl border border-amber-200 text-amber-600 hover:bg-amber-50 transition cursor-pointer shrink-0"
                               title="Edit fee & minimum"

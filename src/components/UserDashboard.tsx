@@ -157,6 +157,9 @@ export default function UserDashboard({
   const [cryptoAmount, setCryptoAmount] = useState<number | ''>('');
   const [screenshot, setScreenshot] = useState<string>('');
 
+  // Live CoinGecko prices for coins with coinGeckoId (in USD)
+  const [liveCoinPrices, setLiveCoinPrices] = useState<Record<string, number>>({});
+
   // Coin search and network filter state
   const [coinSearchQuery, setCoinSearchQuery] = useState<string>('');
   const [networkFilter, setNetworkFilter] = useState<string>('all');
@@ -170,6 +173,40 @@ export default function UserDashboard({
     window.addEventListener('resize', handleResize, { passive: true });
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  // Fetch live USD prices from CoinGecko for coins that have a coinGeckoId
+  useEffect(() => {
+    const geckoIds = (coins || [])
+      .filter(c => c.published !== false && c.coinGeckoId)
+      .map(c => c.coinGeckoId!)
+      .filter((v, i, arr) => arr.indexOf(v) === i); // unique
+    if (geckoIds.length === 0) return;
+    const controller = new AbortController();
+    const idsParam = geckoIds.join(',');
+    fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${idsParam}&vs_currencies=usd`, { signal: controller.signal })
+      .then(r => r.json())
+      .then(data => {
+        const prices: Record<string, number> = {};
+        for (const id of geckoIds) {
+          if (data[id]?.usd) prices[id] = data[id].usd;
+        }
+        setLiveCoinPrices(prev => ({ ...prev, ...prices }));
+      })
+      .catch(() => {});
+    const interval = setInterval(() => {
+      fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${idsParam}&vs_currencies=usd`)
+        .then(r => r.json())
+        .then(data => {
+          const prices: Record<string, number> = {};
+          for (const id of geckoIds) {
+            if (data[id]?.usd) prices[id] = data[id].usd;
+          }
+          setLiveCoinPrices(prev => ({ ...prev, ...prices }));
+        })
+        .catch(() => {});
+    }, 60000);
+    return () => { controller.abort(); clearInterval(interval); };
+  }, [coins]);
 
   // Filter active (published) coins
   const activeCoinsList = (coins || []).filter(c => c.published !== false);
@@ -334,7 +371,13 @@ export default function UserDashboard({
     selectedCoin.symbol.trim().toUpperCase() === 'USDT' ||
     selectedCoin.pricePegged === true;
 
-  const activeRate = isLiveRateMode
+  // When a coin has a CoinGecko ID, its rate = liveCoinPrice(USD) × effectiveNGN/USD rate
+  const liveCoinUsdPrice = selectedCoin?.coinGeckoId ? liveCoinPrices[selectedCoin.coinGeckoId] : undefined;
+  const isCoinGeckoLive = !!selectedCoin?.coinGeckoId && liveCoinUsdPrice !== undefined;
+
+  const activeRate = isCoinGeckoLive
+    ? Math.round(liveCoinUsdPrice! * (tradeType === 'buy' ? effectiveBuyRate : effectiveSellRate))
+    : isLiveRateMode
     ? (tradeType === 'buy' ? effectiveBuyRate : effectiveSellRate)
     : selectedCoin!.rate;
   const calculatedNgnAmount = cryptoAmount ? cryptoAmount * activeRate : 0;
@@ -1287,10 +1330,13 @@ export default function UserDashboard({
                                           </span>
                                         </div>
                                         <span className="block text-[11px] text-[#008751] font-extrabold mt-0.5">
-                                          ₦{(group.variants[0]?.pricePegged
-                                            ? (tradeType === 'buy' ? effectiveBuyRate : effectiveSellRate)
-                                            : group.variants[0]?.rate ?? 0
-                                          ).toLocaleString()} <span className="text-[9px] text-gray-400 font-normal">{group.variants[0]?.pricePegged ? 'live rate' : 'base rate'}</span>
+                                          ₦{(
+                                            group.variants[0]?.coinGeckoId && liveCoinPrices[group.variants[0]?.coinGeckoId!]
+                                              ? Math.round(liveCoinPrices[group.variants[0]!.coinGeckoId!] * (tradeType === 'buy' ? effectiveBuyRate : effectiveSellRate))
+                                              : group.variants[0]?.pricePegged
+                                              ? (tradeType === 'buy' ? effectiveBuyRate : effectiveSellRate)
+                                              : group.variants[0]?.rate ?? 0
+                                          ).toLocaleString()} <span className="text-[9px] text-gray-400 font-normal">{group.variants[0]?.coinGeckoId && liveCoinPrices[group.variants[0]?.coinGeckoId!] ? 'live' : group.variants[0]?.pricePegged ? 'live rate' : 'base rate'}</span>
                                         </span>
                                       </div>
 
@@ -1344,10 +1390,12 @@ export default function UserDashboard({
                                             <span className={`w-2.5 h-2.5 rounded-full shrink-0 transition-all ${isVarSelected ? 'bg-[#008751] scale-110' : 'bg-slate-300'}`} />
                                             <div className="text-left leading-tight">
                                               <span className="block font-extrabold">{variant.network}</span>
-                                              <span className="block text-[9px] text-slate-400 font-medium">Rate: ₦{(variant.pricePegged
+                                              <span className="block text-[9px] text-slate-400 font-medium">Rate: ₦{(variant.coinGeckoId && liveCoinPrices[variant.coinGeckoId]
+                                                ? Math.round(liveCoinPrices[variant.coinGeckoId] * (tradeType === 'buy' ? effectiveBuyRate : effectiveSellRate))
+                                                : variant.pricePegged
                                                 ? (tradeType === 'buy' ? effectiveBuyRate : effectiveSellRate)
                                                 : variant.rate
-                                              ).toLocaleString()}/{variant.symbol}{variant.pricePegged ? ' (pegged)' : ''}</span>
+                                              ).toLocaleString()}/{variant.symbol}{variant.coinGeckoId && liveCoinPrices[variant.coinGeckoId] ? ' (live)' : variant.pricePegged ? ' (pegged)' : ''}</span>
                                             </div>
                                           </button>
                                         );
