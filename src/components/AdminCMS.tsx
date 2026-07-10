@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ShieldCheck, TrendingUp, Users, Layers, Settings, Bell, FileCheck, X, CircleCheck as CheckCircle, Circle as XCircle, TriangleAlert as AlertTriangle, SquareCheck as CheckSquare, ExternalLink, Wallet, Circle as HelpCircle, Clock, Lock, Plus, Coins, Trash, Camera, Eye, EyeOff, MessageSquare, Ban, UserX, UserCheck, RotateCcw, ChevronRight, CreditCard as Edit2, Percent, Link2, Search, Activity } from 'lucide-react';
+import { ShieldCheck, TrendingUp, Users, Layers, Settings, Bell, FileCheck, X, CircleCheck as CheckCircle, Circle as XCircle, TriangleAlert as AlertTriangle, SquareCheck as CheckSquare, ExternalLink, Wallet, Circle as HelpCircle, Clock, Lock, Plus, Coins, Trash, Camera, Eye, EyeOff, MessageSquare, Ban, UserX, UserCheck, RotateCcw, ChevronRight, CreditCard as Edit2, Percent, Link2, Search, Activity, Loader as Loader2 } from 'lucide-react';
 import { UserProfile, Order, AdminSettings, Announcement, KYCData, CoinListing, Dispute } from '../types';
 import { formatNGT, formatNGTDate } from '../lib/dateUtils';
 import DisputeChat from './DisputeChat';
@@ -130,6 +130,16 @@ export default function AdminCMS({
   const [editPricePegged, setEditPricePegged] = useState<boolean>(false);
   const [editCoinGeckoId, setEditCoinGeckoId] = useState('');
   const [isSavingCoinFees, setIsSavingCoinFees] = useState(false);
+  // Full coin details editor modal state
+  const [showEditCoinModal, setShowEditCoinModal] = useState(false);
+  const [editCoin, setEditCoin] = useState<CoinListing | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editSymbol, setEditSymbol] = useState('');
+  const [editNetwork, setEditNetwork] = useState('');
+  const [editWalletAddress, setEditWalletAddress] = useState('');
+  const [editRate, setEditRate] = useState<number>(0);
+  const [editLogoUrl, setEditLogoUrl] = useState('');
+  const [isSavingCoinDetails, setIsSavingCoinDetails] = useState(false);
 
   // Announcement form states
   const [bulletinTitle, setBulletinTitle] = useState('');
@@ -484,7 +494,7 @@ export default function AdminCMS({
     }
   };
 
-  // Save fee settings on existing coin
+  // Save fee settings on existing coin (inline quick editor)
   const handleSaveCoinFees = async (coinId: string) => {
     setIsSavingCoinFees(true);
     try {
@@ -501,6 +511,54 @@ export default function AdminCMS({
       addToast('Failed to save fees: ' + err.message, 'error');
     } finally {
       setIsSavingCoinFees(false);
+    }
+  };
+
+  // Open full coin details editor modal
+  const openEditCoinModal = (coin: CoinListing) => {
+    setEditCoin(coin);
+    setEditName(coin.name);
+    setEditSymbol(coin.symbol);
+    setEditNetwork(coin.network);
+    setEditWalletAddress(coin.walletAddress);
+    setEditRate(coin.rate);
+    setEditLogoUrl(coin.logoUrl || '');
+    setEditFeePercent(coin.feePercentage ?? 0);
+    setEditMinAmount(coin.minTradeAmount ?? 1);
+    setEditPricePegged(coin.pricePegged ?? false);
+    setEditCoinGeckoId(coin.coinGeckoId ?? '');
+    setShowEditCoinModal(true);
+  };
+
+  // Save full coin details from modal
+  const handleSaveCoinDetails = async () => {
+    if (!editCoin?.id) return;
+    if (!editName.trim() || !editSymbol.trim() || !editNetwork.trim() || !editWalletAddress.trim()) {
+      addToast('Name, symbol, network, and wallet address are required.', 'error');
+      return;
+    }
+    setIsSavingCoinDetails(true);
+    try {
+      await updateCoinDetails(editCoin.id, {
+        name: editName.trim(),
+        symbol: editSymbol.trim().toUpperCase(),
+        network: editNetwork.trim(),
+        walletAddress: editWalletAddress.trim(),
+        rate: Number(editRate),
+        logoUrl: editLogoUrl || undefined,
+        feePercentage: editFeePercent,
+        minTradeAmount: editMinAmount,
+        pricePegged: editPricePegged,
+        coinGeckoId: editCoinGeckoId.trim() || undefined,
+      });
+      addToast(`Coin "${editName}" updated successfully!`, 'success');
+      setShowEditCoinModal(false);
+      setEditCoin(null);
+      onRefresh();
+    } catch (err: any) {
+      addToast('Failed to update coin: ' + err.message, 'error');
+    } finally {
+      setIsSavingCoinDetails(false);
     }
   };
 
@@ -2276,6 +2334,15 @@ export default function AdminCMS({
                           <div className="flex items-center gap-2 shrink-0">
                             <button
                               type="button"
+                              onClick={() => openEditCoinModal(coin)}
+                              className="p-2 rounded-xl border border-indigo-200 text-indigo-600 hover:bg-indigo-50 transition cursor-pointer shrink-0"
+                              title="Edit coin details"
+                            >
+                              <Edit2 className="w-4 h-4" />
+                              <span className="sr-only">Edit details</span>
+                            </button>
+                            <button
+                              type="button"
                               onClick={() => {
                                 setEditingCoinId(coin.id!);
                                 setEditFeePercent(coin.feePercentage ?? 0);
@@ -2284,9 +2351,9 @@ export default function AdminCMS({
                                 setEditCoinGeckoId(coin.coinGeckoId ?? '');
                               }}
                               className="p-2 rounded-xl border border-amber-200 text-amber-600 hover:bg-amber-50 transition cursor-pointer shrink-0"
-                              title="Edit fee & minimum"
+                              title="Quick edit fees & peg"
                             >
-                              <Edit2 className="w-4 h-4" />
+                              <Percent className="w-4 h-4" />
                             </button>
                             <button
                               type="button"
@@ -3095,6 +3162,196 @@ export default function AdminCMS({
               transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
               onClick={(e) => e.stopPropagation()}
             />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Full Coin Details Editor Modal */}
+      <AnimatePresence>
+        {showEditCoinModal && editCoin && (
+          <motion.div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.18 }}
+            onClick={() => { setShowEditCoinModal(false); setEditCoin(null); }}
+          >
+            <motion.div
+              className="bg-white rounded-3xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="sticky top-0 bg-white/95 backdrop-blur-sm px-6 py-4 border-b border-slate-100 rounded-t-3xl flex items-center justify-between z-10">
+                <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
+                  <Edit2 className="w-4 h-4 text-indigo-500" />
+                  Edit Coin Details
+                </h3>
+                <button
+                  onClick={() => { setShowEditCoinModal(false); setEditCoin(null); }}
+                  className="w-8 h-8 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-400 transition cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="p-6 space-y-4">
+                {/* Logo preview */}
+                {editLogoUrl && (
+                  <div className="flex justify-center">
+                    <img src={editLogoUrl} alt="Logo preview" className="w-16 h-16 object-contain rounded-xl border border-slate-200" />
+                  </div>
+                )}
+
+                {/* Name */}
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-700">Coin Name</label>
+                  <input
+                    type="text"
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    placeholder="e.g. Bitcoin"
+                    className="block w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white"
+                  />
+                </div>
+
+                {/* Symbol */}
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-700">Symbol</label>
+                  <input
+                    type="text"
+                    value={editSymbol}
+                    onChange={(e) => setEditSymbol(e.target.value.toUpperCase())}
+                    placeholder="e.g. BTC"
+                    className="block w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white"
+                  />
+                </div>
+
+                {/* Network */}
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-700">Network</label>
+                  <input
+                    type="text"
+                    value={editNetwork}
+                    onChange={(e) => setEditNetwork(e.target.value)}
+                    placeholder="e.g. BEP-20"
+                    className="block w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white"
+                  />
+                </div>
+
+                {/* Wallet Address */}
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-700">Wallet Address</label>
+                  <input
+                    type="text"
+                    value={editWalletAddress}
+                    onChange={(e) => setEditWalletAddress(e.target.value)}
+                    placeholder="Wallet address"
+                    className="block w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white font-mono text-xs"
+                  />
+                </div>
+
+                {/* Rate */}
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-700">Rate (₦/coin) — used when not live/pegged</label>
+                  <input
+                    type="number"
+                    value={editRate}
+                    onChange={(e) => setEditRate(Number(e.target.value))}
+                    placeholder="Static rate"
+                    className="block w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white"
+                  />
+                </div>
+
+                {/* Logo URL */}
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-700">Logo URL</label>
+                  <input
+                    type="text"
+                    value={editLogoUrl}
+                    onChange={(e) => setEditLogoUrl(e.target.value)}
+                    placeholder="https://…"
+                    className="block w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white"
+                  />
+                </div>
+
+                {/* Fee Percentage */}
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-700">Fee Percentage (%)</label>
+                  <input
+                    type="number"
+                    value={editFeePercent}
+                    onChange={(e) => setEditFeePercent(Number(e.target.value))}
+                    className="block w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white"
+                  />
+                </div>
+
+                {/* Min Trade Amount */}
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-700">Min Trade Amount</label>
+                  <input
+                    type="number"
+                    value={editMinAmount}
+                    onChange={(e) => setEditMinAmount(Number(e.target.value))}
+                    className="block w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white"
+                  />
+                </div>
+
+                {/* Price Pegged toggle */}
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={editPricePegged}
+                    onChange={(e) => setEditPricePegged(e.target.checked)}
+                    className="w-4 h-4 rounded accent-sky-500"
+                  />
+                  <span className="text-xs font-bold text-slate-700">Price Pegged (use live USDT rate)</span>
+                </label>
+
+                {/* CoinGecko ID */}
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                    <Activity className="w-3.5 h-3.5 text-emerald-500" /> CoinGecko ID (optional, for live price)
+                  </label>
+                  <input
+                    type="text"
+                    value={editCoinGeckoId}
+                    onChange={(e) => setEditCoinGeckoId(e.target.value)}
+                    placeholder="e.g. bitcoin, ethereum, solana"
+                    className="block w-full px-3 py-2 border border-emerald-200 rounded-lg text-sm bg-white"
+                  />
+                  <p className="text-[10px] text-emerald-600 mt-1">When set, this coin's USDT value is fetched live from CoinGecko and multiplied by the effective NGN/USDT rate.</p>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="sticky bottom-0 bg-white/95 backdrop-blur-sm px-6 py-4 border-t border-slate-100 rounded-b-3xl flex items-center justify-end gap-3">
+                <button
+                  onClick={() => { setShowEditCoinModal(false); setEditCoin(null); }}
+                  className="px-4 py-2 text-sm font-bold text-slate-500 hover:bg-slate-100 rounded-lg transition cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSaveCoinDetails}
+                  disabled={isSavingCoinDetails}
+                  className="px-5 py-2 text-sm font-bold text-white bg-indigo-500 hover:bg-indigo-600 rounded-lg transition cursor-pointer disabled:opacity-50 flex items-center gap-2"
+                >
+                  {isSavingCoinDetails ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" /> Saving…
+                    </>
+                  ) : (
+                    <>
+                      <CheckSquare className="w-4 h-4" /> Save Changes
+                    </>
+                  )}
+                </button>
+              </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
