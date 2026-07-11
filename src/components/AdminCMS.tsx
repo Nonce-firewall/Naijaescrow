@@ -2504,7 +2504,9 @@ export default function AdminCMS({
                   const coin = coins.find(c => c.symbol === selectedOrder.token);
                   const feePct = coin?.feePercentage ?? 0;
                   if (feePct <= 0) return null;
-                  const feeAmount = Number(selectedOrder.cryptoAmount) * feePct / 100;
+                  const minTrade = coin?.minBuyAmount ?? coin?.minTradeAmount ?? 1;
+                  const feeBase = Math.min(Number(selectedOrder.cryptoAmount), minTrade);
+                  const feeAmount = feeBase * feePct / 100;
                   const netAmount = Number(selectedOrder.cryptoAmount) - feeAmount;
                   return (
                     <div className="space-y-2 text-xs bg-amber-50 border border-amber-200 rounded-xl p-4">

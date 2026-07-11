@@ -392,14 +392,22 @@ export default function UserDashboard({
     }
   };
 
-  // Fee calculations (BUY only)
-  const activeFeePercent = (activeCoin?.feePercentage ?? 0);
-  const feeAmount = cryptoAmount && activeFeePercent > 0 ? Number(cryptoAmount) * activeFeePercent / 100 : 0;
-  const netCryptoAmount = cryptoAmount ? Number(cryptoAmount) - feeAmount : 0;
+  // Minimum trade amount for the active coin/direction
   const activeMinTrade = tradeType === 'buy'
     ? (activeCoin?.minBuyAmount ?? activeCoin?.minTradeAmount ?? 1)
     : (activeCoin?.minSellAmount ?? activeCoin?.minTradeAmount ?? 1);
   const belowMinimum = !!(cryptoAmount && Number(cryptoAmount) > 0 && Number(cryptoAmount) < activeMinTrade);
+
+  // Fee calculations (BUY only)
+  // The fee percentage is pegged to the coin's minimum trade amount — it does NOT
+  // scale with the user's full input. So even if a user buys 100 USDT and the fee
+  // is 16% with a min trade of 1 USDT, the fee is 16% of 1 = 0.16 USDT, not 16 USDT.
+  const activeFeePercent = (activeCoin?.feePercentage ?? 0);
+  const feeBaseAmount = Math.min(Number(cryptoAmount || 0), activeMinTrade);
+  const feeAmount = tradeType === 'buy' && cryptoAmount && activeFeePercent > 0
+    ? feeBaseAmount * activeFeePercent / 100
+    : 0;
+  const netCryptoAmount = cryptoAmount ? Number(cryptoAmount) - feeAmount : 0;
 
   // Handle Drag Over
   const handleDragOver = (e: React.DragEvent) => {
@@ -2508,7 +2516,9 @@ export default function UserDashboard({
                     const coin = coins.find(c => c.symbol === viewReceipt.token);
                     const feePct = coin?.feePercentage ?? 0;
                     if (feePct <= 0) return null;
-                    const feeAmount = Number(viewReceipt.cryptoAmount) * feePct / 100;
+                    const minTrade = coin?.minBuyAmount ?? coin?.minTradeAmount ?? 1;
+                    const feeBase = Math.min(Number(viewReceipt.cryptoAmount), minTrade);
+                    const feeAmount = feeBase * feePct / 100;
                     const netAmount = Number(viewReceipt.cryptoAmount) - feeAmount;
                     return (
                       <div className="space-y-1.5 pt-2 border-t border-[#E0E7E0]">
