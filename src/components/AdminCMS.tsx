@@ -2441,7 +2441,14 @@ export default function AdminCMS({
                         {(() => {
                           const coin = coins.find(c => c.symbol === selectedOrder.token);
                           const isLiveCoin = !!coin?.coinGeckoId;
-                          const ngnPerUsdt = isLiveCoin && liveNgnRate ? Math.round(liveNgnRate) : selectedOrder.rate;
+                          // For live (CoinGecko-pegged) coins: use the current live market rate + markup.
+                          // For custom-rate coins: the coin's `rate` is NGN-per-token, not NGN-per-USDT.
+                          // Use the effective USDT rate (market + markup) to convert NGN → USDT.
+                          const effectiveSellRate = liveNgnRate ? Math.round(liveNgnRate) + settings.usdtSellMarkup : settings.usdtSellMarkup;
+                          const effectiveBuyRate  = liveNgnRate ? Math.round(liveNgnRate) + settings.usdtBuyMarkup  : settings.usdtBuyMarkup;
+                          const ngnPerUsdt = isLiveCoin && liveNgnRate
+                            ? Math.round(liveNgnRate)
+                            : (selectedOrder.type === 'buy' ? effectiveBuyRate : effectiveSellRate);
                           if (ngnPerUsdt <= 0) return ' (rate unavailable)';
                           const usdt = selectedOrder.ngnAmount / ngnPerUsdt;
                           return `₦${selectedOrder.ngnAmount.toLocaleString()} ÷ ₦${ngnPerUsdt.toLocaleString()}/USDT ≈ ${usdt.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDT`;
