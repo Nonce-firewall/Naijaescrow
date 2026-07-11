@@ -58,7 +58,7 @@ export default function SupportDropdown({ onClose }: SupportDropdownProps) {
       <div className="flex items-center justify-between px-4 py-3 border-b border-[#F0F4F0]">
         <div>
           <p className="text-xs font-bold text-[#1A1A1A]">Contact Support</p>
-          <p className="text-[10px] text-gray-400 mt-0.5">Mon–Fri · 9 AM–6 PM WAT · 2–4 hr response</p>
+          <p className="text-[10px] text-gray-400 mt-0.5">Mon–Sun · 9AM – 6PM · 10–30 Mins response</p>
         </div>
         <button
           onClick={onClose}
