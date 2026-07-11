@@ -2485,11 +2485,15 @@ export default function UserDashboard({
                       <span className="text-gray-400 font-mono">USDT EQUIVALENT:</span>
                       <span className="font-bold">
                         {(() => {
-                          // Always use the effective USDT rate (market + markup) to convert NGN → USDT.
-                          // For live (CoinGecko-pegged) coins this is already correct.
-                          // For custom-rate coins the coin's `rate` is NGN-per-token, not NGN-per-USDT,
-                          // so dividing ngnAmount by coin.rate would give wrong results.
-                          const ngnPerUsdt = viewReceipt.type === 'buy' ? effectiveBuyRate : effectiveSellRate;
+                          const coin = coins.find(c => c.symbol === viewReceipt.token);
+                          const isLiveCoin = !!coin?.coinGeckoId;
+                          // Live (CoinGecko-pegged) coins: order.rate is NGN-per-token (not NGN-per-USDT),
+                          // so use effective USDT rate (market + markup) to convert NGN → USDT.
+                          // Custom-rate coins: admin sets rate as NGN-per-USDT directly,
+                          // so viewReceipt.rate IS the correct NGN-per-USDT denominator.
+                          const ngnPerUsdt = isLiveCoin
+                            ? (viewReceipt.type === 'buy' ? effectiveBuyRate : effectiveSellRate)
+                            : viewReceipt.rate;
                           const usdt = ngnPerUsdt > 0 ? viewReceipt.ngnAmount / ngnPerUsdt : 0;
                           return `≈ ${usdt.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDT`;
                         })()}
