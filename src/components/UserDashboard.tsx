@@ -2484,7 +2484,7 @@ export default function UserDashboard({
                   </div>
                   {viewReceipt.token !== 'USDT' && (
                     <div className="flex justify-between text-emerald-700">
-                      <span className="text-gray-400 font-mono">USDT EQUIVALENT:</span>
+                      <span className="text-gray-400 font-mono">TOTAL USDT:</span>
                       <span className="font-bold">
                         {(() => {
                           const coin = coins.find(c => c.symbol === viewReceipt.token);
@@ -2513,7 +2513,7 @@ export default function UserDashboard({
                     return (
                       <div className="space-y-1.5 pt-2 border-t border-[#E0E7E0]">
                         <div className="flex justify-between">
-                          <span className="text-gray-400 font-mono">COIN FEE ({feePct}%):</span>
+                          <span className="text-gray-400 font-mono">NETWORK FEE ({feePct}%):</span>
                           <span className="font-bold text-rose-600">−{feeAmount.toLocaleString(undefined, { maximumFractionDigits: 8 })} {viewReceipt.token}</span>
                         </div>
                         <div className="flex justify-between">
