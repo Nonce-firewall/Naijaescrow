@@ -471,7 +471,7 @@ export default function AdminCMS({
         feePercentage: coinFeePercentage,
         minTradeAmount: coinMinTradeAmount,
         pricePegged: coinPricePegged,
-        coinGeckoId: coinGeckoId.trim() || undefined,
+        coinGeckoId: coinGeckoId.trim() || null,
       });
       addToast(`Coin listing "${coinName}" added successfully!`, 'success');
       // Reset form
@@ -502,7 +502,7 @@ export default function AdminCMS({
         feePercentage: editFeePercent,
         minTradeAmount: editMinAmount,
         pricePegged: editPricePegged,
-        coinGeckoId: editCoinGeckoId.trim() || undefined,
+        coinGeckoId: editCoinGeckoId.trim() || null,
       });
       addToast('Coin settings saved!', 'success');
       setEditingCoinId(null);
@@ -549,7 +549,7 @@ export default function AdminCMS({
         feePercentage: editFeePercent,
         minTradeAmount: editMinAmount,
         pricePegged: editPricePegged,
-        coinGeckoId: editCoinGeckoId.trim() || undefined,
+        coinGeckoId: editCoinGeckoId.trim() || null,
       });
       addToast(`Coin "${editName}" updated successfully!`, 'success');
       setShowEditCoinModal(false);

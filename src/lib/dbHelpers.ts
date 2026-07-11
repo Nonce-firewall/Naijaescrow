@@ -461,7 +461,7 @@ export async function updateCoinDetails(id: string, fields: {
   feePercentage?: number;
   minTradeAmount?: number;
   pricePegged?: boolean;
-  coinGeckoId?: string;
+  coinGeckoId?: string | null;
 }) {
   const updates: any = {};
   if (fields.name !== undefined) updates.name = fields.name;
@@ -473,7 +473,7 @@ export async function updateCoinDetails(id: string, fields: {
   if (fields.feePercentage !== undefined) updates.fee_percentage = fields.feePercentage;
   if (fields.minTradeAmount !== undefined) updates.min_trade_amount = fields.minTradeAmount;
   if (fields.pricePegged !== undefined) updates.price_pegged = fields.pricePegged;
-  if (fields.coinGeckoId !== undefined) updates.coin_gecko_id = fields.coinGeckoId || null;
+  updates.coin_gecko_id = fields.coinGeckoId || null;
   const { error } = await supabase.from('coins').update(updates).eq('id', id);
   if (error) throw new Error(error.message);
 }
