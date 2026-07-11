@@ -77,6 +77,7 @@ export interface Order {
   rejectionReason?: string;
   createdAt: number;
   processedAt?: number;
+  usdtEquivalent?: number;
 }
 
 export interface Announcement {

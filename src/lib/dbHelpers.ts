@@ -166,7 +166,8 @@ export function rowToOrder(row: any): Order {
     blockchainTxId: row.blockchain_tx_id || undefined,
     rejectionReason: row.rejection_reason || undefined,
     createdAt: row.created_at,
-    processedAt: row.processed_at || undefined
+    processedAt: row.processed_at || undefined,
+    usdtEquivalent: row.usdt_equivalent ?? undefined
   };
 }
 
@@ -328,7 +329,8 @@ export async function createOrder(
   adminWalletAddress?: string,
   token: string = 'USDT',
   blockchainTxId?: string,
-  userWalletAddress?: string
+  userWalletAddress?: string,
+  usdtEquivalent?: number
 ) {
   const ngnAmount = cryptoAmount * rate;
   const { data, error } = await supabase.from('orders').insert({
@@ -347,6 +349,7 @@ export async function createOrder(
     admin_wallet_address: adminWalletAddress || null,
     blockchain_tx_id: blockchainTxId || null,
     user_wallet_address: userWalletAddress || null,
+    usdt_equivalent: usdtEquivalent ?? cryptoAmount,
     created_at: Date.now()
   }).select().single();
   if (error) throw new Error(error.message);

@@ -641,6 +641,10 @@ export default function UserDashboard({
       const orderNetwork = activeCoin ? activeCoin.network : network;
       const orderToken = activeCoin ? activeCoin.symbol : 'USDT';
 
+      const orderUsdtEquivalent = isCoinGeckoLive
+        ? Number(cryptoAmount) * (liveCoinUsdPrice ?? 0)
+        : Number(cryptoAmount);
+
       await createOrder(
         userProfile.uid,
         userProfile.email,
@@ -654,7 +658,8 @@ export default function UserDashboard({
         adminWallet,
         orderToken,
         tradeType === 'sell' ? sellTxHash.trim() : undefined,
-        tradeType === 'buy' ? userWalletAddress.trim() : undefined
+        tradeType === 'buy' ? userWalletAddress.trim() : undefined,
+        orderUsdtEquivalent
       );
 
       addToast('Escrow order submitted successfully!', 'success');
