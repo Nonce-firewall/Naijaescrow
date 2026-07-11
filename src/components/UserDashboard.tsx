@@ -396,7 +396,9 @@ export default function UserDashboard({
   const activeFeePercent = (activeCoin?.feePercentage ?? 0);
   const feeAmount = cryptoAmount && activeFeePercent > 0 ? Number(cryptoAmount) * activeFeePercent / 100 : 0;
   const netCryptoAmount = cryptoAmount ? Number(cryptoAmount) - feeAmount : 0;
-  const activeMinTrade = activeCoin?.minTradeAmount ?? 1;
+  const activeMinTrade = tradeType === 'buy'
+    ? (activeCoin?.minBuyAmount ?? activeCoin?.minTradeAmount ?? 1)
+    : (activeCoin?.minSellAmount ?? activeCoin?.minTradeAmount ?? 1);
   const belowMinimum = !!(cryptoAmount && Number(cryptoAmount) > 0 && Number(cryptoAmount) < activeMinTrade);
 
   // Handle Drag Over
@@ -2500,6 +2502,27 @@ export default function UserDashboard({
                       </span>
                     </div>
                   )}
+
+                  {/* Fee breakdown — BUY orders with coin fee > 0 */}
+                  {viewReceipt.type === 'buy' && (() => {
+                    const coin = coins.find(c => c.symbol === viewReceipt.token);
+                    const feePct = coin?.feePercentage ?? 0;
+                    if (feePct <= 0) return null;
+                    const feeAmount = Number(viewReceipt.cryptoAmount) * feePct / 100;
+                    const netAmount = Number(viewReceipt.cryptoAmount) - feeAmount;
+                    return (
+                      <div className="space-y-1.5 pt-2 border-t border-[#E0E7E0]">
+                        <div className="flex justify-between">
+                          <span className="text-gray-400 font-mono">COIN FEE ({feePct}%):</span>
+                          <span className="font-bold text-rose-600">−{feeAmount.toLocaleString(undefined, { maximumFractionDigits: 8 })} {viewReceipt.token}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-400 font-mono">YOU RECEIVE:</span>
+                          <span className="font-bold text-emerald-700">{netAmount.toLocaleString(undefined, { maximumFractionDigits: 8 })} {viewReceipt.token}</span>
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
                 <div className="border-t border-dashed border-[#E0E7E0] pt-4 space-y-2 text-xs">
                   <div className="flex justify-between">

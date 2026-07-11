@@ -101,6 +101,8 @@ export interface CoinListing {
   pricePegged?: boolean;
   feePercentage?: number;
   minTradeAmount?: number;
+  minBuyAmount?: number;
+  minSellAmount?: number;
   coinGeckoId?: string;
   createdAt: number;
 }

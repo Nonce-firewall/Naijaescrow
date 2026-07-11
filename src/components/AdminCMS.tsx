@@ -118,6 +118,8 @@ export default function AdminCMS({
   const [coinLogoUrl, setCoinLogoUrl] = useState('');
   const [coinFeePercentage, setCoinFeePercentage] = useState<number>(0);
   const [coinMinTradeAmount, setCoinMinTradeAmount] = useState<number>(1);
+  const [coinMinBuyAmount, setCoinMinBuyAmount] = useState<number>(1);
+  const [coinMinSellAmount, setCoinMinSellAmount] = useState<number>(1);
   const [coinPricePegged, setCoinPricePegged] = useState<boolean>(false);
   const [coinGeckoId, setCoinGeckoId] = useState('');
   const [isCreatingCoin, setIsCreatingCoin] = useState(false);
@@ -127,6 +129,8 @@ export default function AdminCMS({
   const [editingCoinId, setEditingCoinId] = useState<string | null>(null);
   const [editFeePercent, setEditFeePercent] = useState<number>(0);
   const [editMinAmount, setEditMinAmount] = useState<number>(1);
+  const [editMinBuyAmount, setEditMinBuyAmount] = useState<number>(1);
+  const [editMinSellAmount, setEditMinSellAmount] = useState<number>(1);
   const [editPricePegged, setEditPricePegged] = useState<boolean>(false);
   const [editCoinGeckoId, setEditCoinGeckoId] = useState('');
   const [isSavingCoinFees, setIsSavingCoinFees] = useState(false);
@@ -470,6 +474,8 @@ export default function AdminCMS({
         logoUrl: coinLogoUrl || 'https://cryptologos.cc/logos/tether-usdt-logo.png?v=040',
         feePercentage: coinFeePercentage,
         minTradeAmount: coinMinTradeAmount,
+        minBuyAmount: coinMinBuyAmount,
+        minSellAmount: coinMinSellAmount,
         pricePegged: coinPricePegged,
         coinGeckoId: coinGeckoId.trim() || null,
       });
@@ -483,6 +489,8 @@ export default function AdminCMS({
       setCoinLogoUrl('');
       setCoinFeePercentage(0);
       setCoinMinTradeAmount(1);
+      setCoinMinBuyAmount(1);
+      setCoinMinSellAmount(1);
       setCoinPricePegged(false);
       setCoinGeckoId('');
       onRefresh();
@@ -501,6 +509,8 @@ export default function AdminCMS({
       await updateCoinDetails(coinId, {
         feePercentage: editFeePercent,
         minTradeAmount: editMinAmount,
+        minBuyAmount: editMinBuyAmount,
+        minSellAmount: editMinSellAmount,
         pricePegged: editPricePegged,
         coinGeckoId: editCoinGeckoId.trim() || null,
       });
@@ -525,6 +535,8 @@ export default function AdminCMS({
     setEditLogoUrl(coin.logoUrl || '');
     setEditFeePercent(coin.feePercentage ?? 0);
     setEditMinAmount(coin.minTradeAmount ?? 1);
+    setEditMinBuyAmount(coin.minBuyAmount ?? coin.minTradeAmount ?? 1);
+    setEditMinSellAmount(coin.minSellAmount ?? coin.minTradeAmount ?? 1);
     setEditPricePegged(coin.pricePegged ?? false);
     setEditCoinGeckoId(coin.coinGeckoId ?? '');
     setShowEditCoinModal(true);
@@ -548,6 +560,8 @@ export default function AdminCMS({
         logoUrl: editLogoUrl || undefined,
         feePercentage: editFeePercent,
         minTradeAmount: editMinAmount,
+        minBuyAmount: editMinBuyAmount,
+        minSellAmount: editMinSellAmount,
         pricePegged: editPricePegged,
         coinGeckoId: editCoinGeckoId.trim() || null,
       });
@@ -2102,17 +2116,30 @@ export default function AdminCMS({
                       <p className="text-[9px] text-amber-600 mt-1">Deducted from user's crypto on BUY. 0 = no fee.</p>
                     </div>
                     <div>
-                      <label className="block text-[10px] text-amber-700 mb-1 font-mono uppercase">Min Trade Amount</label>
+                      <label className="block text-[10px] text-amber-700 mb-1 font-mono uppercase">Min Buy Amount</label>
                       <input
                         type="number"
                         min="0"
                         step="any"
-                        value={coinMinTradeAmount}
-                        onChange={(e) => setCoinMinTradeAmount(Number(e.target.value))}
+                        value={coinMinBuyAmount}
+                        onChange={(e) => setCoinMinBuyAmount(Number(e.target.value))}
                         placeholder="e.g. 5"
                         className="block w-full px-3 py-2 border border-amber-200 rounded-lg text-xs bg-white"
                       />
-                      <p className="text-[9px] text-amber-600 mt-1">Minimum units a user must trade.</p>
+                      <p className="text-[9px] text-amber-600 mt-1">Minimum units a user must buy.</p>
+                    </div>
+                    <div>
+                      <label className="block text-[10px] text-amber-700 mb-1 font-mono uppercase">Min Sell Amount</label>
+                      <input
+                        type="number"
+                        min="0"
+                        step="any"
+                        value={coinMinSellAmount}
+                        onChange={(e) => setCoinMinSellAmount(Number(e.target.value))}
+                        placeholder="e.g. 5"
+                        className="block w-full px-3 py-2 border border-amber-200 rounded-lg text-xs bg-white"
+                      />
+                      <p className="text-[9px] text-amber-600 mt-1">Minimum units a user must sell.</p>
                     </div>
                   </div>
 
@@ -2255,7 +2282,9 @@ export default function AdminCMS({
                                 <span>•</span>
                                 <span>Fee: <strong className="text-amber-600">{coin.feePercentage ?? 0}%</strong></span>
                                 <span>•</span>
-                                <span>Min: <strong className="text-slate-600">{coin.minTradeAmount ?? 1} {coin.symbol}</strong></span>
+                                <span>Min Buy: <strong className="text-slate-600">{coin.minBuyAmount ?? coin.minTradeAmount ?? 1} {coin.symbol}</strong></span>
+                                <span>•</span>
+                                <span>Min Sell: <strong className="text-slate-600">{coin.minSellAmount ?? coin.minTradeAmount ?? 1} {coin.symbol}</strong></span>
                                 {coin.pricePegged && (
                                   <>
                                     <span>•</span>
@@ -2287,12 +2316,21 @@ export default function AdminCMS({
                                     />
                                   </div>
                                   <div>
-                                    <label className="block text-[9px] text-amber-700 font-mono uppercase mb-1">Min Amount</label>
+                                    <label className="block text-[9px] text-amber-700 font-mono uppercase mb-1">Min Buy</label>
                                     <input
                                       type="number" min="0" step="any"
-                                      value={editMinAmount}
-                                      onChange={(e) => setEditMinAmount(Number(e.target.value))}
-                                      className="w-24 px-2 py-1.5 border border-amber-200 rounded-lg text-xs bg-white"
+                                      value={editMinBuyAmount}
+                                      onChange={(e) => setEditMinBuyAmount(Number(e.target.value))}
+                                      className="w-20 px-2 py-1.5 border border-amber-200 rounded-lg text-xs bg-white"
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="block text-[9px] text-amber-700 font-mono uppercase mb-1">Min Sell</label>
+                                    <input
+                                      type="number" min="0" step="any"
+                                      value={editMinSellAmount}
+                                      onChange={(e) => setEditMinSellAmount(Number(e.target.value))}
+                                      className="w-20 px-2 py-1.5 border border-amber-200 rounded-lg text-xs bg-white"
                                     />
                                   </div>
                                   <label className="flex items-center gap-1.5 text-[10px] text-amber-700 font-bold cursor-pointer select-none pb-1.5">
@@ -2347,6 +2385,8 @@ export default function AdminCMS({
                                 setEditingCoinId(coin.id!);
                                 setEditFeePercent(coin.feePercentage ?? 0);
                                 setEditMinAmount(coin.minTradeAmount ?? 1);
+                                setEditMinBuyAmount(coin.minBuyAmount ?? coin.minTradeAmount ?? 1);
+                                setEditMinSellAmount(coin.minSellAmount ?? coin.minTradeAmount ?? 1);
                                 setEditPricePegged(coin.pricePegged ?? false);
                                 setEditCoinGeckoId(coin.coinGeckoId ?? '');
                               }}
@@ -2458,6 +2498,32 @@ export default function AdminCMS({
                     </div>
                   )}
                 </div>
+
+                {/* Fee breakdown — BUY orders with coin fee > 0 */}
+                {selectedOrder.type === 'buy' && (() => {
+                  const coin = coins.find(c => c.symbol === selectedOrder.token);
+                  const feePct = coin?.feePercentage ?? 0;
+                  if (feePct <= 0) return null;
+                  const feeAmount = Number(selectedOrder.cryptoAmount) * feePct / 100;
+                  const netAmount = Number(selectedOrder.cryptoAmount) - feeAmount;
+                  return (
+                    <div className="space-y-2 text-xs bg-amber-50 border border-amber-200 rounded-xl p-4">
+                      <span className="text-[10px] text-amber-800 font-bold block uppercase tracking-wider">Coin Fee Breakdown (BUY)</span>
+                      <div className="flex justify-between font-mono text-slate-700">
+                        <span>Traded Amount</span>
+                        <span className="font-bold">{selectedOrder.cryptoAmount} {selectedOrder.token}</span>
+                      </div>
+                      <div className="flex justify-between font-mono text-slate-700">
+                        <span>Fee ({feePct}%)</span>
+                        <span className="font-bold text-rose-600">−{feeAmount.toLocaleString(undefined, { maximumFractionDigits: 8 })} {selectedOrder.token}</span>
+                      </div>
+                      <div className="border-t border-amber-200 pt-2 flex justify-between font-mono">
+                        <span className="font-bold text-amber-900">User Receives</span>
+                        <span className="font-bold text-emerald-700">{netAmount.toLocaleString(undefined, { maximumFractionDigits: 8 })} {selectedOrder.token}</span>
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 {/* Bank / account instructions */}
                 {selectedOrder.userBankDetails && (
@@ -3318,13 +3384,24 @@ export default function AdminCMS({
                   />
                 </div>
 
-                {/* Min Trade Amount */}
+                {/* Min Buy Amount */}
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-700">Min Trade Amount</label>
+                  <label className="text-xs font-bold text-slate-700">Min Buy Amount</label>
                   <input
                     type="number"
-                    value={editMinAmount}
-                    onChange={(e) => setEditMinAmount(Number(e.target.value))}
+                    value={editMinBuyAmount}
+                    onChange={(e) => setEditMinBuyAmount(Number(e.target.value))}
+                    className="block w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white"
+                  />
+                </div>
+
+                {/* Min Sell Amount */}
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-700">Min Sell Amount</label>
+                  <input
+                    type="number"
+                    value={editMinSellAmount}
+                    onChange={(e) => setEditMinSellAmount(Number(e.target.value))}
                     className="block w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white"
                   />
                 </div>

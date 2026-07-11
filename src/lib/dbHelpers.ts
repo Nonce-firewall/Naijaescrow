@@ -194,6 +194,8 @@ export function rowToCoin(row: any): CoinListing {
     pricePegged: row.price_pegged ?? false,
     feePercentage: row.fee_percentage ?? 0,
     minTradeAmount: row.min_trade_amount ?? 1,
+    minBuyAmount: row.min_buy_amount ?? row.min_trade_amount ?? 1,
+    minSellAmount: row.min_sell_amount ?? row.min_trade_amount ?? 1,
     coinGeckoId: row.coin_gecko_id || undefined,
     createdAt: row.created_at
   };
@@ -435,17 +437,21 @@ export async function createCoinListing(coin: Omit<CoinListing, 'id' | 'createdA
     price_pegged: coin.pricePegged ?? false,
     fee_percentage: coin.feePercentage ?? 0,
     min_trade_amount: coin.minTradeAmount ?? 1,
+    min_buy_amount: coin.minBuyAmount ?? coin.minTradeAmount ?? 1,
+    min_sell_amount: coin.minSellAmount ?? coin.minTradeAmount ?? 1,
     coin_gecko_id: coin.coinGeckoId || null,
     created_at: Date.now()
   });
   if (error) throw new Error(error.message);
 }
 
-export async function updateCoinFees(id: string, feePercentage: number, minTradeAmount: number, pricePegged?: boolean) {
+export async function updateCoinFees(id: string, feePercentage: number, minTradeAmount: number, pricePegged?: boolean, minBuyAmount?: number, minSellAmount?: number) {
   const updates: any = {
     fee_percentage: feePercentage,
     min_trade_amount: minTradeAmount
   };
+  if (minBuyAmount !== undefined) updates.min_buy_amount = minBuyAmount;
+  if (minSellAmount !== undefined) updates.min_sell_amount = minSellAmount;
   if (pricePegged !== undefined) updates.price_pegged = pricePegged;
   const { error } = await supabase.from('coins').update(updates).eq('id', id);
   if (error) throw new Error(error.message);
@@ -460,6 +466,8 @@ export async function updateCoinDetails(id: string, fields: {
   logoUrl?: string;
   feePercentage?: number;
   minTradeAmount?: number;
+  minBuyAmount?: number;
+  minSellAmount?: number;
   pricePegged?: boolean;
   coinGeckoId?: string | null;
 }) {
@@ -472,6 +480,8 @@ export async function updateCoinDetails(id: string, fields: {
   if (fields.logoUrl !== undefined) updates.logo_url = fields.logoUrl || null;
   if (fields.feePercentage !== undefined) updates.fee_percentage = fields.feePercentage;
   if (fields.minTradeAmount !== undefined) updates.min_trade_amount = fields.minTradeAmount;
+  if (fields.minBuyAmount !== undefined) updates.min_buy_amount = fields.minBuyAmount;
+  if (fields.minSellAmount !== undefined) updates.min_sell_amount = fields.minSellAmount;
   if (fields.pricePegged !== undefined) updates.price_pegged = fields.pricePegged;
   updates.coin_gecko_id = fields.coinGeckoId || null;
   const { error } = await supabase.from('coins').update(updates).eq('id', id);
