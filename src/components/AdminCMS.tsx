@@ -927,7 +927,7 @@ export default function AdminCMS({
                             User: <span className="font-mono">{ord.userEmail}</span> • {formatNGT(ord.createdAt)}
                           </div>
                           <div className="font-bold text-slate-700">
-                            {ord.cryptoAmount} USDT at ₦{ord.rate} = <span className="text-emerald-700">₦{ord.ngnAmount.toLocaleString()}</span>
+                            {ord.cryptoAmount} {ord.token} at ₦{ord.rate}/{ord.token} = <span className="text-emerald-700">₦{ord.ngnAmount.toLocaleString()}</span>
                           </div>
                         </div>
 
@@ -1510,7 +1510,7 @@ export default function AdminCMS({
                             <div className="px-5 py-4 grid grid-cols-2 gap-x-6 gap-y-3 text-xs">
                               <div>
                                 <span className="text-slate-400 block text-[10px] uppercase font-mono">Amount</span>
-                                <span className="font-bold text-slate-800">{o.cryptoAmount} USDT</span>
+                                <span className="font-bold text-slate-800">{o.cryptoAmount} {o.token}</span>
                               </div>
                               <div>
                                 <span className="text-slate-400 block text-[10px] uppercase font-mono">NGN Value</span>
@@ -1518,7 +1518,7 @@ export default function AdminCMS({
                               </div>
                               <div>
                                 <span className="text-slate-400 block text-[10px] uppercase font-mono">Rate</span>
-                                <span className="font-bold text-slate-800">₦{o.rate}/USDT</span>
+                                <span className="font-bold text-slate-800">₦{o.rate.toLocaleString()}/{o.token}</span>
                               </div>
                               <div>
                                 <span className="text-slate-400 block text-[10px] uppercase font-mono">Network</span>
@@ -2422,12 +2422,22 @@ export default function AdminCMS({
                   </div>
                   <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
                     <span className="text-[10px] text-slate-400 font-mono block">Crypto Amount</span>
-                    <span className="font-bold text-slate-800 font-mono">{selectedOrder.cryptoAmount} USDT ({selectedOrder.network})</span>
+                    <span className="font-bold text-slate-800 font-mono">{selectedOrder.cryptoAmount} {selectedOrder.token} ({selectedOrder.network})</span>
                   </div>
                   <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
                     <span className="text-[10px] text-slate-400 font-mono block">Cash Amount (NGN)</span>
                     <span className="font-bold text-slate-800">₦{selectedOrder.ngnAmount.toLocaleString()}</span>
                   </div>
+                  <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                    <span className="text-[10px] text-slate-400 font-mono block">Exchange Rate</span>
+                    <span className="font-bold text-slate-800">₦{selectedOrder.rate.toLocaleString()}/{selectedOrder.token}</span>
+                  </div>
+                  {selectedOrder.token !== 'USDT' && (
+                    <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-100">
+                      <span className="text-[10px] text-emerald-600 font-mono block">USDT Equivalent (at rate ₦{selectedOrder.rate.toLocaleString()}/{selectedOrder.token})</span>
+                      <span className="font-bold text-emerald-800">≈ {selectedOrder.cryptoAmount} {selectedOrder.token} = ₦{selectedOrder.ngnAmount.toLocaleString()}</span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Bank / account instructions */}
@@ -2828,7 +2838,7 @@ export default function AdminCMS({
                           {traderOrders.slice(0, 10).map(o => (
                             <div key={o.id} className="flex justify-between items-center py-1.5 px-2 bg-slate-50 rounded-lg text-[10px] font-mono">
                               <span className="font-bold">#{o.id.substring(0,6).toUpperCase()}</span>
-                              <span className={o.type === 'buy' ? 'text-emerald-700' : 'text-rose-700'}>{o.type.toUpperCase()} {o.cryptoAmount} USDT</span>
+                              <span className={o.type === 'buy' ? 'text-emerald-700' : 'text-rose-700'}>{o.type.toUpperCase()} {o.cryptoAmount} {o.token}</span>
                               <span className={o.status === 'completed' ? 'text-emerald-600' : o.status === 'pending' ? 'text-amber-600' : 'text-rose-600'}>{o.status}</span>
                             </div>
                           ))}

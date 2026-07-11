@@ -553,7 +553,12 @@ export default function UserDashboard({
     }
 
     if (!cryptoAmount || cryptoAmount <= 0) {
-      addToast('Please provide a valid USDT amount.', 'error');
+      addToast(`Please provide a valid ${activeCoin ? activeCoin.symbol : 'USDT'} amount.`, 'error');
+      return;
+    }
+
+    if (Number(cryptoAmount) < activeMinTrade) {
+      addToast(`Minimum trade for ${activeCoin?.symbol ?? 'USDT'} is ${activeMinTrade} ${activeCoin?.symbol ?? 'USDT'}.`, 'error');
       return;
     }
 
@@ -1440,7 +1445,7 @@ export default function UserDashboard({
                         <input
                           type="number"
                           required
-                          min="5"
+                          min={activeMinTrade}
                           step="any"
                           value={cryptoAmount}
                           onChange={(e) => setCryptoAmount(e.target.value !== '' ? Number(e.target.value) : '')}
@@ -1780,7 +1785,7 @@ export default function UserDashboard({
                       <tr className="bg-slate-50 text-[10px] text-slate-400 uppercase tracking-wider font-mono border-b border-slate-100">
                         <th className="py-4 px-6">ID / Date</th>
                         <th className="py-4 px-6">Type</th>
-                        <th className="py-4 px-6">USDT Amount</th>
+                        <th className="py-4 px-6">Crypto Amount</th>
                         <th className="py-4 px-6">NGN Payout</th>
                         <th className="py-4 px-6">Status</th>
                         <th className="py-4 px-6 text-center">Receipt</th>
@@ -1807,12 +1812,12 @@ export default function UserDashboard({
                               </span>
                             </td>
                             <td className="py-4 px-6 font-semibold text-slate-700">
-                              {ord.cryptoAmount} USDT
+                              {ord.cryptoAmount} {ord.token}
                               <span className="block text-[10px] text-slate-400 font-mono">{ord.network}</span>
                             </td>
                             <td className="py-4 px-6 font-bold text-slate-800">
                               ₦{ord.ngnAmount.toLocaleString()}
-                              <span className="block text-[10px] text-slate-400 font-mono">Rate: ₦{ord.rate}</span>
+                              <span className="block text-[10px] text-slate-400 font-mono">Rate: ₦{ord.rate.toLocaleString()}/{ord.token}</span>
                             </td>
                             <td className="py-4 px-6">
                               {ord.status === 'pending' && (
@@ -2448,18 +2453,41 @@ export default function UserDashboard({
                 <div className="text-center">
                   <span className="text-[10px] text-gray-400 font-mono uppercase">TOTAL TRANSACTION PAYOUT</span>
                   <div className="text-3xl font-bold text-[#1A1A1A] mt-1">
-                    {viewReceipt.type === 'buy' ? `${viewReceipt.cryptoAmount} USDT` : `₦${viewReceipt.ngnAmount.toLocaleString()}`}
+                    {viewReceipt.type === 'buy'
+                      ? `${viewReceipt.cryptoAmount} ${viewReceipt.token}`
+                      : `₦${viewReceipt.ngnAmount.toLocaleString()}`}
                   </div>
                   <span className="text-[10px] text-gray-400 font-mono uppercase block mt-1">
-                    Via {viewReceipt.network} network at rate ₦{viewReceipt.rate}/USDT
+                    Via {viewReceipt.network} network at rate ₦{viewReceipt.rate.toLocaleString()}/{viewReceipt.token}
                   </span>
                 </div>
 
+                {/* Order summary with fee breakdown and totals */}
                 <div className="border-t border-dashed border-[#E0E7E0] pt-4 space-y-2 text-xs">
                   <div className="flex justify-between">
                     <span className="text-gray-400 font-mono">ORDER TYPE:</span>
                     <span className="font-bold text-[#1A1A1A] uppercase">{viewReceipt.type === 'buy' ? viewReceipt.token === "USDT" ? `Buy USDT` : `Buy ${viewReceipt.token}/USDT` : viewReceipt.token === "USDT" ? `Sell USDT` : `Sell ${viewReceipt.token}/USDT`}</span>
                   </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400 font-mono">AMOUNT:</span>
+                    <span className="font-bold text-[#1A1A1A]">{viewReceipt.cryptoAmount} {viewReceipt.token}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400 font-mono">RATE:</span>
+                    <span className="font-bold text-[#1A1A1A]">₦{viewReceipt.rate.toLocaleString()}/{viewReceipt.token}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400 font-mono">{viewReceipt.type === 'buy' ? 'YOU PAY (NGN):' : 'YOU RECEIVE (NGN):'}</span>
+                    <span className="font-bold text-[#1A1A1A]">₦{viewReceipt.ngnAmount.toLocaleString()}</span>
+                  </div>
+                  {viewReceipt.token !== 'USDT' && (
+                    <div className="flex justify-between text-emerald-700">
+                      <span className="text-gray-400 font-mono">USDT EQUIVALENT:</span>
+                      <span className="font-bold">≈ {(viewReceipt.ngnAmount / viewReceipt.rate).toFixed(4)} USDT</span>
+                    </div>
+                  )}
+                </div>
+                <div className="border-t border-dashed border-[#E0E7E0] pt-4 space-y-2 text-xs">
                   <div className="flex justify-between">
                     <span className="text-gray-400 font-mono">ACCOUNT CORRESPONDENT:</span>
                     <span className="font-bold text-[#1A1A1A]">{viewReceipt.userEmail}</span>
