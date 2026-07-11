@@ -2485,7 +2485,11 @@ export default function UserDashboard({
                       <span className="text-gray-400 font-mono">USDT EQUIVALENT:</span>
                       <span className="font-bold">
                         {(() => {
-                          const ngnPerUsdt = viewReceipt.type === 'buy' ? effectiveBuyRate : effectiveSellRate;
+                          const coin = coins.find(c => c.symbol === viewReceipt.token);
+                          const isLiveCoin = !!coin?.coinGeckoId;
+                          const ngnPerUsdt = isLiveCoin
+                            ? (viewReceipt.type === 'buy' ? effectiveBuyRate : effectiveSellRate)
+                            : viewReceipt.rate;
                           const usdt = ngnPerUsdt > 0 ? viewReceipt.ngnAmount / ngnPerUsdt : 0;
                           return `≈ ${usdt.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDT`;
                         })()}

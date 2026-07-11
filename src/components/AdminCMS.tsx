@@ -2438,10 +2438,14 @@ export default function AdminCMS({
                         USDT Equivalent — {selectedOrder.cryptoAmount} {selectedOrder.token} at ₦{selectedOrder.rate.toLocaleString()}/{selectedOrder.token}
                       </span>
                       <span className="font-bold text-emerald-800">
-                        ₦{selectedOrder.ngnAmount.toLocaleString()} ÷ ₦{liveNgnRate ? Math.round(liveNgnRate).toLocaleString() : '—'}/USDT
-                        {liveNgnRate
-                          ? ` ≈ ${(selectedOrder.ngnAmount / Math.round(liveNgnRate)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDT`
-                          : ' (live rate unavailable)'}
+                        {(() => {
+                          const coin = coins.find(c => c.symbol === selectedOrder.token);
+                          const isLiveCoin = !!coin?.coinGeckoId;
+                          const ngnPerUsdt = isLiveCoin && liveNgnRate ? Math.round(liveNgnRate) : selectedOrder.rate;
+                          if (ngnPerUsdt <= 0) return ' (rate unavailable)';
+                          const usdt = selectedOrder.ngnAmount / ngnPerUsdt;
+                          return `₦${selectedOrder.ngnAmount.toLocaleString()} ÷ ₦${ngnPerUsdt.toLocaleString()}/USDT ≈ ${usdt.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDT`;
+                        })()}
                       </span>
                     </div>
                   )}
