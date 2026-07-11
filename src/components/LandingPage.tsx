@@ -552,7 +552,7 @@ function TradingWidget({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-emerald-400 text-[10px] font-bold">9ija Escrownian</span>
+            <span className="text-emerald-400 text-[10px] font-bold">Rate Calculator</span>
           </div>
           <div className="flex items-center gap-1.5">
             <span className="text-[9px] text-slate-400 uppercase tracking-wider">Mode:</span>
@@ -690,7 +690,7 @@ function TradingWidget({
           onClick={onCtaClick}
           className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-[11px] uppercase tracking-wider cursor-pointer bg-emerald-600 hover:bg-emerald-500 active:scale-[0.97] transition-[transform,background-color] duration-150 text-white"
         >
-          Initiate Order
+          Make It Real 🥰
           <ChevronRight className="w-3.5 h-3.5" />
         </button>
 
