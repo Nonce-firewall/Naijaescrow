@@ -2440,7 +2440,7 @@ export default function AdminCMS({
                       <span className="font-bold text-emerald-800">
                         {(() => {
                           const coin = coins.find(c => c.symbol === selectedOrder.token);
-                          const isLiveCoin = !!coin?.coinGeckoId;
+                          const isLiveCoin = coin?.pricePegged === true;
                           // Live (CoinGecko-pegged) coins: order.rate is NGN-per-token (not NGN-per-USDT),
                           // so use the effective USDT rate (market + markup) to convert NGN → USDT.
                           // Custom-rate coins: admin sets rate as NGN-per-USDT directly,

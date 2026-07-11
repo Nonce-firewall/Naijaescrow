@@ -2486,7 +2486,7 @@ export default function UserDashboard({
                       <span className="font-bold">
                         {(() => {
                           const coin = coins.find(c => c.symbol === viewReceipt.token);
-                          const isLiveCoin = !!coin?.coinGeckoId;
+                          const isLiveCoin = coin?.pricePegged === true;
                           // Live (CoinGecko-pegged) coins: order.rate is NGN-per-token (not NGN-per-USDT),
                           // so use effective USDT rate (market + markup) to convert NGN → USDT.
                           // Custom-rate coins: admin sets rate as NGN-per-USDT directly,
