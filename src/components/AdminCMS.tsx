@@ -177,7 +177,7 @@ export default function AdminCMS({
   // Calculate quick metrics for Analytics view
   const totalBuyVolumeUsdt = orders
     .filter((o) => o.type === 'buy' && o.status === 'completed')
-    .reduce((sum, o) => sum + o.cryptoAmount, 0);
+    .reduce((sum, o) => sum + (o.usdtEquivalent ?? o.cryptoAmount), 0);
 
   const totalSellVolumeNgn = orders
     .filter((o) => o.type === 'sell' && o.status === 'completed')
