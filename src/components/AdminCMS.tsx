@@ -2434,8 +2434,15 @@ export default function AdminCMS({
                   </div>
                   {selectedOrder.token !== 'USDT' && (
                     <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-100">
-                      <span className="text-[10px] text-emerald-600 font-mono block">USDT Equivalent (at rate ₦{selectedOrder.rate.toLocaleString()}/{selectedOrder.token})</span>
-                      <span className="font-bold text-emerald-800">≈ {selectedOrder.cryptoAmount} {selectedOrder.token} = ₦{selectedOrder.ngnAmount.toLocaleString()}</span>
+                      <span className="text-[10px] text-emerald-600 font-mono block">
+                        USDT Equivalent — {selectedOrder.cryptoAmount} {selectedOrder.token} at ₦{selectedOrder.rate.toLocaleString()}/{selectedOrder.token}
+                      </span>
+                      <span className="font-bold text-emerald-800">
+                        ₦{selectedOrder.ngnAmount.toLocaleString()} ÷ ₦{liveNgnRate ? Math.round(liveNgnRate).toLocaleString() : '—'}/USDT
+                        {liveNgnRate
+                          ? ` ≈ ${(selectedOrder.ngnAmount / Math.round(liveNgnRate)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDT`
+                          : ' (live rate unavailable)'}
+                      </span>
                     </div>
                   )}
                 </div>

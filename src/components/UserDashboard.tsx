@@ -2483,7 +2483,13 @@ export default function UserDashboard({
                   {viewReceipt.token !== 'USDT' && (
                     <div className="flex justify-between text-emerald-700">
                       <span className="text-gray-400 font-mono">USDT EQUIVALENT:</span>
-                      <span className="font-bold">≈ {(viewReceipt.ngnAmount / viewReceipt.rate).toFixed(4)} USDT</span>
+                      <span className="font-bold">
+                        {(() => {
+                          const ngnPerUsdt = viewReceipt.type === 'buy' ? effectiveBuyRate : effectiveSellRate;
+                          const usdt = ngnPerUsdt > 0 ? viewReceipt.ngnAmount / ngnPerUsdt : 0;
+                          return `≈ ${usdt.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDT`;
+                        })()}
+                      </span>
                     </div>
                   )}
                 </div>
