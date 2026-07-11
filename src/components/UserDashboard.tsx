@@ -1507,7 +1507,7 @@ export default function UserDashboard({
                         <span className="font-semibold">{cryptoAmount} {activeCoin?.symbol}</span>
                       </div>
                       <div className="flex justify-between text-slate-600">
-                        <span>Platform fee ({activeFeePercent}%)</span>
+                        <span>Network fee ({activeFeePercent}%)</span>
                         <span className="font-semibold text-rose-600">− {feeAmount.toFixed(4)} {activeCoin?.symbol}</span>
                       </div>
                       <div className="flex justify-between border-t border-amber-200 pt-1.5 mt-0.5">
@@ -1568,7 +1568,7 @@ export default function UserDashboard({
                       <>
                         <h4 className="font-bold text-[#008751] text-sm flex items-center gap-1.5">
                           <CheckCircle2 className="w-5 h-5 text-[#008751]" />
-                          Step 1: Transfer NGN to Admin Account
+                          Step 1: Transfer Naira amount to the Admin's provided Account
                         </h4>
                         <p className="text-xs text-gray-600 leading-relaxed">
                           Please transfer exactly <span className="font-bold text-[#008751]">{calculatedNgnAmount ? `₦${calculatedNgnAmount.toLocaleString()}` : 'the calculated amount'}</span> to the admin bank credentials below. Your {activeCoin ? activeCoin.symbol : 'USDT'} will be released to your registered blockchain address once the admin validates the receipt.
@@ -1597,7 +1597,7 @@ export default function UserDashboard({
                       <>
                         <h4 className="font-bold text-rose-950 text-sm flex items-center gap-1.5">
                           <CheckCircle2 className="w-5 h-5 text-rose-600" />
-                          Step 1: Transfer {activeCoin ? activeCoin.symbol : 'USDT'} to Admin Escrow Wallet
+                          Step 1: Transfer {activeCoin ? activeCoin.symbol : 'USDT'} to the Admin's provided Escrow Wallet
                         </h4>
                         <p className="text-xs text-gray-600 leading-relaxed">
                           Please deposit exactly <span className="font-bold text-[#1A1A1A]">{cryptoAmount || 0} {activeCoin ? activeCoin.symbol : 'USDT'}</span> on the <span className="font-bold text-[#1A1A1A]">{activeCoin ? activeCoin.network : network}</span> network to the admin wallet address below. Do not send on other networks.
@@ -2322,7 +2322,7 @@ export default function UserDashboard({
             </div>
 
             {localNotifs.length === 0 && privateAnnouncements.length === 0 ? (
-              <p className="text-xs text-gray-400">No notifications or platform bulletins right now.</p>
+              <p className="text-xs text-gray-400">No notifications right now.</p>
             ) : (
               <div className="space-y-2 max-h-[420px] overflow-y-auto">
 
