@@ -1,21 +1,40 @@
 import '@testing-library/jest-dom';
-import { expect, afterEach, vi } from 'vitest';
-import { cleanup } from '@testing-library/react';
-
-// Cleanup after each test
-afterEach(() => {
-  cleanup();
-});
+import { vi } from 'vitest';
 
 // Mock Supabase client
 vi.mock('../lib/supabase', () => ({
   supabase: {
-    from: vi.fn(),
+    from: vi.fn(() => ({
+      select: vi.fn(() => ({
+        eq: vi.fn(() => ({
+          maybeSingle: vi.fn(() => Promise.resolve({ data: null, error: null })),
+          single: vi.fn(() => Promise.resolve({ data: null, error: null })),
+        })),
+        limit: vi.fn(() => Promise.resolve({ data: [], error: null })),
+      })),
+      insert: vi.fn(() => ({
+        select: vi.fn(() => ({
+          single: vi.fn(() => Promise.resolve({ data: null, error: null })),
+        })),
+      })),
+      update: vi.fn(() => ({
+        eq: vi.fn(() => Promise.resolve({ error: null })),
+      })),
+      upsert: vi.fn(() => Promise.resolve({ error: null })),
+      delete: vi.fn(() => ({
+        eq: vi.fn(() => Promise.resolve({ error: null })),
+      })),
+    })),
     auth: {
-      getSession: vi.fn(),
-      updateUser: vi.fn(),
+      signInWithPassword: vi.fn(() => Promise.resolve({ data: null, error: null })),
+      signUp: vi.fn(() => Promise.resolve({ data: null, error: null })),
+      signOut: vi.fn(() => Promise.resolve({ error: null })),
+      resetPasswordForEmail: vi.fn(() => Promise.resolve({ error: null })),
+      signInWithOAuth: vi.fn(() => Promise.resolve({ error: null })),
+      getSession: vi.fn(() => Promise.resolve({ data: { session: null } })),
+      updateUser: vi.fn(() => Promise.resolve({ data: null, error: null })),
     },
-    rpc: vi.fn(),
+    rpc: vi.fn(() => Promise.resolve({ data: null, error: null })),
   },
 }));
 
@@ -33,3 +52,10 @@ Object.defineProperty(window, 'matchMedia', {
     dispatchEvent: vi.fn(),
   })),
 });
+
+// Mock IntersectionObserver
+global.IntersectionObserver = vi.fn().mockImplementation(() => ({
+  observe: vi.fn(),
+  unobserve: vi.fn(),
+  disconnect: vi.fn(),
+})) as any;
