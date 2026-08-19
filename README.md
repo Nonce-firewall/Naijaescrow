@@ -57,6 +57,8 @@ vite.config.ts                 # Vite configuration
 vitest.config.ts               # Vitest test runner configuration
 eslint.config.js               # ESLint configuration
 .prettierrc                    # Prettier code formatting rules
+docker-compose.yml             # Docker Compose setup for local development
+Dockerfile                     # Container image definition
 ```
 
 **Tech Stack**:
@@ -65,21 +67,72 @@ eslint.config.js               # ESLint configuration
 - **Blockchain**: Ethers.js (for wallet integration)
 - **Testing**: Vitest, React Testing Library
 - **Code Quality**: ESLint, Prettier, TypeScript strict mode
+- **Containerization**: Docker & Docker Compose
 
 ## Prerequisites
 
+### Local Development (without Docker)
 - Node.js 20 or higher
 - npm 10 or higher
 - Git
 - Supabase account with a project initialized
 - Firebase account (optional, for analytics)
 
-## Install
+### Docker-based Development
+- Docker 20.10+
+- Docker Compose 2.0+
+- Git
+
+## Quick Start with Docker
+
+**One-command setup** (includes PostgreSQL, Redis, and the app):
 
 ```bash
 # Clone the repository
-git clone https://github.com/CryptoGangstar/9ijaescrow.git
-cd 9ijaescrow
+git clone https://github.com/Nonce-firewall/Naijaescrow.git
+cd Naijaescrow
+
+# Copy environment template
+cp .env.example .env.local
+
+# Start everything with Docker Compose
+docker-compose up --build
+
+# App will be available at http://localhost:5000
+```
+
+**Verify it works**:
+1. Open http://localhost:5000 in your browser
+2. The database and Redis are automatically initialized
+3. Click "Sign Up" and create a test account
+4. After login, access the user dashboard
+
+**Useful Docker commands**:
+```bash
+# View logs
+docker-compose logs -f app
+
+# Stop all services
+docker-compose down
+
+# Stop and remove volumes (clean slate)
+docker-compose down -v
+
+# Rebuild after dependency changes
+docker-compose up --build
+
+# Run a single service
+docker-compose up postgres  # Just the database
+```
+
+## Traditional Local Setup (without Docker)
+
+### Install
+
+```bash
+# Clone the repository
+git clone https://github.com/Nonce-firewall/Naijaescrow.git
+cd Naijaescrow
 
 # Install dependencies
 npm install
@@ -89,7 +142,7 @@ node -v  # Should be v20+
 npm -v   # Should be v10+
 ```
 
-## Environment Setup
+### Environment Setup
 
 1. **Copy the environment template**:
    ```bash
@@ -248,6 +301,24 @@ When working on AdminCMS.tsx or UserDashboard.tsx:
 
 ## Troubleshooting
 
+### Docker Issues
+
+**Container fails to start**:
+```bash
+# Check logs for errors
+docker-compose logs app
+
+# Rebuild everything from scratch
+docker-compose down -v
+docker-compose up --build
+```
+
+**Port conflicts**:
+```bash
+# If port 5000, 5432, or 6379 is already in use, edit docker-compose.yml
+# and change the host port in the `ports` section (e.g., "5001:5000")
+```
+
 ### "Cannot find module" errors
 ```bash
 # Clear node_modules and reinstall
@@ -286,5 +357,5 @@ MIT
 ## Support
 
 For issues or questions:
-- Open an issue on [GitHub](https://github.com/CryptoGangstar/9ijaescrow/issues)
+- Open an issue on [GitHub](https://github.com/Nonce-firewall/Naijaescrow/issues)
 - Contact: cryptogangstar247@gmail.com
