@@ -2121,7 +2121,7 @@ export default function UserDashboard({
                           </div>
                           <button
                             type="button"
-                            onClick={startCamera}
+                            onClick={() => startCamera()}
                             className="bg-white hover:bg-[#F7F9F7] text-[#008751] font-bold px-4 py-2 rounded-xl text-xs border border-[#008751]/20 cursor-pointer transition shadow-sm"
                           >
                             Retake Photo
@@ -2138,7 +2138,7 @@ export default function UserDashboard({
                           </div>
                           <button
                             type="button"
-                            onClick={startCamera}
+                            onClick={() => startCamera()}
                             className="bg-white hover:bg-[#F7F9F7] text-[#008751] font-bold px-4 py-2 rounded-xl text-xs border border-[#008751]/20 cursor-pointer transition shadow-sm"
                           >
                             Open Camera

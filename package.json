@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite --port=5000 --host=0.0.0.0",
+    "dev": "vite --port=3000 --host=0.0.0.0",
     "build": "vite build",
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
@@ -32,12 +32,13 @@
   "devDependencies": {
     "@netlify/functions": "^3.1.10",
     "@testing-library/jest-dom": "^6.1.5",
-    "@testing-library/react": "^14.1.2",
+    "@testing-library/react": "^16.2.0",
     "@testing-library/user-event": "^14.5.1",
     "@types/express": "^4.17.21",
     "@types/node": "^22.14.0",
     "@typescript-eslint/eslint-plugin": "^6.13.2",
     "@typescript-eslint/parser": "^6.13.2",
+    "@vitest/coverage-v8": "^1.0.4",
     "autoprefixer": "^10.4.21",
     "esbuild": "^0.25.0",
     "eslint": "^8.55.0",

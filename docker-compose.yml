@@ -65,7 +65,7 @@ services:
       # Redis
       REDIS_URL: redis://redis:6379
     ports:
-      - "5000:5000"
+      - "3000:3000"
     depends_on:
       postgres:
         condition: service_healthy

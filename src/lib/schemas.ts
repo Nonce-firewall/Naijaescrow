@@ -100,6 +100,18 @@ export const CoinListingSchema = z.object({
 });
 
 /**
+ * Announcement validation schema
+ */
+export const AnnouncementSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  content: z.string(),
+  scope: z.enum(['all', 'public', 'private']),
+  isActive: z.boolean(),
+  createdAt: z.number(),
+});
+
+/**
  * Dispute validation schema
  * Ensures dispute data is complete and valid
  */

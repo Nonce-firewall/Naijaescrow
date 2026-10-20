@@ -95,14 +95,14 @@ cd Naijaescrow
 # Copy environment template
 cp .env.example .env.local
 
-# Start everything with Docker Compose
-docker-compose up --build
+# Start everything with Docker Compose (PostgreSQL, Redis, and Web App)
+docker compose up --build
 
-# App will be available at http://localhost:5000
+# App will be available at http://localhost:3000
 ```
 
 **Verify it works**:
-1. Open http://localhost:5000 in your browser
+1. Open http://localhost:3000 in your browser
 2. The database and Redis are automatically initialized
 3. Click "Sign Up" and create a test account
 4. After login, access the user dashboard
@@ -110,19 +110,19 @@ docker-compose up --build
 **Useful Docker commands**:
 ```bash
 # View logs
-docker-compose logs -f app
+docker compose logs -f app
 
 # Stop all services
-docker-compose down
+docker compose down
 
 # Stop and remove volumes (clean slate)
-docker-compose down -v
+docker compose down -v
 
 # Rebuild after dependency changes
-docker-compose up --build
+docker compose up --build
 
 # Run a single service
-docker-compose up postgres  # Just the database
+docker compose up postgres  # Just the database
 ```
 
 ## Traditional Local Setup (without Docker)
@@ -335,19 +335,24 @@ npm install
 - Ensure `vitest.config.ts` exists with jsdom environment configured
 - Run `npm install -D jsdom`
 
-### Port 5000 already in use
+### Port 3000 already in use
 ```bash
 # Find and kill the process, or use a different port:
-npm run dev -- --port 5001
+npm run dev -- --port 3001
 ```
+
+## Documentation & Contribution
+
+- **[CONTRIBUTING.md](CONTRIBUTING.md)**: Development workflow, coding style, and PR guidelines.
+- **[CHANGELOG.md](CHANGELOG.md)**: Version history, notable changes, and release notes.
 
 ## Contributing
 
-1. Follow the development workflow above
+1. Review [CONTRIBUTING.md](CONTRIBUTING.md) before opening a PR
 2. Write tests for new features
 3. Ensure all tests pass: `npm test`
-4. Ensure lint passes: `npm run lint`
-5. Keep commits small and focused
+4. Ensure lint and formatting pass: `npm run lint` and `npm run format:check`
+5. Keep commits small and focused with descriptive conventional commit messages
 6. Reference related issues in commit messages: `fix: resolve #123`
 
 ## License
