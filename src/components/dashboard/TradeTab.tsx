@@ -18,7 +18,7 @@ export default function TradeTab({
   settings,
   liveNgnRate,
   addToast,
-  onOrderCreated
+  onOrderCreated,
 }: TradeTabProps) {
   const [tradeType, setTradeType] = useState<'buy' | 'sell'>('buy');
   const [network, setNetwork] = useState<'BSC' | 'Tron' | 'Polygon'>('BSC');
@@ -69,7 +69,9 @@ export default function TradeTab({
     }
   };
 
-  const calculatedNGN = cryptoAmount ? (parseFloat(cryptoAmount) * (liveNgnRate || settings.usdtSellMarkup)).toLocaleString('en-NG') : '0';
+  const calculatedNGN = cryptoAmount
+    ? (parseFloat(cryptoAmount) * (liveNgnRate || settings.usdtSellMarkup)).toLocaleString('en-NG')
+    : '0';
 
   return (
     <div className="space-y-4">
@@ -93,7 +95,7 @@ export default function TradeTab({
               I want to
             </label>
             <div className="flex gap-2">
-              {(['buy', 'sell'] as const).map(type => (
+              {(['buy', 'sell'] as const).map((type) => (
                 <button
                   key={type}
                   onClick={() => setTradeType(type)}
@@ -137,9 +139,7 @@ export default function TradeTab({
               placeholder="Enter amount..."
               className="w-full px-3 py-2 border border-[#E0E7E0] rounded-xl bg-[#F7F9F7] focus:outline-none focus:ring-2 focus:ring-[#008751] text-sm"
             />
-            <p className="text-xs text-gray-500 mt-2">
-              Estimated NGN: ₦{calculatedNGN}
-            </p>
+            <p className="text-xs text-gray-500 mt-2">Estimated NGN: ₦{calculatedNGN}</p>
           </div>
 
           {/* Screenshot Upload */}
@@ -153,9 +153,7 @@ export default function TradeTab({
               onChange={handleScreenshotUpload}
               className="w-full px-3 py-2 border border-[#E0E7E0] rounded-xl bg-[#F7F9F7] focus:outline-none text-sm"
             />
-            {screenshot && (
-              <p className="text-xs text-green-600 mt-1">✓ {screenshot.name}</p>
-            )}
+            {screenshot && <p className="text-xs text-green-600 mt-1">✓ {screenshot.name}</p>}
           </div>
         </div>
 

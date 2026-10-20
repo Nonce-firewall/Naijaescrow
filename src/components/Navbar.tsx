@@ -3,13 +3,32 @@ import { motion, AnimatePresence } from 'motion/react';
 import { supabase } from '../lib/supabase';
 import { UserProfile, NotificationPreferences } from '../types';
 import { updateNotificationPreferences, changePassword, deleteAccount } from '../lib/dbHelpers';
-import { LogOut, UserCheck, Clock, Circle as XCircle, CircleAlert as AlertCircle, ArrowLeftRight, Menu, X, CircleUser as UserCircle2, Bell, Settings, ChevronDown, KeyRound, BellRing, Eye, EyeOff, Trash2, TriangleAlert as AlertTriangle } from 'lucide-react';
+import {
+  LogOut,
+  UserCheck,
+  Clock,
+  Circle as XCircle,
+  CircleAlert as AlertCircle,
+  ArrowLeftRight,
+  Menu,
+  X,
+  CircleUser as UserCircle2,
+  Bell,
+  Settings,
+  ChevronDown,
+  KeyRound,
+  BellRing,
+  Eye,
+  EyeOff,
+  Trash2,
+  TriangleAlert as AlertTriangle,
+} from 'lucide-react';
 import SupportButton from './SupportButton';
 
 const DEFAULT_NOTIF_PREFS: NotificationPreferences = {
   orderUpdates: true,
   kycUpdates: true,
-  announcements: true
+  announcements: true,
 };
 
 interface NavbarProps {
@@ -23,7 +42,16 @@ interface NavbarProps {
   onBellClick?: () => void;
 }
 
-export default function Navbar({ userProfile, isAdminMode, currentPage, onToggleAdminMode, onNavigate, addToast, bulletinCount = 0, onBellClick }: NavbarProps) {
+export default function Navbar({
+  userProfile,
+  isAdminMode,
+  currentPage,
+  onToggleAdminMode,
+  onNavigate,
+  addToast,
+  bulletinCount = 0,
+  onBellClick,
+}: NavbarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -55,25 +83,23 @@ export default function Navbar({ userProfile, isAdminMode, currentPage, onToggle
   };
 
   const kycColor =
-    userProfile?.kycStatus === 'approved' ? 'text-[#008751]' :
-    userProfile?.kycStatus === 'pending' ? 'text-amber-600' : 'text-rose-600';
+    userProfile?.kycStatus === 'approved'
+      ? 'text-[#008751]'
+      : userProfile?.kycStatus === 'pending'
+        ? 'text-amber-600'
+        : 'text-rose-600';
 
   const isLanding = currentPage === 'landing';
 
   return (
     <nav className="bg-gray-300 border-b border-[#E0E7E0] font-sans sticky top-0 z-40">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
-
         {/* Brand */}
         <div
           onClick={() => onNavigate('landing')}
           className="flex items-center cursor-pointer hover:opacity-90 transition select-none shrink-0"
         >
-          <img
-            src="/logo-main.png"
-            alt="9ija Escrow"
-            className="h-8 w-auto"
-          />
+          <img src="/logo-main.png" alt="9ija Escrow" className="h-8 w-auto" />
         </div>
 
         {/* Desktop right section */}
@@ -90,95 +116,104 @@ export default function Navbar({ userProfile, isAdminMode, currentPage, onToggle
                 <span className="hidden md:inline">Dashboard</span>
               </button>
             ) : null
-          ) : (
-            /* Dashboard / other pages — full user controls */
-            userProfile ? (
-              <>
-                {userProfile.role === 'admin' && (
-                  <button
-                    onClick={onToggleAdminMode}
-                    className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer border ${
-                      isAdminMode
-                        ? 'bg-amber-50 hover:bg-amber-100 text-amber-900 border-amber-200'
-                        : 'bg-[#E6F4EA] hover:bg-[#d1ebd7] text-[#008751] border-[#c0e0cc]'
-                    }`}
-                  >
-                    <ArrowLeftRight className="w-3.5 h-3.5" />
-                    {isAdminMode ? 'User View' : 'Admin CMS'}
-                  </button>
-                )}
+          ) : /* Dashboard / other pages — full user controls */
+          userProfile ? (
+            <>
+              {userProfile.role === 'admin' && (
+                <button
+                  onClick={onToggleAdminMode}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer border ${
+                    isAdminMode
+                      ? 'bg-amber-50 hover:bg-amber-100 text-amber-900 border-amber-200'
+                      : 'bg-[#E6F4EA] hover:bg-[#d1ebd7] text-[#008751] border-[#c0e0cc]'
+                  }`}
+                >
+                  <ArrowLeftRight className="w-3.5 h-3.5" />
+                  {isAdminMode ? 'User View' : 'Admin CMS'}
+                </button>
+              )}
 
-                {/* Bell icon — tablet/iPad only (hidden on lg+ where bulletin card is visible) */}
-                {!isAdminMode && (
-                  <button
-                    onClick={onBellClick}
-                    className="relative lg:hidden p-2 rounded-lg border border-[#E0E7E0] text-gray-600 hover:bg-[#F7F9F7] cursor-pointer transition"
-                    title="System Bulletin"
-                  >
-                    <Bell className="w-4 h-4" />
-                    {bulletinCount > 0 && (
-                      <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-0.5 bg-rose-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center leading-none border border-white">
-                        {bulletinCount > 9 ? '9+' : bulletinCount}
-                      </span>
-                    )}
-                  </button>
-                )}
-
-                {/* Support icon — tablet + desktop */}
-                {!isAdminMode && <SupportButton />}
-
-                <div className="relative" ref={accountMenuRef}>
-                  <button
-                    onClick={() => setAccountMenuOpen((v) => !v)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 border rounded-xl text-xs font-bold transition cursor-pointer ${
-                      accountMenuOpen
-                        ? 'border-[#008751]/40 bg-[#E6F4EA] text-[#008751]'
-                        : 'border-[#E0E7E0] hover:bg-[#F7F9F7] text-gray-600'
-                    }`}
-                  >
-                    <Settings className="w-3.5 h-3.5" />
-                    Account
-                    <ChevronDown className={`w-3 h-3 transition-transform ${accountMenuOpen ? 'rotate-180' : ''}`} />
-                  </button>
-
-                  {accountMenuOpen && (
-                    <div className="absolute right-0 top-full mt-2 w-56 bg-white border border-[#E0E7E0] rounded-xl shadow-lg py-1.5 z-50">
-                      <button
-                        onClick={() => { setShowPasswordModal(true); setAccountMenuOpen(false); }}
-                        className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-bold text-gray-600 hover:bg-[#F7F9F7] hover:text-[#008751] transition cursor-pointer"
-                      >
-                        <KeyRound className="w-3.5 h-3.5 shrink-0" />
-                        Change Password
-                      </button>
-                      <button
-                        onClick={() => { setShowNotifModal(true); setAccountMenuOpen(false); }}
-                        className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-bold text-gray-600 hover:bg-[#F7F9F7] hover:text-[#008751] transition cursor-pointer"
-                      >
-                        <BellRing className="w-3.5 h-3.5 shrink-0" />
-                        Notification Preferences
-                      </button>
-                      <div className="my-1.5 border-t border-[#E0E7E0]" />
-                      <button
-                        onClick={handleLogout}
-                        className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-bold text-gray-600 hover:bg-rose-50 hover:text-rose-700 transition cursor-pointer"
-                      >
-                        <LogOut className="w-3.5 h-3.5 shrink-0" />
-                        Log Out
-                      </button>
-                      <div className="my-1.5 border-t border-[#E0E7E0]" />
-                      <button
-                        onClick={() => { setShowDeleteModal(true); setAccountMenuOpen(false); }}
-                        className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-bold text-rose-600 hover:bg-rose-50 transition cursor-pointer"
-                      >
-                        <Trash2 className="w-3.5 h-3.5 shrink-0" />
-                        Delete Account
-                      </button>
-                    </div>
+              {/* Bell icon — tablet/iPad only (hidden on lg+ where bulletin card is visible) */}
+              {!isAdminMode && (
+                <button
+                  onClick={onBellClick}
+                  className="relative lg:hidden p-2 rounded-lg border border-[#E0E7E0] text-gray-600 hover:bg-[#F7F9F7] cursor-pointer transition"
+                  title="System Bulletin"
+                >
+                  <Bell className="w-4 h-4" />
+                  {bulletinCount > 0 && (
+                    <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-0.5 bg-rose-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center leading-none border border-white">
+                      {bulletinCount > 9 ? '9+' : bulletinCount}
+                    </span>
                   )}
-                </div>
-              </>
-            ) : null
-          )}
+                </button>
+              )}
+
+              {/* Support icon — tablet + desktop */}
+              {!isAdminMode && <SupportButton />}
+
+              <div className="relative" ref={accountMenuRef}>
+                <button
+                  onClick={() => setAccountMenuOpen((v) => !v)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 border rounded-xl text-xs font-bold transition cursor-pointer ${
+                    accountMenuOpen
+                      ? 'border-[#008751]/40 bg-[#E6F4EA] text-[#008751]'
+                      : 'border-[#E0E7E0] hover:bg-[#F7F9F7] text-gray-600'
+                  }`}
+                >
+                  <Settings className="w-3.5 h-3.5" />
+                  Account
+                  <ChevronDown
+                    className={`w-3 h-3 transition-transform ${accountMenuOpen ? 'rotate-180' : ''}`}
+                  />
+                </button>
+
+                {accountMenuOpen && (
+                  <div className="absolute right-0 top-full mt-2 w-56 bg-white border border-[#E0E7E0] rounded-xl shadow-lg py-1.5 z-50">
+                    <button
+                      onClick={() => {
+                        setShowPasswordModal(true);
+                        setAccountMenuOpen(false);
+                      }}
+                      className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-bold text-gray-600 hover:bg-[#F7F9F7] hover:text-[#008751] transition cursor-pointer"
+                    >
+                      <KeyRound className="w-3.5 h-3.5 shrink-0" />
+                      Change Password
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowNotifModal(true);
+                        setAccountMenuOpen(false);
+                      }}
+                      className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-bold text-gray-600 hover:bg-[#F7F9F7] hover:text-[#008751] transition cursor-pointer"
+                    >
+                      <BellRing className="w-3.5 h-3.5 shrink-0" />
+                      Notification Preferences
+                    </button>
+                    <div className="my-1.5 border-t border-[#E0E7E0]" />
+                    <button
+                      onClick={handleLogout}
+                      className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-bold text-gray-600 hover:bg-rose-50 hover:text-rose-700 transition cursor-pointer"
+                    >
+                      <LogOut className="w-3.5 h-3.5 shrink-0" />
+                      Log Out
+                    </button>
+                    <div className="my-1.5 border-t border-[#E0E7E0]" />
+                    <button
+                      onClick={() => {
+                        setShowDeleteModal(true);
+                        setAccountMenuOpen(false);
+                      }}
+                      className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-bold text-rose-600 hover:bg-rose-50 transition cursor-pointer"
+                    >
+                      <Trash2 className="w-3.5 h-3.5 shrink-0" />
+                      Delete Account
+                    </button>
+                  </div>
+                )}
+              </div>
+            </>
+          ) : null}
         </div>
 
         {/* Mobile right section */}
@@ -199,7 +234,9 @@ export default function Navbar({ userProfile, isAdminMode, currentPage, onToggle
                 <button
                   onClick={onToggleAdminMode}
                   className={`p-2 rounded-lg border text-xs font-bold transition cursor-pointer ${
-                    isAdminMode ? 'bg-amber-50 text-amber-800 border-amber-200' : 'bg-[#E6F4EA] text-[#008751] border-[#c0e0cc]'
+                    isAdminMode
+                      ? 'bg-amber-50 text-amber-800 border-amber-200'
+                      : 'bg-[#E6F4EA] text-[#008751] border-[#c0e0cc]'
                   }`}
                   title={isAdminMode ? 'User View' : 'Admin CMS'}
                 >
@@ -254,7 +291,9 @@ export default function Navbar({ userProfile, isAdminMode, currentPage, onToggle
                     : userProfile.email}
                 </span>
                 {userProfile.kycStatus === 'approved' && userProfile.kycData?.fullName && (
-                  <span className="text-[10px] text-gray-400 font-mono block truncate max-w-[200px]">{userProfile.email}</span>
+                  <span className="text-[10px] text-gray-400 font-mono block truncate max-w-[200px]">
+                    {userProfile.email}
+                  </span>
                 )}
               </div>
               <span className={`text-[10px] font-bold flex items-center gap-1 ${kycColor}`}>
@@ -266,14 +305,20 @@ export default function Navbar({ userProfile, isAdminMode, currentPage, onToggle
               </span>
             </div>
             <button
-              onClick={() => { setShowPasswordModal(true); setMenuOpen(false); }}
+              onClick={() => {
+                setShowPasswordModal(true);
+                setMenuOpen(false);
+              }}
               className="w-full flex items-center justify-center gap-2 border border-[#E0E7E0] hover:bg-[#F7F9F7] text-gray-600 py-2.5 rounded-xl text-sm font-bold transition cursor-pointer"
             >
               <KeyRound className="w-4 h-4" />
               Change Password
             </button>
             <button
-              onClick={() => { setShowNotifModal(true); setMenuOpen(false); }}
+              onClick={() => {
+                setShowNotifModal(true);
+                setMenuOpen(false);
+              }}
               className="w-full flex items-center justify-center gap-2 border border-[#E0E7E0] hover:bg-[#F7F9F7] text-gray-600 py-2.5 rounded-xl text-sm font-bold transition cursor-pointer"
             >
               <BellRing className="w-4 h-4" />
@@ -287,7 +332,10 @@ export default function Navbar({ userProfile, isAdminMode, currentPage, onToggle
               Log Out
             </button>
             <button
-              onClick={() => { setShowDeleteModal(true); setMenuOpen(false); }}
+              onClick={() => {
+                setShowDeleteModal(true);
+                setMenuOpen(false);
+              }}
               className="w-full flex items-center justify-center gap-2 border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-600 py-2.5 rounded-xl text-sm font-bold transition cursor-pointer"
             >
               <Trash2 className="w-4 h-4" />
@@ -329,7 +377,13 @@ export default function Navbar({ userProfile, isAdminMode, currentPage, onToggle
   );
 }
 
-function ChangePasswordModal({ onClose, addToast }: { onClose: () => void; addToast: (msg: string, type: 'success' | 'error' | 'info') => void }) {
+function ChangePasswordModal({
+  onClose,
+  addToast,
+}: {
+  onClose: () => void;
+  addToast: (msg: string, type: 'success' | 'error' | 'info') => void;
+}) {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPw, setShowPw] = useState(false);
@@ -409,7 +463,9 @@ function ChangePasswordModal({ onClose, addToast }: { onClose: () => void; addTo
           </div>
 
           <div>
-            <label className="text-xs font-bold text-gray-500 block mb-1.5">Confirm New Password</label>
+            <label className="text-xs font-bold text-gray-500 block mb-1.5">
+              Confirm New Password
+            </label>
             <input
               type={showPw ? 'text' : 'password'}
               value={confirmPassword}
@@ -438,7 +494,7 @@ function ChangePasswordModal({ onClose, addToast }: { onClose: () => void; addTo
 function NotificationPreferencesModal({
   userProfile,
   onClose,
-  addToast
+  addToast,
 }: {
   userProfile: UserProfile;
   onClose: () => void;
@@ -467,9 +523,21 @@ function NotificationPreferencesModal({
   };
 
   const options: { key: keyof NotificationPreferences; label: string; desc: string }[] = [
-    { key: 'orderUpdates', label: 'Order Updates', desc: 'Notify me when an order is approved or rejected.' },
-    { key: 'kycUpdates', label: 'KYC Updates', desc: 'Notify me about identity verification status changes.' },
-    { key: 'announcements', label: 'Announcements', desc: 'Notify me about platform-wide announcements.' }
+    {
+      key: 'orderUpdates',
+      label: 'Order Updates',
+      desc: 'Notify me when an order is approved or rejected.',
+    },
+    {
+      key: 'kycUpdates',
+      label: 'KYC Updates',
+      desc: 'Notify me about identity verification status changes.',
+    },
+    {
+      key: 'announcements',
+      label: 'Announcements',
+      desc: 'Notify me about platform-wide announcements.',
+    },
   ];
 
   return (
@@ -534,7 +602,7 @@ function NotificationPreferencesModal({
 function DeleteAccountModal({
   onClose,
   addToast,
-  onDeleted
+  onDeleted,
 }: {
   onClose: () => void;
   addToast: (msg: string, type: 'success' | 'error' | 'info') => void;
@@ -586,13 +654,15 @@ function DeleteAccountModal({
 
         <div className="space-y-3 overflow-y-auto flex-1 min-h-0">
           <p className="text-xs text-gray-600 leading-relaxed">
-            This will <span className="font-bold text-rose-600">temporary denied</span> your access to your dashboard and scrubbed your data.
-            This action is risky!.
+            This will <span className="font-bold text-rose-600">temporary denied</span> your access
+            to your dashboard and scrubbed your data. This action is risky!.
           </p>
           <div className="bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5">
             <p className="text-[11px] text-amber-800 leading-relaxed">
-              For fraud and legal compliance purposes, your KYC verification and your account activities records will be retained
-              even after deletion, as required by regulation. However you can request to reinstate your account by contacting us if you change your mind later.
+              For fraud and legal compliance purposes, your KYC verification and your account
+              activities records will be retained even after deletion, as required by regulation.
+              However you can request to reinstate your account by contacting us if you change your
+              mind later.
             </p>
           </div>
           <div>

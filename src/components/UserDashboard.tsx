@@ -1,8 +1,44 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { formatNGT, formatNGTDate } from '../lib/dateUtils';
 import { motion, AnimatePresence } from 'motion/react';
-import { TrendingUp, ArrowUpRight, ArrowDownLeft, Clock, CircleCheck as CheckCircle2, Circle as XCircle, CircleAlert as AlertCircle, Upload, Receipt, Smartphone, Eye, Lock, Bell, ChevronRight, UserCheck, FileText, Camera, Coins, Search, ListFilter as Filter, Check, MessageSquare, OctagonAlert as AlertOctagon, ShieldOff, X, RotateCw, Copy } from 'lucide-react';
-import { UserProfile, Order, AdminSettings, Announcement, KYCData, CoinListing, Dispute } from '../types';
+import {
+  TrendingUp,
+  ArrowUpRight,
+  ArrowDownLeft,
+  Clock,
+  CircleCheck as CheckCircle2,
+  Circle as XCircle,
+  CircleAlert as AlertCircle,
+  Upload,
+  Receipt,
+  Smartphone,
+  Eye,
+  Lock,
+  Bell,
+  ChevronRight,
+  UserCheck,
+  FileText,
+  Camera,
+  Coins,
+  Search,
+  ListFilter as Filter,
+  Check,
+  MessageSquare,
+  OctagonAlert as AlertOctagon,
+  ShieldOff,
+  X,
+  RotateCw,
+  Copy,
+} from 'lucide-react';
+import {
+  UserProfile,
+  Order,
+  AdminSettings,
+  Announcement,
+  KYCData,
+  CoinListing,
+  Dispute,
+} from '../types';
 import { createOrder, submitKYC, submitDispute } from '../lib/dbHelpers';
 import DisputeChat from './DisputeChat';
 import TradingJourney from './TradingJourney';
@@ -41,12 +77,16 @@ export default function UserDashboard({
   onCloseMobileBulletin,
   onBulletinCountChange,
 }: UserDashboardProps) {
-  
   // Tab states: 'trade' | 'history' | 'kyc' | 'disputes'
   const [activeTab, setActiveTab] = useState<'trade' | 'history' | 'kyc' | 'disputes'>('trade');
 
   // Mobile swipe-between-tabs support
-  const tabOrder = useRef<Array<'trade' | 'history' | 'kyc' | 'disputes'>>(['trade', 'history', 'kyc', 'disputes']);
+  const tabOrder = useRef<Array<'trade' | 'history' | 'kyc' | 'disputes'>>([
+    'trade',
+    'history',
+    'kyc',
+    'disputes',
+  ]);
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
   const swipeLockedRef = useRef<'horizontal' | 'vertical' | null>(null);
 
@@ -149,7 +189,7 @@ export default function UserDashboard({
       setPullDistance(0);
     }
   };
-  
+
   // Trade form states
   const [tradeType, setTradeType] = useState<'buy' | 'sell'>('buy');
   const [network, setNetwork] = useState<'BSC' | 'Tron' | 'Polygon'>('BSC');
@@ -177,39 +217,44 @@ export default function UserDashboard({
   // Fetch live USD prices from CoinGecko for coins that have a coinGeckoId
   useEffect(() => {
     const geckoIds = (coins || [])
-      .filter(c => c.published !== false && c.coinGeckoId)
-      .map(c => c.coinGeckoId!)
+      .filter((c) => c.published !== false && c.coinGeckoId)
+      .map((c) => c.coinGeckoId!)
       .filter((v, i, arr) => arr.indexOf(v) === i); // unique
     if (geckoIds.length === 0) return;
     const controller = new AbortController();
     const idsParam = geckoIds.join(',');
-    fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${idsParam}&vs_currencies=usd`, { signal: controller.signal })
-      .then(r => r.json())
-      .then(data => {
+    fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${idsParam}&vs_currencies=usd`, {
+      signal: controller.signal,
+    })
+      .then((r) => r.json())
+      .then((data) => {
         const prices: Record<string, number> = {};
         for (const id of geckoIds) {
           if (data[id]?.usd) prices[id] = data[id].usd;
         }
-        setLiveCoinPrices(prev => ({ ...prev, ...prices }));
+        setLiveCoinPrices((prev) => ({ ...prev, ...prices }));
       })
       .catch(() => {});
     const interval = setInterval(() => {
       fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${idsParam}&vs_currencies=usd`)
-        .then(r => r.json())
-        .then(data => {
+        .then((r) => r.json())
+        .then((data) => {
           const prices: Record<string, number> = {};
           for (const id of geckoIds) {
             if (data[id]?.usd) prices[id] = data[id].usd;
           }
-          setLiveCoinPrices(prev => ({ ...prev, ...prices }));
+          setLiveCoinPrices((prev) => ({ ...prev, ...prices }));
         })
         .catch(() => {});
     }, 60000);
-    return () => { controller.abort(); clearInterval(interval); };
+    return () => {
+      controller.abort();
+      clearInterval(interval);
+    };
   }, [coins]);
 
   // Filter active (published) coins
-  const activeCoinsList = (coins || []).filter(c => c.published !== false);
+  const activeCoinsList = (coins || []).filter((c) => c.published !== false);
 
   // Group active coins by unique symbol
   interface GroupedCoin {
@@ -229,7 +274,7 @@ export default function UserDashboard({
         symbol: coin.symbol,
         name: coin.name,
         logoUrl: coin.logoUrl,
-        variants: []
+        variants: [],
       };
       symbolToGroupMap[symbolKey] = group;
       groupedCoins.push(group);
@@ -239,15 +284,15 @@ export default function UserDashboard({
 
   // Filter grouped coins list by search and network filters
   const filteredGroupedCoins = groupedCoins.filter((group) => {
-    const matchesSearch = 
+    const matchesSearch =
       group.name.toLowerCase().includes(coinSearchQuery.toLowerCase()) ||
       group.symbol.toLowerCase().includes(coinSearchQuery.toLowerCase());
-    
+
     // Group matches network filter if any of its variants matches
-    const matchesNetwork = 
-      networkFilter === 'all' || 
-      group.variants.some(v => v.network.toLowerCase().includes(networkFilter.toLowerCase()));
-      
+    const matchesNetwork =
+      networkFilter === 'all' ||
+      group.variants.some((v) => v.network.toLowerCase().includes(networkFilter.toLowerCase()));
+
     return matchesSearch && matchesNetwork;
   });
 
@@ -257,16 +302,18 @@ export default function UserDashboard({
   const displayedGroupedCoins = isFilteringActive
     ? filteredGroupedCoins
     : filteredGroupedCoins.slice(0, coinDisplayLimit);
-  const hiddenCoinCount = isFilteringActive ? 0 : Math.max(0, filteredGroupedCoins.length - coinDisplayLimit);
+  const hiddenCoinCount = isFilteringActive
+    ? 0
+    : Math.max(0, filteredGroupedCoins.length - coinDisplayLimit);
 
   // Coin the user *explicitly* selected by clicking one in the picker.
   // Undefined / empty selectedCoinId means "no coin chosen yet" → USDT / live-rate mode.
-  const selectedCoin = activeCoinsList.find(c => c.id === selectedCoinId) ?? null;
+  const selectedCoin = activeCoinsList.find((c) => c.id === selectedCoinId) ?? null;
 
   // activeCoin drives all UI (coin picker highlight, wallet/network display, order fields).
   // Falls back to the first published coin so the picker always shows something.
   const activeCoin = selectedCoin ?? (activeCoinsList.length > 0 ? activeCoinsList[0] : null);
-  
+
   // User bank details for selling
   const [userBankName, setUserBankName] = useState('');
   const [userAccountNumber, setUserAccountNumber] = useState('');
@@ -290,11 +337,11 @@ export default function UserDashboard({
   // Until hydrated, any change to `orders` is initial hydration, not a real update.
   const ordersHydratedRef = useRef(false);
   const prevProfileRef = useRef<UserProfile | null>(null);
-  
+
   // Upload drag state
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
+
   // KYC form states
   const [kycName, setKycName] = useState('');
   const [kycIdType, setKycIdType] = useState<KYCData['idType']>('nin_paper');
@@ -327,28 +374,39 @@ export default function UserDashboard({
 
   // Collapsible announcements (collapsed by default — click title to expand)
   const [expandedAnnIds, setExpandedAnnIds] = useState<string[]>([]);
-  const toggleAnn = (id: string) => setExpandedAnnIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  const toggleAnn = (id: string) =>
+    setExpandedAnnIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
 
   // Dismissed announcements (per-user, stored in localStorage)
   const DISMISSED_KEY = `dismissed_anns_${userProfile.uid}`;
   const [dismissedIds, setDismissedIds] = useState<string[]>(() => {
-    try { return JSON.parse(localStorage.getItem(DISMISSED_KEY) || '[]'); } catch { return []; }
+    try {
+      return JSON.parse(localStorage.getItem(DISMISSED_KEY) || '[]');
+    } catch {
+      return [];
+    }
   });
   const dismissAnnouncement = (id: string) => {
     const updated = [...dismissedIds, id];
     setDismissedIds(updated);
-    try { localStorage.setItem(DISMISSED_KEY, JSON.stringify(updated)); } catch {}
+    try {
+      localStorage.setItem(DISMISSED_KEY, JSON.stringify(updated));
+    } catch {}
   };
 
   // Private announcements filter (exclude dismissed)
   const privateAnnouncements = announcements.filter(
-    (ann) => (ann.scope === 'private' || ann.scope === 'all') && ann.isActive && !dismissedIds.includes(ann.id)
+    (ann) =>
+      (ann.scope === 'private' || ann.scope === 'all') &&
+      ann.isActive &&
+      !dismissedIds.includes(ann.id)
   );
 
   // Display name: first two words of KYC full name, fallback to email prefix
-  const displayName = userProfile.kycStatus === 'approved' && userProfile.kycData?.fullName
-    ? userProfile.kycData.fullName.trim().split(/\s+/).slice(0, 2).join(' ')
-    : userProfile.email.split('@')[0];
+  const displayName =
+    userProfile.kycStatus === 'approved' && userProfile.kycData?.fullName
+      ? userProfile.kycData.fullName.trim().split(/\s+/).slice(0, 2).join(' ')
+      : userProfile.email.split('@')[0];
 
   // Effective rates: live market price + admin-set markup
   // SELL rate drives all display; BUY rate is applied only at buy-order creation time
@@ -372,14 +430,18 @@ export default function UserDashboard({
     selectedCoin.pricePegged === true;
 
   // When a coin has a CoinGecko ID, its rate = liveCoinPrice(USD) × effectiveNGN/USD rate
-  const liveCoinUsdPrice = selectedCoin?.coinGeckoId ? liveCoinPrices[selectedCoin.coinGeckoId] : undefined;
+  const liveCoinUsdPrice = selectedCoin?.coinGeckoId
+    ? liveCoinPrices[selectedCoin.coinGeckoId]
+    : undefined;
   const isCoinGeckoLive = !!selectedCoin?.coinGeckoId && liveCoinUsdPrice !== undefined;
 
   const activeRate = isCoinGeckoLive
     ? Math.round(liveCoinUsdPrice! * (tradeType === 'buy' ? effectiveBuyRate : effectiveSellRate))
     : isLiveRateMode
-    ? (tradeType === 'buy' ? effectiveBuyRate : effectiveSellRate)
-    : selectedCoin!.rate;
+      ? tradeType === 'buy'
+        ? effectiveBuyRate
+        : effectiveSellRate
+      : selectedCoin!.rate;
   const calculatedNgnAmount = cryptoAmount ? cryptoAmount * activeRate : 0;
 
   // Copy to clipboard helper
@@ -393,20 +455,26 @@ export default function UserDashboard({
   };
 
   // Minimum trade amount for the active coin/direction
-  const activeMinTrade = tradeType === 'buy'
-    ? (activeCoin?.minBuyAmount ?? activeCoin?.minTradeAmount ?? 1)
-    : (activeCoin?.minSellAmount ?? activeCoin?.minTradeAmount ?? 1);
-  const belowMinimum = !!(cryptoAmount && Number(cryptoAmount) > 0 && Number(cryptoAmount) < activeMinTrade);
+  const activeMinTrade =
+    tradeType === 'buy'
+      ? (activeCoin?.minBuyAmount ?? activeCoin?.minTradeAmount ?? 1)
+      : (activeCoin?.minSellAmount ?? activeCoin?.minTradeAmount ?? 1);
+  const belowMinimum = !!(
+    cryptoAmount &&
+    Number(cryptoAmount) > 0 &&
+    Number(cryptoAmount) < activeMinTrade
+  );
 
   // Fee calculations (BUY only)
   // The fee percentage is pegged to the coin's minimum trade amount — it does NOT
   // scale with the user's full input. So even if a user buys 100 USDT and the fee
   // is 16% with a min trade of 1 USDT, the fee is 16% of 1 = 0.16 USDT, not 16 USDT.
-  const activeFeePercent = (activeCoin?.feePercentage ?? 0);
+  const activeFeePercent = activeCoin?.feePercentage ?? 0;
   const feeBaseAmount = Math.min(Number(cryptoAmount || 0), activeMinTrade);
-  const feeAmount = tradeType === 'buy' && cryptoAmount && activeFeePercent > 0
-    ? feeBaseAmount * activeFeePercent / 100
-    : 0;
+  const feeAmount =
+    tradeType === 'buy' && cryptoAmount && activeFeePercent > 0
+      ? (feeBaseAmount * activeFeePercent) / 100
+      : 0;
   const netCryptoAmount = cryptoAmount ? Number(cryptoAmount) - feeAmount : 0;
 
   // Handle Drag Over
@@ -460,7 +528,11 @@ export default function UserDashboard({
   };
 
   // Handle Input File Change
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, isKyc: boolean = false, isHolding: boolean = false) => {
+  const handleFileChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    isKyc: boolean = false,
+    isHolding: boolean = false
+  ) => {
     if (e.target.files && e.target.files[0]) {
       processFile(e.target.files[0], isKyc, isHolding);
     }
@@ -471,9 +543,11 @@ export default function UserDashboard({
     const targetMode = mode ?? facingMode;
     try {
       if (cameraStream) {
-        cameraStream.getTracks().forEach(track => track.stop());
+        cameraStream.getTracks().forEach((track) => track.stop());
       }
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: targetMode, width: 640, height: 480 } });
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: targetMode, width: 640, height: 480 },
+      });
       setCameraStream(stream);
       setIsCameraActive(true);
       setTimeout(() => {
@@ -483,7 +557,10 @@ export default function UserDashboard({
       }, 150);
     } catch (err: any) {
       console.error('Error accessing camera:', err);
-      addToast('Could not access camera. Please ensure camera permissions are allowed in your browser settings.', 'error');
+      addToast(
+        'Could not access camera. Please ensure camera permissions are allowed in your browser settings.',
+        'error'
+      );
     }
   };
 
@@ -496,7 +573,7 @@ export default function UserDashboard({
 
   const stopCamera = () => {
     if (cameraStream) {
-      cameraStream.getTracks().forEach(track => track.stop());
+      cameraStream.getTracks().forEach((track) => track.stop());
       setCameraStream(null);
     }
     setIsCameraActive(false);
@@ -533,7 +610,7 @@ export default function UserDashboard({
   useEffect(() => {
     return () => {
       if (cameraStream) {
-        cameraStream.getTracks().forEach(track => track.stop());
+        cameraStream.getTracks().forEach((track) => track.stop());
       }
     };
   }, [cameraStream]);
@@ -558,17 +635,26 @@ export default function UserDashboard({
     }
 
     if (userProfile.accountStatus === 'pending_reactivation') {
-      addToast('Your account is pending admin reactivation. Contact support to reclaim your account.', 'error');
+      addToast(
+        'Your account is pending admin reactivation. Contact support to reclaim your account.',
+        'error'
+      );
       return;
     }
 
     if (!cryptoAmount || cryptoAmount <= 0) {
-      addToast(`Please provide a valid ${activeCoin ? activeCoin.symbol : 'USDT'} amount.`, 'error');
+      addToast(
+        `Please provide a valid ${activeCoin ? activeCoin.symbol : 'USDT'} amount.`,
+        'error'
+      );
       return;
     }
 
     if (Number(cryptoAmount) < activeMinTrade) {
-      addToast(`Minimum trade for ${activeCoin?.symbol ?? 'USDT'} is ${activeMinTrade} ${activeCoin?.symbol ?? 'USDT'}.`, 'error');
+      addToast(
+        `Minimum trade for ${activeCoin?.symbol ?? 'USDT'} is ${activeMinTrade} ${activeCoin?.symbol ?? 'USDT'}.`,
+        'error'
+      );
       return;
     }
 
@@ -593,28 +679,50 @@ export default function UserDashboard({
         return;
       }
       if (!sellTxHash.trim()) {
-        addToast('Please provide the blockchain transaction hash for your crypto transfer.', 'error');
+        addToast(
+          'Please provide the blockchain transaction hash for your crypto transfer.',
+          'error'
+        );
         return;
       }
       // Validate TX hash format per network family
       const effectiveNetwork = (activeCoin?.network ?? network).toLowerCase();
       const isTron = effectiveNetwork.includes('tron');
-      const isEvm = ['bsc', 'bep20', 'polygon', 'ethereum', 'eth', 'arbitrum', 'optimism', 'avalanche', 'evm'].some(k => effectiveNetwork.includes(k));
+      const isEvm = [
+        'bsc',
+        'bep20',
+        'polygon',
+        'ethereum',
+        'eth',
+        'arbitrum',
+        'optimism',
+        'avalanche',
+        'evm',
+      ].some((k) => effectiveNetwork.includes(k));
       const tx = sellTxHash.trim();
       if (isTron) {
         if (!/^[0-9a-fA-F]{64}$/.test(tx)) {
-          addToast('Invalid Tron TxID — must be exactly 64 hex characters (no 0x prefix).', 'error');
+          addToast(
+            'Invalid Tron TxID — must be exactly 64 hex characters (no 0x prefix).',
+            'error'
+          );
           return;
         }
       } else if (isEvm) {
         if (!/^0x[0-9a-fA-F]{64}$/.test(tx)) {
-          addToast('Invalid TX hash — EVM hashes start with 0x followed by 64 hex characters.', 'error');
+          addToast(
+            'Invalid TX hash — EVM hashes start with 0x followed by 64 hex characters.',
+            'error'
+          );
           return;
         }
       } else {
         // Custom / non-EVM, non-Tron blockchain: accept any plausible tx hash
         if (tx.length < 10 || !/^[A-Za-z0-9]+$/.test(tx)) {
-          addToast('Invalid transaction hash — enter the valid TxID from your wallet for this blockchain network.', 'error');
+          addToast(
+            'Invalid transaction hash — enter the valid TxID from your wallet for this blockchain network.',
+            'error'
+          );
           return;
         }
       }
@@ -622,21 +730,30 @@ export default function UserDashboard({
 
     setIsSubmittingOrder(true);
     try {
-      const bankDetails = tradeType === 'sell' ? {
-        bankName: userBankName,
-        accountNumber: userAccountNumber,
-        accountName: userAccountName
-      } : undefined;
+      const bankDetails =
+        tradeType === 'sell'
+          ? {
+              bankName: userBankName,
+              accountNumber: userAccountNumber,
+              accountName: userAccountName,
+            }
+          : undefined;
 
-      const adminBank = tradeType === 'buy' ? {
-        bankName: settings.ngnBankName,
-        accountNumber: settings.ngnAccountNumber,
-        accountName: settings.ngnAccountName
-      } : undefined;
+      const adminBank =
+        tradeType === 'buy'
+          ? {
+              bankName: settings.ngnBankName,
+              accountNumber: settings.ngnAccountNumber,
+              accountName: settings.ngnAccountName,
+            }
+          : undefined;
 
-      const adminWallet = tradeType === 'sell' 
-        ? (activeCoin ? activeCoin.walletAddress : settings.wallets[network]) 
-        : undefined;
+      const adminWallet =
+        tradeType === 'sell'
+          ? activeCoin
+            ? activeCoin.walletAddress
+            : settings.wallets[network]
+          : undefined;
 
       const orderNetwork = activeCoin ? activeCoin.network : network;
       const orderToken = activeCoin ? activeCoin.symbol : 'USDT';
@@ -711,9 +828,10 @@ export default function UserDashboard({
         });
       } else if (existed.status !== ord.status) {
         if (ord.status === 'completed') {
-          const label = ord.type === 'buy'
-            ? `${ord.cryptoAmount} ${ord.token} purchase`
-            : `₦${ord.ngnAmount.toLocaleString()} sell payout`;
+          const label =
+            ord.type === 'buy'
+              ? `${ord.cryptoAmount} ${ord.token} purchase`
+              : `₦${ord.ngnAmount.toLocaleString()} sell payout`;
           notifs.push({
             id: `done-${ord.id}`,
             message: `✅ Order #${ord.id.substring(0, 6).toUpperCase()} completed! Your ${label} has been approved.`,
@@ -756,27 +874,75 @@ export default function UserDashboard({
 
     if (prev.kycStatus !== userProfile.kycStatus) {
       if (userProfile.kycStatus === 'approved') {
-        notifs.push({ id: `kyc-approved-${Date.now()}`, message: '🎉 KYC Approved! Your identity is verified and trading is now unlocked.', type: 'success', timestamp: Date.now() });
+        notifs.push({
+          id: `kyc-approved-${Date.now()}`,
+          message: '🎉 KYC Approved! Your identity is verified and trading is now unlocked.',
+          type: 'success',
+          timestamp: Date.now(),
+        });
       } else if (userProfile.kycStatus === 'rejected') {
-        notifs.push({ id: `kyc-rejected-${Date.now()}`, message: '⚠️ KYC Rejected. Review the feedback and resubmit with clearer documents.', type: 'error', timestamp: Date.now() });
+        notifs.push({
+          id: `kyc-rejected-${Date.now()}`,
+          message: '⚠️ KYC Rejected. Review the feedback and resubmit with clearer documents.',
+          type: 'error',
+          timestamp: Date.now(),
+        });
       } else if (userProfile.kycStatus === 'none') {
-        notifs.push({ id: `kyc-reset-${Date.now()}`, message: 'ℹ️ KYC has been reset by admin. Please resubmit your identity documents.', type: 'info', timestamp: Date.now() });
+        notifs.push({
+          id: `kyc-reset-${Date.now()}`,
+          message: 'ℹ️ KYC has been reset by admin. Please resubmit your identity documents.',
+          type: 'info',
+          timestamp: Date.now(),
+        });
       } else if (userProfile.kycStatus === 'pending') {
-        notifs.push({ id: `kyc-pending-${Date.now()}`, message: '⏳ KYC documents submitted. You will be notified once reviewed.', type: 'info', timestamp: Date.now() });
+        notifs.push({
+          id: `kyc-pending-${Date.now()}`,
+          message: '⏳ KYC documents submitted. You will be notified once reviewed.',
+          type: 'info',
+          timestamp: Date.now(),
+        });
       }
     }
 
     if (prev.accountStatus !== userProfile.accountStatus) {
       if (userProfile.accountStatus === 'suspended') {
-        notifs.push({ id: `susp-${Date.now()}`, message: '🚫 Your account has been suspended. Contact support for assistance.', type: 'error', timestamp: Date.now() });
+        notifs.push({
+          id: `susp-${Date.now()}`,
+          message: '🚫 Your account has been suspended. Contact support for assistance.',
+          type: 'error',
+          timestamp: Date.now(),
+        });
       } else if (userProfile.accountStatus === 'active' && prev.accountStatus === 'suspended') {
-        notifs.push({ id: `unsusp-${Date.now()}`, message: '✅ Suspension lifted! Your account is active and you can trade again.', type: 'success', timestamp: Date.now() });
+        notifs.push({
+          id: `unsusp-${Date.now()}`,
+          message: '✅ Suspension lifted! Your account is active and you can trade again.',
+          type: 'success',
+          timestamp: Date.now(),
+        });
       } else if (userProfile.accountStatus === 'terminated') {
-        notifs.push({ id: `term-${Date.now()}`, message: '❌ Your account has been permanently terminated. Contact support.', type: 'error', timestamp: Date.now() });
+        notifs.push({
+          id: `term-${Date.now()}`,
+          message: '❌ Your account has been permanently terminated. Contact support.',
+          type: 'error',
+          timestamp: Date.now(),
+        });
       } else if (userProfile.accountStatus === 'pending_reactivation') {
-        notifs.push({ id: `react-${Date.now()}`, message: '⏳ Your account is pending admin reactivation. Contact support.', type: 'info', timestamp: Date.now() });
-      } else if (userProfile.accountStatus === 'active' && prev.accountStatus === 'pending_reactivation') {
-        notifs.push({ id: `reactdone-${Date.now()}`, message: '✅ Account reactivated! You can trade again.', type: 'success', timestamp: Date.now() });
+        notifs.push({
+          id: `react-${Date.now()}`,
+          message: '⏳ Your account is pending admin reactivation. Contact support.',
+          type: 'info',
+          timestamp: Date.now(),
+        });
+      } else if (
+        userProfile.accountStatus === 'active' &&
+        prev.accountStatus === 'pending_reactivation'
+      ) {
+        notifs.push({
+          id: `reactdone-${Date.now()}`,
+          message: '✅ Account reactivated! You can trade again.',
+          type: 'success',
+          timestamp: Date.now(),
+        });
       }
     }
 
@@ -795,7 +961,10 @@ export default function UserDashboard({
   const handleKycSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!kycName || !kycIdNumber || !kycScreenshot || !kycHoldingId) {
-      addToast('Please fill in all fields, upload your ID document, and provide your Holding ID photo.', 'error');
+      addToast(
+        'Please fill in all fields, upload your ID document, and provide your Holding ID photo.',
+        'error'
+      );
       return;
     }
     // Full legal name must contain at least a first and last name
@@ -816,7 +985,7 @@ export default function UserDashboard({
         idType: kycIdType,
         idNumber: kycIdNumber,
         screenshotUrl: kycScreenshot,
-        holdingIdUrl: kycHoldingId
+        holdingIdUrl: kycHoldingId,
       });
       addToast('KYC documents submitted for admin review.', 'success');
       onRefresh();
@@ -842,7 +1011,11 @@ export default function UserDashboard({
       >
         <RotateCw
           className={`w-5 h-5 text-[#008751] ${isRefreshing ? 'animate-spin' : ''}`}
-          style={!isRefreshing ? { transform: `rotate(${Math.min(pullDistance / PULL_THRESHOLD, 1) * 360}deg)` } : undefined}
+          style={
+            !isRefreshing
+              ? { transform: `rotate(${Math.min(pullDistance / PULL_THRESHOLD, 1) * 360}deg)` }
+              : undefined
+          }
         />
       </div>
 
@@ -857,13 +1030,19 @@ export default function UserDashboard({
           <ShieldOff className="w-6 h-6 text-amber-600 shrink-0 mt-0.5" />
           <div>
             <div className="font-bold text-amber-900 text-sm">Account Suspended</div>
-            <div className="text-xs text-amber-800 mt-1">Your account has been temporarily suspended by the administrator. You cannot place new orders during this period.</div>
+            <div className="text-xs text-amber-800 mt-1">
+              Your account has been temporarily suspended by the administrator. You cannot place new
+              orders during this period.
+            </div>
             {userProfile.suspendReason && (
               <div className="mt-2 text-xs text-amber-900 bg-amber-100 rounded-lg px-3 py-2 font-mono">
-                <span className="font-bold">Reason: </span>{userProfile.suspendReason}
+                <span className="font-bold">Reason: </span>
+                {userProfile.suspendReason}
               </div>
             )}
-            <div className="mt-2 text-xs text-amber-700">Contact support to appeal or resolve the issue.</div>
+            <div className="mt-2 text-xs text-amber-700">
+              Contact support to appeal or resolve the issue.
+            </div>
           </div>
         </motion.div>
       )}
@@ -879,8 +1058,14 @@ export default function UserDashboard({
           <Clock className="w-6 h-6 text-blue-600 shrink-0 mt-0.5" />
           <div>
             <div className="font-bold text-blue-900 text-sm">Account Reactivation Required</div>
-            <div className="text-xs text-blue-800 mt-1">Our records show you previously deleted this account. For your security, an administrator must approve reactivation before you can access the platform. Please contact admin to reclaim your account and trading history.</div>
-            <div className="mt-2 text-xs text-blue-700">Use the Support button (bottom-right) to reach the admin team.</div>
+            <div className="text-xs text-blue-800 mt-1">
+              Our records show you previously deleted this account. For your security, an
+              administrator must approve reactivation before you can access the platform. Please
+              contact admin to reclaim your account and trading history.
+            </div>
+            <div className="mt-2 text-xs text-blue-700">
+              Use the Support button (bottom-right) to reach the admin team.
+            </div>
           </div>
         </motion.div>
       )}
@@ -896,10 +1081,13 @@ export default function UserDashboard({
           <AlertOctagon className="w-6 h-6 text-red-600 shrink-0 mt-0.5" />
           <div>
             <div className="font-bold text-red-900 text-sm">Account Terminated</div>
-            <div className="text-xs text-red-800 mt-1">Your account has been permanently terminated and all trading functions are disabled.</div>
+            <div className="text-xs text-red-800 mt-1">
+              Your account has been permanently terminated and all trading functions are disabled.
+            </div>
             {userProfile.terminateReason && (
               <div className="mt-2 text-xs text-red-900 bg-red-100 rounded-lg px-3 py-2 font-mono">
-                <span className="font-bold">Reason: </span>{userProfile.terminateReason}
+                <span className="font-bold">Reason: </span>
+                {userProfile.terminateReason}
               </div>
             )}
           </div>
@@ -918,28 +1106,40 @@ export default function UserDashboard({
             Live Exchange Rate
           </span>
           <div className="flex items-baseline gap-1 sm:gap-2 min-w-0">
-            <span className="font-bold tracking-tight italic text-[#00FF85] leading-none tabular-nums"
-              style={{ fontSize: 'clamp(1.4rem, 6vw, 3rem)' }}>
+            <span
+              className="font-bold tracking-tight italic text-[#00FF85] leading-none tabular-nums"
+              style={{ fontSize: 'clamp(1.4rem, 6vw, 3rem)' }}
+            >
               ₦{effectiveSellRate.toLocaleString()}
             </span>
             <span className="text-[10px] sm:text-sm text-gray-400 font-mono shrink-0">/USDT</span>
           </div>
           <p className="hidden sm:block text-xs text-gray-400 max-w-xl">
-            Seamless local bank transfers of Naira for USDT with guaranteed dispute resolution. Verified by 9ija Escrow Ledger.
+            Seamless local bank transfers of Naira for USDT with guaranteed dispute resolution.
+            Verified by 9ija Escrow Ledger.
           </p>
         </div>
 
         <div className="relative z-10 text-right shrink-0">
-          <span className="text-[9px] text-gray-400 font-mono block uppercase tracking-wider">Trader</span>
-          <span className="text-sm font-bold text-white mt-0.5 block truncate max-w-[120px] sm:max-w-none">{displayName}</span>
-          <span className={`text-[11px] font-bold flex items-center gap-1 mt-0.5 justify-end ${
-            userProfile.kycStatus === 'approved' ? 'text-[#00FF85]' : 'text-amber-400'
-          }`}>
-            {userProfile.kycStatus === 'approved' && <CheckCircle2 className="w-3 h-3 text-[#00FF85]" />}
+          <span className="text-[9px] text-gray-400 font-mono block uppercase tracking-wider">
+            Trader
+          </span>
+          <span className="text-sm font-bold text-white mt-0.5 block truncate max-w-[120px] sm:max-w-none">
+            {displayName}
+          </span>
+          <span
+            className={`text-[11px] font-bold flex items-center gap-1 mt-0.5 justify-end ${
+              userProfile.kycStatus === 'approved' ? 'text-[#00FF85]' : 'text-amber-400'
+            }`}
+          >
+            {userProfile.kycStatus === 'approved' && (
+              <CheckCircle2 className="w-3 h-3 text-[#00FF85]" />
+            )}
             {userProfile.kycStatus === 'pending' && <Clock className="w-3 h-3 text-amber-400" />}
             {userProfile.kycStatus === 'rejected' && <XCircle className="w-3 h-3 text-rose-400" />}
             {userProfile.kycStatus === 'none' && <AlertCircle className="w-3 h-3 text-amber-400" />}
-            <span className="hidden sm:inline">KYC </span>{userProfile.kycStatus.toUpperCase()}
+            <span className="hidden sm:inline">KYC </span>
+            {userProfile.kycStatus.toUpperCase()}
           </span>
         </div>
 
@@ -958,10 +1158,8 @@ export default function UserDashboard({
 
       {/* Grid: Main Panel (left) & Updates notice (right) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        
         {/* Left column (Tabs & Active Form) */}
         <div className="lg:col-span-8 space-y-6">
-          
           {/* Navigation Tabs — mobile: compact segmented pill switch */}
           <div className="sm:hidden flex items-center bg-white border border-[#E0E7E0] rounded-full p-1 gap-0.5">
             <button
@@ -971,7 +1169,11 @@ export default function UserDashboard({
               }`}
             >
               {activeTab === 'trade' && (
-                <motion.div layoutId="mobile-tab-indicator" className="absolute inset-0 bg-[#008751] rounded-full" transition={{ type: 'spring', bounce: 0.2, duration: 0.4 }} />
+                <motion.div
+                  layoutId="mobile-tab-indicator"
+                  className="absolute inset-0 bg-[#008751] rounded-full"
+                  transition={{ type: 'spring', bounce: 0.2, duration: 0.4 }}
+                />
               )}
               <TrendingUp className="relative z-10 w-3.5 h-3.5 shrink-0" />
               <span className="relative z-10">Trade</span>
@@ -983,14 +1185,20 @@ export default function UserDashboard({
               }`}
             >
               {activeTab === 'history' && (
-                <motion.div layoutId="mobile-tab-indicator" className="absolute inset-0 bg-[#008751] rounded-full" transition={{ type: 'spring', bounce: 0.2, duration: 0.4 }} />
+                <motion.div
+                  layoutId="mobile-tab-indicator"
+                  className="absolute inset-0 bg-[#008751] rounded-full"
+                  transition={{ type: 'spring', bounce: 0.2, duration: 0.4 }}
+                />
               )}
               <Receipt className="relative z-10 w-3.5 h-3.5 shrink-0" />
               <span className="relative z-10">History</span>
               {orders.length > 0 && (
-                <span className={`absolute -top-1 right-1 z-20 min-w-[14px] h-[14px] px-0.5 text-[8px] font-bold rounded-full flex items-center justify-center leading-none ${
-                  activeTab === 'history' ? 'bg-white text-[#008751]' : 'bg-[#008751] text-white'
-                }`}>
+                <span
+                  className={`absolute -top-1 right-1 z-20 min-w-[14px] h-[14px] px-0.5 text-[8px] font-bold rounded-full flex items-center justify-center leading-none ${
+                    activeTab === 'history' ? 'bg-white text-[#008751]' : 'bg-[#008751] text-white'
+                  }`}
+                >
                   {orders.length}
                 </span>
               )}
@@ -1002,15 +1210,23 @@ export default function UserDashboard({
               }`}
             >
               {activeTab === 'kyc' && (
-                <motion.div layoutId="mobile-tab-indicator" className="absolute inset-0 bg-[#008751] rounded-full" transition={{ type: 'spring', bounce: 0.2, duration: 0.4 }} />
+                <motion.div
+                  layoutId="mobile-tab-indicator"
+                  className="absolute inset-0 bg-[#008751] rounded-full"
+                  transition={{ type: 'spring', bounce: 0.2, duration: 0.4 }}
+                />
               )}
               <UserCheck className="relative z-10 w-3.5 h-3.5 shrink-0" />
               <span className="relative z-10">KYC</span>
               {userProfile.kycStatus === 'approved' && (
-                <span className={`absolute -top-1 right-1 z-20 w-3 h-3 rounded-full flex items-center justify-center ${
-                  activeTab === 'kyc' ? 'bg-white' : 'bg-emerald-500'
-                }`}>
-                  <Check className={`w-2 h-2 ${activeTab === 'kyc' ? 'text-[#008751]' : 'text-white'}`} />
+                <span
+                  className={`absolute -top-1 right-1 z-20 w-3 h-3 rounded-full flex items-center justify-center ${
+                    activeTab === 'kyc' ? 'bg-white' : 'bg-emerald-500'
+                  }`}
+                >
+                  <Check
+                    className={`w-2 h-2 ${activeTab === 'kyc' ? 'text-[#008751]' : 'text-white'}`}
+                  />
                 </span>
               )}
               {userProfile.kycStatus === 'pending' && (
@@ -1031,15 +1247,21 @@ export default function UserDashboard({
               }`}
             >
               {activeTab === 'disputes' && (
-                <motion.div layoutId="mobile-tab-indicator" className="absolute inset-0 bg-[#008751] rounded-full" transition={{ type: 'spring', bounce: 0.2, duration: 0.4 }} />
+                <motion.div
+                  layoutId="mobile-tab-indicator"
+                  className="absolute inset-0 bg-[#008751] rounded-full"
+                  transition={{ type: 'spring', bounce: 0.2, duration: 0.4 }}
+                />
               )}
               <MessageSquare className="relative z-10 w-3.5 h-3.5 shrink-0" />
               <span className="relative z-10">Disputes</span>
-              {disputes.filter(d => d.status === 'open').length > 0 && (
-                <span className={`absolute -top-1 right-1 z-20 min-w-[14px] h-[14px] px-0.5 text-[8px] font-bold rounded-full flex items-center justify-center leading-none ${
-                  activeTab === 'disputes' ? 'bg-white text-[#008751]' : 'bg-amber-500 text-white'
-                }`}>
-                  {disputes.filter(d => d.status === 'open').length}
+              {disputes.filter((d) => d.status === 'open').length > 0 && (
+                <span
+                  className={`absolute -top-1 right-1 z-20 min-w-[14px] h-[14px] px-0.5 text-[8px] font-bold rounded-full flex items-center justify-center leading-none ${
+                    activeTab === 'disputes' ? 'bg-white text-[#008751]' : 'bg-amber-500 text-white'
+                  }`}
+                >
+                  {disputes.filter((d) => d.status === 'open').length}
                 </span>
               )}
             </button>
@@ -1057,7 +1279,11 @@ export default function UserDashboard({
               }`}
             >
               {activeTab === 'trade' && (
-                <motion.div layoutId="desktop-tab-indicator" className="absolute inset-0 bg-[#008751] rounded-2xl shadow-md shadow-[#008751]/20" transition={{ type: 'spring', bounce: 0.2, duration: 0.4 }} />
+                <motion.div
+                  layoutId="desktop-tab-indicator"
+                  className="absolute inset-0 bg-[#008751] rounded-2xl shadow-md shadow-[#008751]/20"
+                  transition={{ type: 'spring', bounce: 0.2, duration: 0.4 }}
+                />
               )}
               <TrendingUp className="relative z-10 w-3.5 h-3.5 shrink-0" />
               <span className="relative z-10 text-xs text-center leading-tight">Start Order</span>
@@ -1073,14 +1299,20 @@ export default function UserDashboard({
               }`}
             >
               {activeTab === 'history' && (
-                <motion.div layoutId="desktop-tab-indicator" className="absolute inset-0 bg-[#008751] rounded-2xl shadow-md shadow-[#008751]/20" transition={{ type: 'spring', bounce: 0.2, duration: 0.4 }} />
+                <motion.div
+                  layoutId="desktop-tab-indicator"
+                  className="absolute inset-0 bg-[#008751] rounded-2xl shadow-md shadow-[#008751]/20"
+                  transition={{ type: 'spring', bounce: 0.2, duration: 0.4 }}
+                />
               )}
               <Receipt className="relative z-10 w-3.5 h-3.5 shrink-0" />
               <span className="relative z-10 text-xs text-center leading-tight">Order History</span>
               {orders.length > 0 && (
-                <span className={`absolute -top-1.5 -right-1.5 z-20 min-w-[18px] h-[18px] px-1 text-[9px] font-bold rounded-full flex items-center justify-center leading-none border-2 border-[#F7F9F7] ${
-                  activeTab === 'history' ? 'bg-white text-[#008751]' : 'bg-[#008751] text-white'
-                }`}>
+                <span
+                  className={`absolute -top-1.5 -right-1.5 z-20 min-w-[18px] h-[18px] px-1 text-[9px] font-bold rounded-full flex items-center justify-center leading-none border-2 border-[#F7F9F7] ${
+                    activeTab === 'history' ? 'bg-white text-[#008751]' : 'bg-[#008751] text-white'
+                  }`}
+                >
                   {orders.length}
                 </span>
               )}
@@ -1096,15 +1328,25 @@ export default function UserDashboard({
               }`}
             >
               {activeTab === 'kyc' && (
-                <motion.div layoutId="desktop-tab-indicator" className="absolute inset-0 bg-[#008751] rounded-2xl shadow-md shadow-[#008751]/20" transition={{ type: 'spring', bounce: 0.2, duration: 0.4 }} />
+                <motion.div
+                  layoutId="desktop-tab-indicator"
+                  className="absolute inset-0 bg-[#008751] rounded-2xl shadow-md shadow-[#008751]/20"
+                  transition={{ type: 'spring', bounce: 0.2, duration: 0.4 }}
+                />
               )}
               <UserCheck className="relative z-10 w-3.5 h-3.5 shrink-0" />
-              <span className="relative z-10 text-xs text-center leading-tight">Identity (KYC)</span>
+              <span className="relative z-10 text-xs text-center leading-tight">
+                Identity (KYC)
+              </span>
               {userProfile.kycStatus === 'approved' && (
-                <span className={`absolute -top-1.5 -right-1.5 z-20 w-4 h-4 rounded-full flex items-center justify-center border-2 border-[#F7F9F7] ${
-                  activeTab === 'kyc' ? 'bg-white' : 'bg-emerald-500'
-                }`}>
-                  <Check className={`w-2.5 h-2.5 ${activeTab === 'kyc' ? 'text-[#008751]' : 'text-white'}`} />
+                <span
+                  className={`absolute -top-1.5 -right-1.5 z-20 w-4 h-4 rounded-full flex items-center justify-center border-2 border-[#F7F9F7] ${
+                    activeTab === 'kyc' ? 'bg-white' : 'bg-emerald-500'
+                  }`}
+                >
+                  <Check
+                    className={`w-2.5 h-2.5 ${activeTab === 'kyc' ? 'text-[#008751]' : 'text-white'}`}
+                  />
                 </span>
               )}
               {userProfile.kycStatus === 'pending' && (
@@ -1129,15 +1371,21 @@ export default function UserDashboard({
               }`}
             >
               {activeTab === 'disputes' && (
-                <motion.div layoutId="desktop-tab-indicator" className="absolute inset-0 bg-[#008751] rounded-2xl shadow-md shadow-[#008751]/20" transition={{ type: 'spring', bounce: 0.2, duration: 0.4 }} />
+                <motion.div
+                  layoutId="desktop-tab-indicator"
+                  className="absolute inset-0 bg-[#008751] rounded-2xl shadow-md shadow-[#008751]/20"
+                  transition={{ type: 'spring', bounce: 0.2, duration: 0.4 }}
+                />
               )}
               <MessageSquare className="relative z-10 w-3.5 h-3.5 shrink-0" />
               <span className="relative z-10 text-xs text-center leading-tight">Disputes</span>
-              {disputes.filter(d => d.status === 'open').length > 0 && (
-                <span className={`absolute -top-1.5 -right-1.5 z-20 min-w-[18px] h-[18px] px-1 text-[9px] font-bold rounded-full flex items-center justify-center leading-none border-2 border-[#F7F9F7] ${
-                  activeTab === 'disputes' ? 'bg-white text-[#008751]' : 'bg-amber-500 text-white'
-                }`}>
-                  {disputes.filter(d => d.status === 'open').length}
+              {disputes.filter((d) => d.status === 'open').length > 0 && (
+                <span
+                  className={`absolute -top-1.5 -right-1.5 z-20 min-w-[18px] h-[18px] px-1 text-[9px] font-bold rounded-full flex items-center justify-center leading-none border-2 border-[#F7F9F7] ${
+                    activeTab === 'disputes' ? 'bg-white text-[#008751]' : 'bg-amber-500 text-white'
+                  }`}
+                >
+                  {disputes.filter((d) => d.status === 'open').length}
                 </span>
               )}
             </button>
@@ -1150,1149 +1398,1446 @@ export default function UserDashboard({
             onTouchMove={handleTabTouchMove}
             onTouchEnd={handleTabTouchEnd}
           >
-          <AnimatePresence mode="wait" initial={false}>
-          <motion.div
-            key={activeTab}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -6 }}
-            transition={{ duration: 0.18, ease: 'easeOut' }}
-          >
-          {/* TAB 1: Start Order (Trade) */}
-          {activeTab === 'trade' && (
-            <div className="bg-white p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-[#E0E7E0] shadow-sm">
-              {userProfile.kycStatus !== 'approved' ? (
-                <div className="text-center py-12 px-4 space-y-4">
-                  <div className="w-16 h-16 bg-amber-50 border border-amber-200 text-amber-600 rounded-2xl flex items-center justify-center mx-auto">
-                    <Lock className="w-8 h-8" />
-                  </div>
-                  <h3 className="text-lg font-bold text-slate-900">Trading Portal Locked</h3>
-                  <p className="text-sm text-slate-500 max-w-md mx-auto">
-                    In compliance with NGN local P2P trading regulations, you must verify your identity first. Once verified, Buy and Sell operation unlock instantly.
-                  </p>
-                  {userProfile.kycStatus === 'none' && (
-                    <button
-                      onClick={() => setActiveTab('kyc')}
-                      className="bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-2.5 rounded-xl text-sm font-bold cursor-pointer transition"
-                    >
-                      Verify Identity Now
-                    </button>
-                  )}
-                  {userProfile.kycStatus === 'pending' && (
-                    <span className="inline-flex items-center gap-1.5 text-amber-600 font-semibold bg-amber-50 px-3 py-1.5 rounded-full text-xs">
-                      <Clock className="w-4 h-4 animate-spin" /> Pending Admin Approval
-                    </span>
-                  )}
-                  {userProfile.kycStatus === 'rejected' && (
-                    <div className="space-y-3">
-                      <span className="inline-flex items-center gap-1.5 text-rose-600 font-semibold bg-rose-50 px-3 py-1.5 rounded-full text-xs">
-                        KYC Rejected
-                      </span>
-                      <p className="text-xs text-rose-500">Reason: {userProfile.kycData?.rejectionReason || 'No details provided.'}</p>
-                      <button
-                        onClick={() => setActiveTab('kyc')}
-                        className="text-emerald-600 hover:text-emerald-700 text-xs font-bold underline block mx-auto"
-                      >
-                        Correct details & Retry
-                      </button>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <form onSubmit={handleTradeSubmit} className="space-y-6">
-                  <div>
-                    <h3 className="text-lg font-bold text-[#1A1A1A] tracking-tight">Create Escrow Contract</h3>
-                    <p className="text-xs text-gray-500">Set up a secure transfer that locks assets until verified.</p>
-                  </div>
-
-                  {/* Buy/Sell Selector */}
-                  <div className="grid grid-cols-2 gap-4 bg-[#F7F9F7] p-1.5 rounded-2xl border border-[#E0E7E0]">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setTradeType('buy');
-                        setScreenshot('');
-                      }}
-                      className={`relative py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2 cursor-pointer ${
-                        tradeType === 'buy' ? 'text-white' : 'text-gray-500 hover:text-[#1A1A1A]'
-                      }`}
-                    >
-                      {tradeType === 'buy' && (
-                        <motion.div layoutId="trade-type-indicator" className="absolute inset-0 bg-[#008751] rounded-xl shadow-sm" transition={{ type: 'spring', bounce: 0.2, duration: 0.4 }} />
-                      )}
-                      <ArrowDownLeft className="relative z-10 w-4 h-4" />
-                      <span className="relative z-10">Buy</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setTradeType('sell');
-                        setScreenshot('');
-                      }}
-                      className={`relative py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2 cursor-pointer ${
-                        tradeType === 'sell' ? 'text-white' : 'text-gray-500 hover:text-[#1A1A1A]'
-                      }`}
-                    >
-                      {tradeType === 'sell' && (
-                        <motion.div layoutId="trade-type-indicator" className="absolute inset-0 bg-rose-600 rounded-xl shadow-sm" transition={{ type: 'spring', bounce: 0.2, duration: 0.4 }} />
-                      )}
-                      <ArrowUpRight className="relative z-10 w-4 h-4" />
-                      <span className="relative z-10">Sell</span>
-                    </button>
-                  </div>
-
-                  {/* Coin & Network Selection */}
-                  <div className="space-y-4">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                      <label className="block text-xs font-extrabold text-[#1A1A1A] uppercase tracking-wider">
-                        Select Asset & Blockchain Network
-                      </label>
-                      
-                      {/* Search and network filters */}
-                      {coins && coins.length > 0 && (
-                        <div className="flex flex-wrap items-center gap-2">
-                          {/* Search box */}
-                          <div className="relative">
-                            <input
-                              type="text"
-                              value={coinSearchQuery}
-                              onChange={(e) => setCoinSearchQuery(e.target.value)}
-                              placeholder="Search assets..."
-                              className="pl-8 pr-3 py-1.5 border border-slate-200 rounded-lg text-xs w-40 focus:outline-none focus:ring-1 focus:ring-[#008751] bg-white text-slate-800 placeholder-slate-400"
-                            />
-                            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
-                          </div>
-                          
-                          {/* Network filter pills */}
-                          <div className="flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200">
-                            {(['all', 'BSC', 'Tron', 'Polygon'] as const).map((net) => (
-                              <button
-                                key={net}
-                                type="button"
-                                onClick={() => setNetworkFilter(net)}
-                                className={`px-2.5 py-1 rounded-md text-[10px] font-bold cursor-pointer transition uppercase ${
-                                  networkFilter === net
-                                    ? 'bg-[#008751] text-white'
-                                    : 'text-slate-600 hover:text-slate-900'
-                                }`}
-                              >
-                                {net === 'all' ? 'All' : net}
-                              </button>
-                            ))}
-                          </div>
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.div
+                key={activeTab}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ duration: 0.18, ease: 'easeOut' }}
+              >
+                {/* TAB 1: Start Order (Trade) */}
+                {activeTab === 'trade' && (
+                  <div className="bg-white p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-[#E0E7E0] shadow-sm">
+                    {userProfile.kycStatus !== 'approved' ? (
+                      <div className="text-center py-12 px-4 space-y-4">
+                        <div className="w-16 h-16 bg-amber-50 border border-amber-200 text-amber-600 rounded-2xl flex items-center justify-center mx-auto">
+                          <Lock className="w-8 h-8" />
                         </div>
-                      )}
-                    </div>
-
-                    {coins && coins.length > 0 ? (
-                      <>
-                        {filteredGroupedCoins.length === 0 ? (
-                          <div className="p-8 text-center border border-dashed border-slate-200 rounded-2xl bg-slate-50">
-                            <p className="text-xs text-slate-400">No active assets match your filters.</p>
+                        <h3 className="text-lg font-bold text-slate-900">Trading Portal Locked</h3>
+                        <p className="text-sm text-slate-500 max-w-md mx-auto">
+                          In compliance with NGN local P2P trading regulations, you must verify your
+                          identity first. Once verified, Buy and Sell operation unlock instantly.
+                        </p>
+                        {userProfile.kycStatus === 'none' && (
+                          <button
+                            onClick={() => setActiveTab('kyc')}
+                            className="bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-2.5 rounded-xl text-sm font-bold cursor-pointer transition"
+                          >
+                            Verify Identity Now
+                          </button>
+                        )}
+                        {userProfile.kycStatus === 'pending' && (
+                          <span className="inline-flex items-center gap-1.5 text-amber-600 font-semibold bg-amber-50 px-3 py-1.5 rounded-full text-xs">
+                            <Clock className="w-4 h-4 animate-spin" /> Pending Admin Approval
+                          </span>
+                        )}
+                        {userProfile.kycStatus === 'rejected' && (
+                          <div className="space-y-3">
+                            <span className="inline-flex items-center gap-1.5 text-rose-600 font-semibold bg-rose-50 px-3 py-1.5 rounded-full text-xs">
+                              KYC Rejected
+                            </span>
+                            <p className="text-xs text-rose-500">
+                              Reason:{' '}
+                              {userProfile.kycData?.rejectionReason || 'No details provided.'}
+                            </p>
                             <button
-                              type="button"
-                              onClick={() => { setCoinSearchQuery(''); setNetworkFilter('all'); }}
-                              className="mt-2 text-xs text-[#008751] font-bold underline cursor-pointer"
+                              onClick={() => setActiveTab('kyc')}
+                              className="text-emerald-600 hover:text-emerald-700 text-xs font-bold underline block mx-auto"
                             >
-                              Reset filters
+                              Correct details & Retry
                             </button>
                           </div>
-                        ) : (
-                          <div className="space-y-3">
-                            {/* Coin grid — max-w-3xl caps runaway width while allowing 3 columns on lg */}
-                            <div className="max-w-3xl">
-                              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
-                                {displayedGroupedCoins.map((group) => {
-                                  const isSelected = activeCoin ? (activeCoin.symbol.trim().toUpperCase() === group.symbol.trim().toUpperCase()) : false;
-                                  return (
+                        )}
+                      </div>
+                    ) : (
+                      <form onSubmit={handleTradeSubmit} className="space-y-6">
+                        <div>
+                          <h3 className="text-lg font-bold text-[#1A1A1A] tracking-tight">
+                            Create Escrow Contract
+                          </h3>
+                          <p className="text-xs text-gray-500">
+                            Set up a secure transfer that locks assets until verified.
+                          </p>
+                        </div>
+
+                        {/* Buy/Sell Selector */}
+                        <div className="grid grid-cols-2 gap-4 bg-[#F7F9F7] p-1.5 rounded-2xl border border-[#E0E7E0]">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setTradeType('buy');
+                              setScreenshot('');
+                            }}
+                            className={`relative py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2 cursor-pointer ${
+                              tradeType === 'buy'
+                                ? 'text-white'
+                                : 'text-gray-500 hover:text-[#1A1A1A]'
+                            }`}
+                          >
+                            {tradeType === 'buy' && (
+                              <motion.div
+                                layoutId="trade-type-indicator"
+                                className="absolute inset-0 bg-[#008751] rounded-xl shadow-sm"
+                                transition={{ type: 'spring', bounce: 0.2, duration: 0.4 }}
+                              />
+                            )}
+                            <ArrowDownLeft className="relative z-10 w-4 h-4" />
+                            <span className="relative z-10">Buy</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setTradeType('sell');
+                              setScreenshot('');
+                            }}
+                            className={`relative py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2 cursor-pointer ${
+                              tradeType === 'sell'
+                                ? 'text-white'
+                                : 'text-gray-500 hover:text-[#1A1A1A]'
+                            }`}
+                          >
+                            {tradeType === 'sell' && (
+                              <motion.div
+                                layoutId="trade-type-indicator"
+                                className="absolute inset-0 bg-rose-600 rounded-xl shadow-sm"
+                                transition={{ type: 'spring', bounce: 0.2, duration: 0.4 }}
+                              />
+                            )}
+                            <ArrowUpRight className="relative z-10 w-4 h-4" />
+                            <span className="relative z-10">Sell</span>
+                          </button>
+                        </div>
+
+                        {/* Coin & Network Selection */}
+                        <div className="space-y-4">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <label className="block text-xs font-extrabold text-[#1A1A1A] uppercase tracking-wider">
+                              Select Asset & Blockchain Network
+                            </label>
+
+                            {/* Search and network filters */}
+                            {coins && coins.length > 0 && (
+                              <div className="flex flex-wrap items-center gap-2">
+                                {/* Search box */}
+                                <div className="relative">
+                                  <input
+                                    type="text"
+                                    value={coinSearchQuery}
+                                    onChange={(e) => setCoinSearchQuery(e.target.value)}
+                                    placeholder="Search assets..."
+                                    className="pl-8 pr-3 py-1.5 border border-slate-200 rounded-lg text-xs w-40 focus:outline-none focus:ring-1 focus:ring-[#008751] bg-white text-slate-800 placeholder-slate-400"
+                                  />
+                                  <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                                </div>
+
+                                {/* Network filter pills */}
+                                <div className="flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200">
+                                  {(['all', 'BSC', 'Tron', 'Polygon'] as const).map((net) => (
                                     <button
-                                      key={group.symbol}
+                                      key={net}
                                       type="button"
-                                      onClick={() => {
-                                        // Default to the first available variant for this token asset
-                                        if (group.variants.length > 0) {
-                                          setSelectedCoinId(group.variants[0].id);
-                                          setNetwork(group.variants[0].network as any);
-                                        }
-                                      }}
-                                      className={`p-2.5 sm:p-3.5 rounded-2xl border text-left cursor-pointer transition-[transform,box-shadow,border-color] duration-150 flex items-center gap-2.5 sm:gap-3 relative hover:-translate-y-0.5 hover:shadow-sm ${
-                                        isSelected
-                                          ? 'border-[#008751] bg-[#F0F7F2] ring-1 ring-[#008751]'
-                                          : 'border-[#E0E7E0] hover:border-slate-300 bg-white'
+                                      onClick={() => setNetworkFilter(net)}
+                                      className={`px-2.5 py-1 rounded-md text-[10px] font-bold cursor-pointer transition uppercase ${
+                                        networkFilter === net
+                                          ? 'bg-[#008751] text-white'
+                                          : 'text-slate-600 hover:text-slate-900'
                                       }`}
                                     >
-                                      {/* Logo — smaller on mobile */}
-                                      <div className="shrink-0">
-                                        {group.logoUrl ? (
-                                          <img
-                                            src={group.logoUrl}
-                                            alt={group.name}
-                                            className="w-9 h-9 sm:w-11 sm:h-11 object-contain"
-                                            referrerPolicy="no-referrer"
-                                          />
-                                        ) : (
-                                          <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-[#008751]/10 flex items-center justify-center text-[#008751] font-bold text-[10px] sm:text-xs border border-[#008751]/20">
-                                            {group.symbol.slice(0, 3).toUpperCase()}
-                                          </div>
-                                        )}
-                                      </div>
-
-                                      <div className="min-w-0 flex-1 space-y-0.5">
-                                        <span className="block font-extrabold text-[11px] sm:text-[12px] text-slate-900 truncate leading-tight">
-                                          {group.name}
-                                        </span>
-                                        <div className="flex items-center gap-1 flex-wrap">
-                                          <span className="bg-slate-100 text-slate-700 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded-md leading-none uppercase">
-                                            {group.symbol}
-                                          </span>
-                                          <span className="bg-slate-50 text-slate-600 text-[8px] font-semibold px-1.5 py-0.5 rounded-md leading-none border border-slate-100">
-                                            {group.variants.length} {group.variants.length === 1 ? 'Network' : 'Networks'}
-                                          </span>
-                                        </div>
-                                        <span className="block text-[11px] text-[#008751] font-extrabold mt-0.5">
-                                          ₦{(
-                                            group.variants[0]?.coinGeckoId && liveCoinPrices[group.variants[0]?.coinGeckoId!]
-                                              ? Math.round(liveCoinPrices[group.variants[0]!.coinGeckoId!] * (tradeType === 'buy' ? effectiveBuyRate : effectiveSellRate))
-                                              : group.variants[0]?.pricePegged
-                                              ? (tradeType === 'buy' ? effectiveBuyRate : effectiveSellRate)
-                                              : group.variants[0]?.rate ?? 0
-                                          ).toLocaleString()} <span className="text-[9px] text-gray-400 font-normal">{group.variants[0]?.coinGeckoId && liveCoinPrices[group.variants[0]?.coinGeckoId!] ? 'live' : group.variants[0]?.pricePegged ? 'live rate' : 'base rate'}</span>
-                                        </span>
-                                      </div>
-
-                                      {isSelected && (
-                                        <div className="absolute top-2.5 right-2.5 sm:top-3 sm:right-3 bg-[#008751] text-white p-0.5 rounded-full shrink-0">
-                                          <Check className="w-3 h-3 stroke-[3]" />
-                                        </div>
-                                      )}
+                                      {net === 'all' ? 'All' : net}
                                     </button>
-                                  );
-                                })}
+                                  ))}
+                                </div>
                               </div>
+                            )}
+                          </div>
 
-                              {/* "More assets" nudge — shown when list is clipped */}
-                              {hiddenCoinCount > 0 && (
-                                <p className="mt-2.5 text-[10px] text-slate-400 text-center">
-                                  +{hiddenCoinCount} more asset{hiddenCoinCount !== 1 ? 's' : ''} — use the search box above to find them
-                                </p>
-                              )}
-                            </div>
-
-                            {/* Network type selector specifically for the selected grouped asset */}
-                            {activeCoin && (
-                              (() => {
-                                const selectedGroup = groupedCoins.find(g => g.symbol.trim().toUpperCase() === activeCoin.symbol.trim().toUpperCase());
-                                const variants = selectedGroup ? selectedGroup.variants : [];
-                                if (variants.length === 0) return null;
-
-                                return (
-                                  <div className="mt-4 p-4.5 bg-slate-50 border border-slate-200/80 rounded-2xl">
-                                    <span className="block text-[10px] font-extrabold text-[#1A1A1A] uppercase tracking-wider mb-3">
-                                      Select Blockchain Network for {activeCoin.name} ({activeCoin.symbol})
-                                    </span>
-                                    <div className="flex flex-wrap gap-2.5">
-                                      {variants.map((variant) => {
-                                        const isVarSelected = selectedCoinId === variant.id;
+                          {coins && coins.length > 0 ? (
+                            <>
+                              {filteredGroupedCoins.length === 0 ? (
+                                <div className="p-8 text-center border border-dashed border-slate-200 rounded-2xl bg-slate-50">
+                                  <p className="text-xs text-slate-400">
+                                    No active assets match your filters.
+                                  </p>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setCoinSearchQuery('');
+                                      setNetworkFilter('all');
+                                    }}
+                                    className="mt-2 text-xs text-[#008751] font-bold underline cursor-pointer"
+                                  >
+                                    Reset filters
+                                  </button>
+                                </div>
+                              ) : (
+                                <div className="space-y-3">
+                                  {/* Coin grid — max-w-3xl caps runaway width while allowing 3 columns on lg */}
+                                  <div className="max-w-3xl">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
+                                      {displayedGroupedCoins.map((group) => {
+                                        const isSelected = activeCoin
+                                          ? activeCoin.symbol.trim().toUpperCase() ===
+                                            group.symbol.trim().toUpperCase()
+                                          : false;
                                         return (
                                           <button
-                                            key={variant.id}
+                                            key={group.symbol}
                                             type="button"
                                             onClick={() => {
-                                              setSelectedCoinId(variant.id);
-                                              setNetwork(variant.network as any);
+                                              // Default to the first available variant for this token asset
+                                              if (group.variants.length > 0) {
+                                                setSelectedCoinId(group.variants[0].id);
+                                                setNetwork(group.variants[0].network as any);
+                                              }
                                             }}
-                                            className={`px-4 py-2.5 rounded-xl border text-xs font-bold cursor-pointer transition-all duration-200 flex items-center gap-2.5 shadow-sm hover:scale-[1.01] ${
-                                              isVarSelected
-                                                ? 'border-[#008751] bg-[#F0F7F2] text-[#008751] ring-1 ring-[#008751]'
-                                                : 'border-slate-200 bg-white hover:border-slate-300 text-slate-600'
+                                            className={`p-2.5 sm:p-3.5 rounded-2xl border text-left cursor-pointer transition-[transform,box-shadow,border-color] duration-150 flex items-center gap-2.5 sm:gap-3 relative hover:-translate-y-0.5 hover:shadow-sm ${
+                                              isSelected
+                                                ? 'border-[#008751] bg-[#F0F7F2] ring-1 ring-[#008751]'
+                                                : 'border-[#E0E7E0] hover:border-slate-300 bg-white'
                                             }`}
                                           >
-                                            <span className={`w-2.5 h-2.5 rounded-full shrink-0 transition-all ${isVarSelected ? 'bg-[#008751] scale-110' : 'bg-slate-300'}`} />
-                                            <div className="text-left leading-tight">
-                                              <span className="block font-extrabold">{variant.network}</span>
-                                              <span className="block text-[9px] text-slate-400 font-medium">Rate: ₦{(variant.coinGeckoId && liveCoinPrices[variant.coinGeckoId]
-                                                ? Math.round(liveCoinPrices[variant.coinGeckoId] * (tradeType === 'buy' ? effectiveBuyRate : effectiveSellRate))
-                                                : variant.pricePegged
-                                                ? (tradeType === 'buy' ? effectiveBuyRate : effectiveSellRate)
-                                                : variant.rate
-                                              ).toLocaleString()}/{variant.symbol}{variant.coinGeckoId && liveCoinPrices[variant.coinGeckoId] ? ' (live)' : variant.pricePegged ? ' (pegged)' : ''}</span>
+                                            {/* Logo — smaller on mobile */}
+                                            <div className="shrink-0">
+                                              {group.logoUrl ? (
+                                                <img
+                                                  src={group.logoUrl}
+                                                  alt={group.name}
+                                                  className="w-9 h-9 sm:w-11 sm:h-11 object-contain"
+                                                  referrerPolicy="no-referrer"
+                                                />
+                                              ) : (
+                                                <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-[#008751]/10 flex items-center justify-center text-[#008751] font-bold text-[10px] sm:text-xs border border-[#008751]/20">
+                                                  {group.symbol.slice(0, 3).toUpperCase()}
+                                                </div>
+                                              )}
                                             </div>
+
+                                            <div className="min-w-0 flex-1 space-y-0.5">
+                                              <span className="block font-extrabold text-[11px] sm:text-[12px] text-slate-900 truncate leading-tight">
+                                                {group.name}
+                                              </span>
+                                              <div className="flex items-center gap-1 flex-wrap">
+                                                <span className="bg-slate-100 text-slate-700 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded-md leading-none uppercase">
+                                                  {group.symbol}
+                                                </span>
+                                                <span className="bg-slate-50 text-slate-600 text-[8px] font-semibold px-1.5 py-0.5 rounded-md leading-none border border-slate-100">
+                                                  {group.variants.length}{' '}
+                                                  {group.variants.length === 1
+                                                    ? 'Network'
+                                                    : 'Networks'}
+                                                </span>
+                                              </div>
+                                              <span className="block text-[11px] text-[#008751] font-extrabold mt-0.5">
+                                                ₦
+                                                {(group.variants[0]?.coinGeckoId &&
+                                                liveCoinPrices[group.variants[0]?.coinGeckoId!]
+                                                  ? Math.round(
+                                                      liveCoinPrices[
+                                                        group.variants[0]!.coinGeckoId!
+                                                      ] *
+                                                        (tradeType === 'buy'
+                                                          ? effectiveBuyRate
+                                                          : effectiveSellRate)
+                                                    )
+                                                  : group.variants[0]?.pricePegged
+                                                    ? tradeType === 'buy'
+                                                      ? effectiveBuyRate
+                                                      : effectiveSellRate
+                                                    : (group.variants[0]?.rate ?? 0)
+                                                ).toLocaleString()}{' '}
+                                                <span className="text-[9px] text-gray-400 font-normal">
+                                                  {group.variants[0]?.coinGeckoId &&
+                                                  liveCoinPrices[group.variants[0]?.coinGeckoId!]
+                                                    ? 'live'
+                                                    : group.variants[0]?.pricePegged
+                                                      ? 'live rate'
+                                                      : 'base rate'}
+                                                </span>
+                                              </span>
+                                            </div>
+
+                                            {isSelected && (
+                                              <div className="absolute top-2.5 right-2.5 sm:top-3 sm:right-3 bg-[#008751] text-white p-0.5 rounded-full shrink-0">
+                                                <Check className="w-3 h-3 stroke-[3]" />
+                                              </div>
+                                            )}
                                           </button>
                                         );
                                       })}
                                     </div>
+
+                                    {/* "More assets" nudge — shown when list is clipped */}
+                                    {hiddenCoinCount > 0 && (
+                                      <p className="mt-2.5 text-[10px] text-slate-400 text-center">
+                                        +{hiddenCoinCount} more asset
+                                        {hiddenCoinCount !== 1 ? 's' : ''} — use the search box
+                                        above to find them
+                                      </p>
+                                    )}
                                   </div>
-                                );
-                              })()
-                            )}
-                          </div>
-                        )}
-                      </>
-                    ) : (
-                      <div className="grid grid-cols-3 gap-3">
-                        {(['BSC', 'Tron', 'Polygon'] as const).map((net) => (
-                          <button
-                            key={net}
-                            type="button"
-                            onClick={() => setNetwork(net)}
-                            className={`p-3 rounded-xl border text-center text-xs font-bold cursor-pointer transition ${
-                              network === net
-                                ? 'border-[#008751] bg-[#E6F4EA] text-[#008751]'
-                                : 'border-[#E0E7E0] hover:border-gray-300 text-gray-600'
-                            }`}
-                          >
-                            {net === 'BSC' && 'BSC (BEP20)'}
-                            {net === 'Tron' && 'Tron (TRC20)'}
-                            {net === 'Polygon' && 'Polygon'}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
 
-                  {/* Amounts */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-xs font-bold text-[#1A1A1A] uppercase tracking-wider mb-1.5">
-                        Amount in {activeCoin ? activeCoin.symbol : 'USDT'}
-                      </label>
-                      <div className="relative rounded-md shadow-sm">
-                        <input
-                          type="number"
-                          required
-                          min={activeMinTrade}
-                          step="any"
-                          value={cryptoAmount}
-                          onChange={(e) => setCryptoAmount(e.target.value !== '' ? Number(e.target.value) : '')}
-                          className={`block w-full px-4 py-3 border rounded-xl bg-[#F7F9F7] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#008751] text-sm font-semibold text-[#1A1A1A] ${belowMinimum ? 'border-rose-400' : 'border-[#E0E7E0]'}`}
-                          placeholder={`Min. ${activeMinTrade} ${activeCoin ? activeCoin.symbol : 'USDT'}`}
-                        />
-                        <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-xs font-bold text-gray-400">
-                          {activeCoin ? activeCoin.symbol : 'USDT'}
-                        </div>
-                      </div>
-                    </div>
+                                  {/* Network type selector specifically for the selected grouped asset */}
+                                  {activeCoin &&
+                                    (() => {
+                                      const selectedGroup = groupedCoins.find(
+                                        (g) =>
+                                          g.symbol.trim().toUpperCase() ===
+                                          activeCoin.symbol.trim().toUpperCase()
+                                      );
+                                      const variants = selectedGroup ? selectedGroup.variants : [];
+                                      if (variants.length === 0) return null;
 
-                    <div>
-                      <label className="block text-xs font-bold text-[#1A1A1A] uppercase tracking-wider mb-1.5">
-                        Amount to Receive / Pay (NGN)
-                      </label>
-                      <div className="relative rounded-md shadow-sm">
-                        <input
-                          type="text"
-                          readOnly
-                          value={calculatedNgnAmount ? `₦${calculatedNgnAmount.toLocaleString()}` : '₦0'}
-                          className="block w-full px-4 py-3 border border-[#E0E7E0] rounded-xl bg-[#F7F9F7] focus:outline-none text-sm font-bold text-gray-700 cursor-not-allowed"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Min trade warning */}
-                  {belowMinimum && (
-                    <p className="text-xs text-rose-600 font-semibold -mt-3">
-                      Minimum trade for {activeCoin?.symbol} on {activeCoin?.network} is <span className="font-extrabold">{activeMinTrade} {activeCoin?.symbol}</span>
-                    </p>
-                  )}
-
-                  {/* Fee Breakdown — BUY only, shown when fee > 0 and user has typed an amount */}
-                  {tradeType === 'buy' && activeFeePercent > 0 && cryptoAmount && Number(cryptoAmount) > 0 && (
-                    <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs space-y-1.5">
-                      <div className="flex items-center justify-between mb-0.5">
-                        <span className="font-extrabold text-amber-700 uppercase tracking-wider text-[10px]">Fee Breakdown</span>
-                        <span className="text-amber-600 font-mono text-[10px] bg-amber-100 px-1.5 py-0.5 rounded">{activeFeePercent}% platform fee</span>
-                      </div>
-                      <div className="flex justify-between text-slate-600">
-                        <span>Trade amount</span>
-                        <span className="font-semibold">{cryptoAmount} {activeCoin?.symbol}</span>
-                      </div>
-                      <div className="flex justify-between text-slate-600">
-                        <span>Network fee ({activeFeePercent}%)</span>
-                        <span className="font-semibold text-rose-600">− {feeAmount.toFixed(4)} {activeCoin?.symbol}</span>
-                      </div>
-                      <div className="flex justify-between border-t border-amber-200 pt-1.5 mt-0.5">
-                        <span className="font-bold text-slate-800">You receive (net)</span>
-                        <span className="font-extrabold text-[#008751]">{netCryptoAmount.toFixed(4)} {activeCoin?.symbol}</span>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Transaction Summary Card */}
-                  {activeCoin && (
-                    <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                      <div className="flex items-center gap-3">
-                        <div className="relative">
-                          {activeCoin.logoUrl ? (
-                            <img 
-                              src={activeCoin.logoUrl} 
-                              alt={activeCoin.name} 
-                              className="w-12 h-12 object-contain" 
-                              referrerPolicy="no-referrer"
-                            />
-                          ) : (
-                            <div className="w-12 h-12 rounded-full bg-[#008751]/10 flex items-center justify-center text-[#008751] font-bold text-xs border border-[#008751]/20">
-                              {activeCoin.symbol.slice(0, 3).toUpperCase()}
-                            </div>
-                          )}
-                          <div className="absolute -bottom-1 -right-1 bg-[#008751] text-white p-0.5 rounded-full border-2 border-white">
-                            <Check className="w-2.5 h-2.5 stroke-[3]" />
-                          </div>
-                        </div>
-                        <div>
-                          <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Selected Asset</span>
-                          <span className="font-extrabold text-sm text-slate-800 leading-none">{activeCoin.name}</span>
-                          <div className="flex items-center gap-1.5 mt-1">
-                            <span className="text-[10px] font-mono text-slate-500 uppercase font-bold bg-slate-200/60 px-1.5 py-0.5 rounded">Token: {activeCoin.symbol}</span>
-                            <span className="text-slate-300">•</span>
-                            <span className="text-[10px] font-semibold text-slate-500 bg-emerald-50 text-emerald-800 px-1.5 py-0.5 rounded">Network: {activeCoin.network}</span>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div className="sm:text-right">
-                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Active Rate</span>
-                        <span className="font-extrabold text-sm text-[#008751]">₦{activeRate.toLocaleString()}/$</span>
-                        <span className="block text-[9px] text-slate-400 font-medium">Escrow Protected Guarantee</span>
-                        {liveNgnRate && (
-                          <span className="block text-[9px] text-slate-400 mt-0.5">
-                            Market: <span className="text-slate-600 font-semibold">₦{Math.round(liveNgnRate).toLocaleString()}</span>
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Conditional Flow Instructions */}
-                  <div className="bg-[#F0F7F2] border border-[#D1E6D8] rounded-2xl p-5 space-y-4">
-                    {tradeType === 'buy' ? (
-                      <>
-                        <h4 className="font-bold text-[#008751] text-sm flex items-center gap-1.5">
-                          <CheckCircle2 className="w-5 h-5 text-[#008751]" />
-                          Step 1: Transfer Naira amount to the Admin's provided Account
-                        </h4>
-                        <p className="text-xs text-gray-600 leading-relaxed">
-                          Please transfer exactly <span className="font-bold text-[#008751]">{calculatedNgnAmount ? `₦${calculatedNgnAmount.toLocaleString()}` : 'the calculated amount'}</span> to the admin bank credentials below. Your {activeCoin ? activeCoin.symbol : 'USDT'} will be released to your registered blockchain address once the admin validates the receipt.
-                        </p>
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-white p-3 rounded-xl border border-[#D1E6D8] text-xs">
-                          <div>
-                            <span className="text-[10px] text-gray-400 block font-mono">BANK NAME</span>
-                            <span className="font-bold text-[#1A1A1A]">{settings.ngnBankName}</span>
-                          </div>
-                          <div>
-                            <span className="text-[10px] text-gray-400 block font-mono">ACCOUNT NUMBER</span>
-                            <div className="flex items-center gap-1.5">
-                              <span className="font-mono font-bold text-[#1A1A1A]">{settings.ngnAccountNumber}</span>
-                              <button type="button" onClick={() => copyToClipboard(settings.ngnAccountNumber, 'Account number')} className="p-0.5 rounded text-[#008751] hover:bg-[#008751]/10 transition cursor-pointer shrink-0" title="Copy account number">
-                                <Copy className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
-                          </div>
-                          <div>
-                            <span className="text-[10px] text-gray-400 block font-mono">ACCOUNT NAME</span>
-                            <span className="font-bold text-[#1A1A1A]">{settings.ngnAccountName}</span>
-                          </div>
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <h4 className="font-bold text-rose-950 text-sm flex items-center gap-1.5">
-                          <CheckCircle2 className="w-5 h-5 text-rose-600" />
-                          Step 1: Transfer {activeCoin ? activeCoin.symbol : 'USDT'} to the Admin's provided Escrow Wallet
-                        </h4>
-                        <p className="text-xs text-gray-600 leading-relaxed">
-                          Please deposit exactly <span className="font-bold text-[#1A1A1A]">{cryptoAmount || 0} {activeCoin ? activeCoin.symbol : 'USDT'}</span> on the <span className="font-bold text-[#1A1A1A]">{activeCoin ? activeCoin.network : network}</span> network to the admin wallet address below. Do not send on other networks.
-                        </p>
-                        <div className="bg-white p-3 rounded-xl border border-rose-100 text-xs flex flex-col justify-center">
-                          <span className="text-[10px] text-gray-400 block font-mono">ADMIN {activeCoin ? activeCoin.network : network} WALLET ADDRESS</span>
-                          <div className="flex items-start gap-2 py-1">
-                            <span className="font-mono font-bold text-[#1A1A1A] break-all select-all flex-1">
-                              {activeCoin ? activeCoin.walletAddress : (settings.wallets[network] || '')}
-                            </span>
-                            <button type="button" onClick={() => copyToClipboard(activeCoin ? activeCoin.walletAddress : (settings.wallets[network] || ''), 'Wallet address')} className="p-0.5 rounded text-[#008751] hover:bg-[#008751]/10 transition cursor-pointer shrink-0 mt-0.5" title="Copy wallet address">
-                              <Copy className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        </div>
-                      </>
-                    )}
-                  </div>
-
-                  {/* If buying, user must input their crypto wallet address to receive crypto */}
-                  {tradeType === 'buy' && (
-                    <div className="space-y-2">
-                      <h4 className="font-bold text-[#1A1A1A] text-sm">Step 2: Enter Your Crypto Receiving Address</h4>
-                      <p className="text-xs text-gray-500">
-                        Provide the {activeCoin ? activeCoin.network : network} wallet address where you want to receive your {activeCoin ? activeCoin.symbol : 'USDT'} after admin approval.
-                      </p>
-                      <input
-                        type="text"
-                        required
-                        value={userWalletAddress}
-                        onChange={(e) => setUserWalletAddress(e.target.value)}
-                        placeholder={`Your ${activeCoin ? activeCoin.network : network} wallet address`}
-                        className="block w-full px-3 py-2.5 border border-[#E0E7E0] rounded-xl text-xs font-mono bg-[#F7F9F7] text-[#1A1A1A]"
-                      />
-                    </div>
-                  )}
-
-                  {/* If selling, user must input NGN details to receive cash */}
-                  {tradeType === 'sell' && (
-                    <div className="space-y-4">
-                      <h4 className="font-bold text-[#1A1A1A] text-sm">Step 2: Enter Your NGN Receiving Bank Details</h4>
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <div>
-                          <label className="block text-xs font-medium text-gray-600 mb-1">Bank Name</label>
-                          <input
-                            type="text"
-                            required
-                            value={userBankName}
-                            onChange={(e) => setUserBankName(e.target.value)}
-                            placeholder="e.g. GTBank"
-                            className="block w-full px-3 py-2.5 border border-[#E0E7E0] rounded-xl text-xs bg-[#F7F9F7]"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-xs font-medium text-gray-600 mb-1">Account Number</label>
-                          <input
-                            type="text"
-                            required
-                            value={userAccountNumber}
-                            onChange={(e) => setUserAccountNumber(e.target.value)}
-                            placeholder="10 Digits"
-                            maxLength={10}
-                            className="block w-full px-3 py-2.5 border border-[#E0E7E0] rounded-xl text-xs font-mono bg-[#F7F9F7]"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-xs font-medium text-gray-600 mb-1">Account Name</label>
-                          <input
-                            type="text"
-                            required
-                            value={userAccountName}
-                            onChange={(e) => setUserAccountName(e.target.value)}
-                            placeholder="As shown in Bank App"
-                            className="block w-full px-3 py-2.5 border border-[#E0E7E0] rounded-xl text-xs bg-[#F7F9F7]"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Blockchain Tx Hash input for sell orders */}
-                  {tradeType === 'sell' && (
-                    <div className="space-y-2">
-                      <h4 className="font-bold text-[#1A1A1A] text-sm">Step 3: Enter Blockchain Transaction Hash</h4>
-                      <p className="text-xs text-gray-500">Paste the transaction hash (TxID) from your crypto wallet after sending to the admin wallet above.</p>
-                      <input
-                        type="text"
-                        required
-                        value={sellTxHash}
-                        onChange={(e) => setSellTxHash(e.target.value)}
-                        placeholder="e.g. 0xabc123... or TxID from your wallet"
-                        className="block w-full px-3 py-2.5 border border-[#E0E7E0] rounded-xl text-xs font-mono bg-[#F7F9F7] text-[#1A1A1A]"
-                      />
-                    </div>
-                  )}
-
-                  {/* Step 3/4: Screenshot Upload (Drag & Drop + Click) */}
-                  <div className="space-y-2">
-                    <h4 className="font-bold text-[#1A1A1A] text-sm">
-                      {tradeType === 'buy' ? 'Step 3: Upload NGN Transfer Receipt' : 'Step 4: Upload Crypto Transfer Receipt'}
-                    </h4>
-                    <p className="text-xs text-gray-500">Provide an authentic screenshot proof of the transfer to trigger admin approval.</p>
-                    
-                    <div
-                      onDragOver={handleDragOver}
-                      onDragLeave={handleDragLeave}
-                      onDrop={(e) => handleDrop(e, false)}
-                      onClick={() => fileInputRef.current?.click()}
-                      className={`border border-dashed rounded-3xl p-6 text-center cursor-pointer transition flex flex-col items-center justify-center gap-3 ${
-                        isDragging 
-                          ? 'border-[#008751] bg-[#F0F7F2]' 
-                          : screenshot 
-                            ? 'border-[#D1E6D8] bg-[#F7F9F7]' 
-                            : 'border-[#E0E7E0] hover:border-gray-400 bg-[#F7F9F7]/50'
-                      }`}
-                    >
-                      <input
-                        type="file"
-                        ref={fileInputRef}
-                        onChange={(e) => handleFileChange(e, false)}
-                        accept="image/*"
-                        className="hidden"
-                      />
-                      {screenshot ? (
-                        <div className="relative group max-w-[200px]">
-                          <img 
-                            src={screenshot} 
-                            alt="Payment receipt preview" 
-                            className="h-32 w-auto object-cover rounded-xl shadow-sm border border-[#E0E7E0]" 
-                          />
-                          <div className="absolute inset-0 bg-black/40 rounded-xl opacity-0 group-hover:opacity-100 flex items-center justify-center transition">
-                            <span className="text-[10px] text-white font-bold uppercase tracking-wider">Change Photo</span>
-                          </div>
-                        </div>
-                      ) : (
-                        <>
-                          <div className="p-3 bg-white rounded-full border border-[#E0E7E0] shadow-sm text-gray-500">
-                            <Upload className="w-5 h-5 text-[#008751]" />
-                          </div>
-                          <div>
-                            <span className="text-xs font-bold text-[#1A1A1A] block">Drag & Drop transfer screenshot</span>
-                            <span className="text-[10px] text-gray-400 block mt-0.5">Or click to browse files (max 2MB)</span>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Action Button */}
-                  <div>
-                    <button
-                      type="submit"
-                      disabled={isSubmittingOrder}
-                      className={`w-full py-4 rounded-xl text-sm font-bold text-center text-white transition shadow-sm cursor-pointer flex justify-center items-center gap-2 ${
-                        tradeType === 'buy'
-                          ? 'bg-[#008751] hover:bg-[#007043]'
-                          : 'bg-rose-600 hover:bg-rose-500'
-                      }`}
-                    >
-                      {isSubmittingOrder ? (
-                        <>
-                          <Clock className="w-4 h-4 animate-spin" />
-                          Saving escrow contract...
-                        </>
-                      ) : (
-                        <>
-                          {tradeType === 'buy' ? 'Submit Buy Order Proof' : 'Submit Sell Order Proof'}
-                        </>
-                      )}
-                    </button>
-                  </div>
-
-                </form>
-              )}
-            </div>
-          )}
-
-          {/* TAB 2: Order History */}
-          {activeTab === 'history' && (
-            <div className="bg-white rounded-3xl border border-[#E0E7E0] shadow-sm overflow-hidden">
-              <div className="p-6 border-b border-[#E0E7E0]">
-                <h3 className="text-lg font-bold text-[#1A1A1A] tracking-tight">Your Escrow Transactions</h3>
-                <p className="text-xs text-gray-500">Track and view receipts for all buy/sell requests.</p>
-              </div>
-
-              {orders.length === 0 ? (
-                <div className="text-center py-16 px-4">
-                  <div className="w-12 h-12 bg-slate-50 border border-slate-200 text-slate-400 rounded-xl flex items-center justify-center mx-auto mb-4">
-                    <Smartphone className="w-6 h-6" />
-                  </div>
-                  <h4 className="text-sm font-bold text-slate-700">No transactions recorded</h4>
-                  <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
-                    Start a buy or sell contract from the "Start Order" tab to record your first ledger item.
-                  </p>
-                </div>
-              ) : (
-                <div className="overflow-x-auto" data-horizontal-scroll>
-                  <table className="w-full text-left border-collapse">
-                    <thead>
-                      <tr className="bg-slate-50 text-[10px] text-slate-400 uppercase tracking-wider font-mono border-b border-slate-100">
-                        <th className="py-4 px-6">ID / Date</th>
-                        <th className="py-4 px-6">Type</th>
-                        <th className="py-4 px-6">Crypto Amount</th>
-                        <th className="py-4 px-6">NGN Payout</th>
-                        <th className="py-4 px-6">Status</th>
-                        <th className="py-4 px-6 text-center">Receipt</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 text-xs">
-                      {orders.slice(0, ordersLimit).map((ord) => {
-                        const isBuy = ord.type === 'buy';
-                        const dateStr = formatNGTDate(ord.createdAt);
-
-                        return (
-                          <tr key={ord.id} className="hover:bg-slate-50/50">
-                            <td className="py-4 px-6 font-mono">
-                              <span className="font-bold text-slate-700 text-xs block">#{ord.id.substring(0, 6).toUpperCase()}</span>
-                              <span className="text-[10px] text-slate-400">{dateStr}</span>
-                            </td>
-                            <td className="py-4 px-6">
-                              <span className={`inline-flex items-center gap-1 font-bold text-[10px] uppercase px-2 py-0.5 rounded-full ${
-                                isBuy 
-                                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' 
-                                  : 'bg-rose-50 text-rose-700 border border-rose-100'
-                              }`}>
-                                {isBuy ? ord.token === "USDT" ? `Buy USDT` : `Buy ${ord.token}/USDT` : ord.token === "USDT" ? `Sell USDT` : `Sell ${ord.token}/USDT`}
-                              </span>
-                            </td>
-                            <td className="py-4 px-6 font-semibold text-slate-700">
-                              {ord.cryptoAmount} {ord.token}
-                              <span className="block text-[10px] text-slate-400 font-mono">{ord.network}</span>
-                            </td>
-                            <td className="py-4 px-6 font-bold text-slate-800">
-                              ₦{ord.ngnAmount.toLocaleString()}
-                              <span className="block text-[10px] text-slate-400 font-mono">Rate: ₦{ord.rate.toLocaleString()}/{ord.token}</span>
-                            </td>
-                            <td className="py-4 px-6">
-                              {ord.status === 'pending' && (
-                                <span className="inline-flex items-center gap-1 text-amber-600 bg-amber-50 border border-amber-100 px-2 py-0.5 rounded-full font-semibold text-[10px]">
-                                  <Clock className="w-3 h-3 animate-spin" /> Pending
-                                </span>
-                              )}
-                              {ord.status === 'completed' && (
-                                <span className="inline-flex items-center gap-1 text-emerald-600 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-full font-semibold text-[10px]">
-                                  <CheckCircle2 className="w-3 h-3" /> Completed
-                                </span>
-                              )}
-                              {ord.status === 'rejected' && (
-                                <div className="space-y-0.5">
-                                  <span className="inline-flex items-center gap-1 text-rose-600 bg-rose-50 border border-rose-100 px-2 py-0.5 rounded-full font-semibold text-[10px]">
-                                    <XCircle className="w-3 h-3" /> Declined
-                                  </span>
-                                  {ord.rejectionReason && (
-                                    <span className="block text-[9px] text-rose-500 font-medium truncate max-w-[120px]">
-                                      {ord.rejectionReason}
-                                    </span>
-                                  )}
+                                      return (
+                                        <div className="mt-4 p-4.5 bg-slate-50 border border-slate-200/80 rounded-2xl">
+                                          <span className="block text-[10px] font-extrabold text-[#1A1A1A] uppercase tracking-wider mb-3">
+                                            Select Blockchain Network for {activeCoin.name} (
+                                            {activeCoin.symbol})
+                                          </span>
+                                          <div className="flex flex-wrap gap-2.5">
+                                            {variants.map((variant) => {
+                                              const isVarSelected = selectedCoinId === variant.id;
+                                              return (
+                                                <button
+                                                  key={variant.id}
+                                                  type="button"
+                                                  onClick={() => {
+                                                    setSelectedCoinId(variant.id);
+                                                    setNetwork(variant.network as any);
+                                                  }}
+                                                  className={`px-4 py-2.5 rounded-xl border text-xs font-bold cursor-pointer transition-all duration-200 flex items-center gap-2.5 shadow-sm hover:scale-[1.01] ${
+                                                    isVarSelected
+                                                      ? 'border-[#008751] bg-[#F0F7F2] text-[#008751] ring-1 ring-[#008751]'
+                                                      : 'border-slate-200 bg-white hover:border-slate-300 text-slate-600'
+                                                  }`}
+                                                >
+                                                  <span
+                                                    className={`w-2.5 h-2.5 rounded-full shrink-0 transition-all ${isVarSelected ? 'bg-[#008751] scale-110' : 'bg-slate-300'}`}
+                                                  />
+                                                  <div className="text-left leading-tight">
+                                                    <span className="block font-extrabold">
+                                                      {variant.network}
+                                                    </span>
+                                                    <span className="block text-[9px] text-slate-400 font-medium">
+                                                      Rate: ₦
+                                                      {(variant.coinGeckoId &&
+                                                      liveCoinPrices[variant.coinGeckoId]
+                                                        ? Math.round(
+                                                            liveCoinPrices[variant.coinGeckoId] *
+                                                              (tradeType === 'buy'
+                                                                ? effectiveBuyRate
+                                                                : effectiveSellRate)
+                                                          )
+                                                        : variant.pricePegged
+                                                          ? tradeType === 'buy'
+                                                            ? effectiveBuyRate
+                                                            : effectiveSellRate
+                                                          : variant.rate
+                                                      ).toLocaleString()}
+                                                      /{variant.symbol}
+                                                      {variant.coinGeckoId &&
+                                                      liveCoinPrices[variant.coinGeckoId]
+                                                        ? ' (live)'
+                                                        : variant.pricePegged
+                                                          ? ' (pegged)'
+                                                          : ''}
+                                                    </span>
+                                                  </div>
+                                                </button>
+                                              );
+                                            })}
+                                          </div>
+                                        </div>
+                                      );
+                                    })()}
                                 </div>
                               )}
-                            </td>
-                            <td className="py-4 px-6 text-center">
-                              <button
-                                onClick={() => setViewReceipt(ord)}
-                                className="p-1.5 hover:bg-emerald-50 text-slate-400 hover:text-emerald-700 rounded-lg cursor-pointer transition inline-flex items-center justify-center border border-transparent hover:border-emerald-100"
-                              >
-                                <Eye className="w-4 h-4" />
-                              </button>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                  {orders.length > ordersLimit && (
-                    <div className="px-6 py-4 border-t border-[#E0E7E0] text-center">
-                      <button
-                        onClick={() => setOrdersLimit((prev) => prev + 5)}
-                        className="text-xs font-bold text-[#008751] hover:text-[#007043] border border-[#D1E6D8] hover:border-[#008751] bg-[#F7F9F7] hover:bg-[#F0F7F2] px-5 py-2 rounded-xl transition cursor-pointer"
-                      >
-                        Load more orders ({orders.length - ordersLimit} remaining)
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-          {/* TAB 3: KYC Submission Form */}
-          {activeTab === 'kyc' && (
-            <div className="bg-white p-6 rounded-3xl border border-[#E0E7E0] shadow-sm space-y-6">
-              <div>
-                <h3 className="text-lg font-bold text-[#1A1A1A] tracking-tight">Identity Verification</h3>
-                <p className="text-xs text-gray-500">Provide official details to verify account safety.</p>
-              </div>
-
-              {userProfile.kycStatus === 'approved' && (
-                <div className="bg-[#F0F7F2] border border-[#D1E6D8] rounded-2xl p-6 text-center space-y-3">
-                  <div className="w-12 h-12 rounded-full bg-[#E6F4EA] text-[#008751] flex items-center justify-center mx-auto shadow-inner">
-                    <UserCheck className="w-6 h-6" />
-                  </div>
-                  <h4 className="font-extrabold text-[#1A1A1A] text-base">Account Fully Verified!</h4>
-                  <p className="text-xs text-gray-600 max-w-md mx-auto">
-                    Your KYC records (submitted by {userProfile.kycData?.fullName}) are manually approved by the 9ija Escrow security team. You can operate the Buy and Sell terminals with zero limitations.
-                  </p>
-                  <div className="bg-white p-3.5 rounded-xl border border-[#D1E6D8] max-w-sm mx-auto text-left text-xs space-y-1">
-                    <div className="flex justify-between">
-                      <span className="text-gray-400 font-mono">FULL NAME:</span>
-                      <span className="font-bold text-[#1A1A1A]">{userProfile.kycData?.fullName}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400 font-mono">ID TYPE:</span>
-                      <span className="font-bold text-[#1A1A1A]">
-                        {userProfile.kycData?.idType === 'nin_paper' && 'NIN (Paper Slip)'}
-                        {userProfile.kycData?.idType === 'nin_plastic' && 'NIN (Premium Plastic Card)'}
-                        {userProfile.kycData?.idType === 'voters_card' && "Voter's Card"}
-                        {userProfile.kycData?.idType === 'drivers_license' && "Driver's License"}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400 font-mono">ID NUMBER:</span>
-                      <span className="font-bold text-[#1A1A1A] font-mono">{userProfile.kycData?.idNumber}</span>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {userProfile.kycStatus === 'pending' && (
-                <div className="bg-amber-50 border border-amber-100 rounded-2xl p-6 text-center space-y-3">
-                  <div className="w-12 h-12 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center mx-auto animate-pulse">
-                    <Clock className="w-6 h-6" />
-                  </div>
-                  <h4 className="font-extrabold text-amber-950 text-base">Verification in Progress</h4>
-                  <p className="text-xs text-gray-600 max-w-md mx-auto leading-relaxed">
-                    Your submitted identity card ({userProfile.kycData?.fullName}) is currently in the admin verification queue. Most documents are verified within 10-20 minutes.
-                  </p>
-                  <div className="bg-white p-3.5 rounded-xl border border-amber-100 max-w-sm mx-auto text-left text-xs space-y-1">
-                    <div className="flex justify-between">
-                      <span className="text-gray-400 font-mono font-medium">SUBMITTED ON:</span>
-                      <span className="font-bold text-gray-800">
-                        {userProfile.kycData?.submittedAt ? formatNGT(userProfile.kycData.submittedAt) : 'Just now'}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {(userProfile.kycStatus === 'none' || userProfile.kycStatus === 'rejected') && (
-                <form onSubmit={handleKycSubmit} className="space-y-6">
-                  {userProfile.kycStatus === 'rejected' && (
-                    <div className="bg-rose-50 border border-rose-100 text-rose-950 rounded-xl p-4 flex gap-3 items-start">
-                      <AlertCircle className="w-5 h-5 text-rose-600 mt-0.5 shrink-0" />
-                      <div>
-                        <h4 className="font-bold text-sm">Previous Verification Rejected</h4>
-                        <p className="text-xs text-gray-600 mt-1">
-                          <span className="font-bold text-rose-900">Reason:</span> {userProfile.kycData?.rejectionReason || 'Uploaded document was blurry. Please upload a high-resolution screenshot.'}
-                        </p>
-                        <p className="text-xs text-gray-400 mt-1">Please update your details below and re-submit for review.</p>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-bold text-[#1A1A1A] uppercase tracking-wider mb-1">
-                        Full Legal Name
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={kycName}
-                        onChange={(e) => setKycName(e.target.value)}
-                        placeholder="e.g. John Obi Okechukwu"
-                        className="block w-full px-4 py-3 border border-[#E0E7E0] rounded-xl bg-[#F7F9F7] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#008751] text-sm font-semibold text-[#1A1A1A]"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-bold text-[#1A1A1A] uppercase tracking-wider mb-1">
-                        Select Document Type
-                      </label>
-                      <select
-                        value={kycIdType}
-                        onChange={(e) => setKycIdType(e.target.value as KYCData['idType'])}
-                        className="block w-full px-4 py-3 border border-[#E0E7E0] rounded-xl bg-[#F7F9F7] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#008751] text-sm font-semibold text-[#1A1A1A]"
-                      >
-                        <option value="nin_paper">NIN Paper Slip (Direct PDF Screenshot)</option>
-                        <option value="nin_plastic">NIN Premium Plastic ID Card</option>
-                        <option value="voters_card">Voter's Card</option>
-                        <option value="drivers_license">Driver's License</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-[#1A1A1A] uppercase tracking-wider mb-1">
-                      Identity Document Number (NIN / Voter / DL Number)
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={kycIdNumber}
-                      onChange={(e) => setKycIdNumber(e.target.value)}
-                      placeholder="e.g. 12345678901 (11 digits for NIN)"
-                      className="block w-full px-4 py-3 border border-[#E0E7E0] rounded-xl bg-[#F7F9F7] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#008751] text-sm font-semibold text-[#1A1A1A]"
-                    />
-                  </div>
-
-                  {/* ID Document Photo Dropzone */}
-                  <div className="space-y-2">
-                    <label className="block text-xs font-bold text-[#1A1A1A] uppercase tracking-wider mb-1">
-                      Upload Identity Document Photo
-                    </label>
-                    <div
-                      onDragOver={handleDragOver}
-                      onDragLeave={handleDragLeave}
-                      onDrop={(e) => handleDrop(e, true)}
-                      onClick={() => kycFileInputRef.current?.click()}
-                      className={`border border-dashed rounded-3xl p-6 text-center cursor-pointer transition flex flex-col items-center justify-center gap-3 ${
-                        isDragging 
-                          ? 'border-[#008751] bg-[#F0F7F2]' 
-                          : kycScreenshot 
-                            ? 'border-[#D1E6D8] bg-[#F7F9F7]' 
-                            : 'border-[#E0E7E0] hover:border-gray-400 bg-[#F7F9F7]/50'
-                      }`}
-                    >
-                      <input
-                        type="file"
-                        ref={kycFileInputRef}
-                        onChange={(e) => handleFileChange(e, true)}
-                        accept="image/*"
-                        className="hidden"
-                      />
-                      {kycScreenshot ? (
-                        <div className="relative group max-w-[200px]">
-                          <img 
-                            src={kycScreenshot} 
-                            alt="ID preview" 
-                            className="h-28 w-auto object-cover rounded-xl shadow-sm border border-[#E0E7E0]" 
-                          />
-                          <div className="absolute inset-0 bg-black/40 rounded-xl opacity-0 group-hover:opacity-100 flex items-center justify-center transition">
-                            <span className="text-[10px] text-white font-bold uppercase tracking-wider">Change Photo</span>
-                          </div>
-                        </div>
-                      ) : (
-                        <>
-                          <div className="p-3 bg-white rounded-full border border-[#E0E7E0] shadow-sm text-gray-500">
-                            <FileText className="w-5 h-5 text-[#008751]" />
-                          </div>
-                          <div>
-                            <span className="text-xs font-bold text-[#1A1A1A] block">Drag & Drop identity image</span>
-                            <span className="text-[10px] text-gray-400 block mt-0.5">Or click to browse files (max 2MB)</span>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Holding ID Photo (Upload or Live Camera snap) */}
-                  <div className="space-y-3 pt-2">
-                    <div className="space-y-1">
-                      <label className="block text-xs font-bold text-[#1A1A1A] uppercase tracking-wider">
-                        Selfie Verification: Hold ID beside Face
-                      </label>
-                      <p className="text-[11px] text-gray-500 leading-relaxed bg-amber-50 border border-amber-200/50 rounded-xl p-3">
-                        👉 <strong>Security Guideline:</strong> Please hold your physical ID card with your <strong>left hand</strong> beside your face. Ensure that both your full face and the details on the ID card are completely clear and legible. <strong>Live camera capture is required</strong> — file uploads are not accepted for this step.
-                      </p>
-                    </div>
-
-                    {/* Live Camera — only option; file upload intentionally removed for security */}
-                    <div className="border border-[#E0E7E0] rounded-3xl p-5 bg-[#F7F9F7]/30 flex flex-col items-center justify-center gap-3 min-h-[220px]">
-                      {isCameraActive ? (
-                        <div className="w-full flex flex-col items-center gap-3">
-                          <div className="relative rounded-2xl overflow-hidden border-2 border-[#008751] w-full max-w-[360px] aspect-[4/3] bg-black">
-                            <video
-                              ref={videoRef}
-                              autoPlay
-                              playsInline
-                              muted
-                              className={`w-full h-full object-cover ${facingMode === 'user' ? 'scale-x-[-1]' : ''}`}
-                            />
-                            {/* Camera mode badge */}
-                            <span className="absolute bottom-2 left-2 bg-black/60 text-white font-mono text-[9px] px-2 py-0.5 rounded-full uppercase tracking-wider">
-                              {facingMode === 'user' ? 'Front Camera' : 'Back Camera'}
-                            </span>
-                            {/* Switch camera button */}
-                            <button
-                              type="button"
-                              onClick={switchCamera}
-                              title="Switch Camera"
-                              className="absolute top-2 right-2 bg-black/50 hover:bg-black/75 text-white rounded-full p-2 transition cursor-pointer"
-                            >
-                              <RotateCw className="w-4 h-4" />
-                            </button>
-                          </div>
-                          <div className="flex gap-2 w-full max-w-[360px]">
-                            <button
-                              type="button"
-                              onClick={capturePhoto}
-                              className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 rounded-xl text-xs transition cursor-pointer text-center font-sans"
-                            >
-                              Take Photo
-                            </button>
-                            <button
-                              type="button"
-                              onClick={stopCamera}
-                              className="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-4 py-2 rounded-xl text-xs transition cursor-pointer"
-                            >
-                              Cancel
-                            </button>
-                          </div>
-                        </div>
-                      ) : kycHoldingId ? (
-                        <div className="flex flex-col items-center gap-3">
-                          <div className="max-w-[260px] mx-auto text-center">
-                            <img
-                              src={kycHoldingId}
-                              alt="Captured selfie with ID"
-                              className="h-36 w-auto object-cover rounded-xl shadow-sm border border-[#E0E7E0] mx-auto"
-                            />
-                            <span className="text-[9px] text-[#008751] font-bold uppercase tracking-wider block mt-2">✅ Photo Captured!</span>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => startCamera()}
-                            className="bg-white hover:bg-[#F7F9F7] text-[#008751] font-bold px-4 py-2 rounded-xl text-xs border border-[#008751]/20 cursor-pointer transition shadow-sm"
-                          >
-                            Retake Photo
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="text-center space-y-3">
-                          <div className="w-12 h-12 rounded-full bg-[#008751]/10 flex items-center justify-center mx-auto text-[#008751]">
-                            <Camera className="w-6 h-6" />
-                          </div>
-                          <div className="space-y-1">
-                            <span className="text-xs font-bold text-[#1A1A1A] block">Live Camera Capture Required</span>
-                            <span className="text-[10px] text-gray-400 block">File uploads are not accepted for this step</span>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => startCamera()}
-                            className="bg-white hover:bg-[#F7F9F7] text-[#008751] font-bold px-4 py-2 rounded-xl text-xs border border-[#008751]/20 cursor-pointer transition shadow-sm"
-                          >
-                            Open Camera
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div>
-                    <button
-                      type="submit"
-                      disabled={isSubmittingKyc}
-                      className="w-full py-4 rounded-xl text-sm font-bold text-center text-white bg-[#008751] hover:bg-[#007043] transition shadow-sm cursor-pointer flex justify-center items-center gap-2"
-                    >
-                      {isSubmittingKyc ? (
-                        <>
-                          <Clock className="w-4 h-4 animate-spin" />
-                          Submitting for audit...
-                        </>
-                      ) : (
-                        'Submit Verification Files'
-                      )}
-                    </button>
-                  </div>
-                </form>
-              )}
-            </div>
-          )}
-
-          {/* TAB 4: Disputes */}
-          {activeTab === 'disputes' && (
-            <div className="bg-white p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-[#E0E7E0] shadow-sm space-y-5">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <h3 className="text-lg font-bold text-[#1A1A1A] tracking-tight">My Disputes</h3>
-                  <p className="text-xs text-gray-500">Track and follow up on your trade disputes with the 9ija Escrow team.</p>
-                </div>
-                {disputes.filter(d => d.status === 'open').length > 0 && (
-                  <span className="shrink-0 bg-amber-100 text-amber-800 text-[10px] font-bold px-2.5 py-1 rounded-full border border-amber-200">
-                    {disputes.filter(d => d.status === 'open').length} Open
-                  </span>
-                )}
-              </div>
-
-              {disputes.length === 0 ? (
-                <div className="text-center py-16 px-4">
-                  <div className="w-14 h-14 bg-slate-50 border border-slate-200 text-slate-400 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                    <MessageSquare className="w-7 h-7" />
-                  </div>
-                  <h4 className="text-sm font-bold text-slate-700">No Disputes Filed</h4>
-                  <p className="text-xs text-slate-400 mt-1.5 max-w-sm mx-auto leading-relaxed">
-                    If you have an issue with a rejected order, you can open a dispute from the receipt in your Order History.
-                  </p>
-                  <button
-                    onClick={() => setActiveTab('history')}
-                    className="mt-4 inline-flex items-center gap-2 text-xs font-bold text-[#008751] hover:text-[#007043] border border-[#008751]/30 hover:border-[#008751] bg-[#F7F9F7] hover:bg-[#F0F7F2] px-4 py-2 rounded-xl transition cursor-pointer"
-                  >
-                    <Receipt className="w-3.5 h-3.5" />
-                    Go to Order History
-                  </button>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {disputes.map((d) => {
-                    const isExpanded = expandedDisputeIds.has(d.id);
-                    const isOpen = d.status === 'open';
-                    const toggleExpand = () => setExpandedDisputeIds(prev => {
-                      const next = new Set(prev);
-                      if (next.has(d.id)) next.delete(d.id); else next.add(d.id);
-                      return next;
-                    });
-
-                    return (
-                      <div
-                        key={d.id}
-                        className={`rounded-2xl border overflow-hidden transition-colors ${
-                          isOpen ? 'border-amber-200' : 'border-[#E0E7E0]'
-                        }`}
-                      >
-                        {/* Dispute header row */}
-                        <button
-                          onClick={toggleExpand}
-                          className={`w-full flex items-center gap-3 px-4 py-3.5 text-left cursor-pointer transition-colors ${
-                            isOpen ? 'bg-amber-50/60 hover:bg-amber-50' : 'bg-white hover:bg-[#F7F9F7]'
-                          }`}
-                        >
-                          <div className={`shrink-0 w-9 h-9 rounded-xl flex items-center justify-center ${
-                            isOpen ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'
-                          }`}>
-                            <MessageSquare className="w-4 h-4" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className="font-bold text-xs text-[#1A1A1A]">
-                                Order #{d.orderId.substring(0, 6).toUpperCase()}
-                              </span>
-                              <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${
-                                isOpen
-                                  ? 'bg-amber-100 text-amber-800 border border-amber-200'
-                                  : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
-                              }`}>
-                                {isOpen ? '● OPEN' : '✓ RESOLVED'}
-                              </span>
+                            </>
+                          ) : (
+                            <div className="grid grid-cols-3 gap-3">
+                              {(['BSC', 'Tron', 'Polygon'] as const).map((net) => (
+                                <button
+                                  key={net}
+                                  type="button"
+                                  onClick={() => setNetwork(net)}
+                                  className={`p-3 rounded-xl border text-center text-xs font-bold cursor-pointer transition ${
+                                    network === net
+                                      ? 'border-[#008751] bg-[#E6F4EA] text-[#008751]'
+                                      : 'border-[#E0E7E0] hover:border-gray-300 text-gray-600'
+                                  }`}
+                                >
+                                  {net === 'BSC' && 'BSC (BEP20)'}
+                                  {net === 'Tron' && 'Tron (TRC20)'}
+                                  {net === 'Polygon' && 'Polygon'}
+                                </button>
+                              ))}
                             </div>
-                            <p className="text-[10px] text-gray-400 font-mono mt-0.5 truncate max-w-[200px]">
-                              {d.message}
-                            </p>
-                            <p className="text-[9px] text-gray-400 mt-0.5">{formatNGT(d.createdAt)}</p>
-                          </div>
-                          <ChevronRight className={`w-4 h-4 text-gray-400 shrink-0 transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`} />
-                        </button>
+                          )}
+                        </div>
 
-                        {/* Expanded body */}
-                        {isExpanded && (
-                          <div className={`px-4 pb-4 pt-3 border-t ${isOpen ? 'border-amber-200/60 bg-amber-50/20' : 'border-[#E0E7E0] bg-white'}`}>
-                            <DisputeChat
-                              disputeId={d.id}
-                              currentUserId={userProfile.uid}
-                              currentUserEmail={userProfile.email}
-                              currentUserRole="user"
-                              isOpen={isOpen}
-                              currentUserDisplayName={userProfile.kycData?.fullName?.trim().split(/\s+/).slice(0, 2).join(' ') || undefined}
-                              initialMessage={d.message}
-                              initialMessageAt={d.createdAt}
-                              initialMessageEmail={userProfile.email}
-                              initialMessageDisplayName={userProfile.kycData?.fullName?.trim().split(/\s+/).slice(0, 2).join(' ') || undefined}
-                              evidenceUrls={d.imageUrls}
-                              adminResponse={d.adminResponse}
-                              resolvedAt={d.resolvedAt}
-                              onEvidenceClick={(url) => setLightboxUrl(url)}
+                        {/* Amounts */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div>
+                            <label className="block text-xs font-bold text-[#1A1A1A] uppercase tracking-wider mb-1.5">
+                              Amount in {activeCoin ? activeCoin.symbol : 'USDT'}
+                            </label>
+                            <div className="relative rounded-md shadow-sm">
+                              <input
+                                type="number"
+                                required
+                                min={activeMinTrade}
+                                step="any"
+                                value={cryptoAmount}
+                                onChange={(e) =>
+                                  setCryptoAmount(
+                                    e.target.value !== '' ? Number(e.target.value) : ''
+                                  )
+                                }
+                                className={`block w-full px-4 py-3 border rounded-xl bg-[#F7F9F7] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#008751] text-sm font-semibold text-[#1A1A1A] ${belowMinimum ? 'border-rose-400' : 'border-[#E0E7E0]'}`}
+                                placeholder={`Min. ${activeMinTrade} ${activeCoin ? activeCoin.symbol : 'USDT'}`}
+                              />
+                              <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-xs font-bold text-gray-400">
+                                {activeCoin ? activeCoin.symbol : 'USDT'}
+                              </div>
+                            </div>
+                          </div>
+
+                          <div>
+                            <label className="block text-xs font-bold text-[#1A1A1A] uppercase tracking-wider mb-1.5">
+                              Amount to Receive / Pay (NGN)
+                            </label>
+                            <div className="relative rounded-md shadow-sm">
+                              <input
+                                type="text"
+                                readOnly
+                                value={
+                                  calculatedNgnAmount
+                                    ? `₦${calculatedNgnAmount.toLocaleString()}`
+                                    : '₦0'
+                                }
+                                className="block w-full px-4 py-3 border border-[#E0E7E0] rounded-xl bg-[#F7F9F7] focus:outline-none text-sm font-bold text-gray-700 cursor-not-allowed"
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Min trade warning */}
+                        {belowMinimum && (
+                          <p className="text-xs text-rose-600 font-semibold -mt-3">
+                            Minimum trade for {activeCoin?.symbol} on {activeCoin?.network} is{' '}
+                            <span className="font-extrabold">
+                              {activeMinTrade} {activeCoin?.symbol}
+                            </span>
+                          </p>
+                        )}
+
+                        {/* Fee Breakdown — BUY only, shown when fee > 0 and user has typed an amount */}
+                        {tradeType === 'buy' &&
+                          activeFeePercent > 0 &&
+                          cryptoAmount &&
+                          Number(cryptoAmount) > 0 && (
+                            <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs space-y-1.5">
+                              <div className="flex items-center justify-between mb-0.5">
+                                <span className="font-extrabold text-amber-700 uppercase tracking-wider text-[10px]">
+                                  Fee Breakdown
+                                </span>
+                                <span className="text-amber-600 font-mono text-[10px] bg-amber-100 px-1.5 py-0.5 rounded">
+                                  {activeFeePercent}% platform fee
+                                </span>
+                              </div>
+                              <div className="flex justify-between text-slate-600">
+                                <span>Trade amount</span>
+                                <span className="font-semibold">
+                                  {cryptoAmount} {activeCoin?.symbol}
+                                </span>
+                              </div>
+                              <div className="flex justify-between text-slate-600">
+                                <span>Network fee ({activeFeePercent}%)</span>
+                                <span className="font-semibold text-rose-600">
+                                  − {feeAmount.toFixed(4)} {activeCoin?.symbol}
+                                </span>
+                              </div>
+                              <div className="flex justify-between border-t border-amber-200 pt-1.5 mt-0.5">
+                                <span className="font-bold text-slate-800">You receive (net)</span>
+                                <span className="font-extrabold text-[#008751]">
+                                  {netCryptoAmount.toFixed(4)} {activeCoin?.symbol}
+                                </span>
+                              </div>
+                            </div>
+                          )}
+
+                        {/* Transaction Summary Card */}
+                        {activeCoin && (
+                          <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                            <div className="flex items-center gap-3">
+                              <div className="relative">
+                                {activeCoin.logoUrl ? (
+                                  <img
+                                    src={activeCoin.logoUrl}
+                                    alt={activeCoin.name}
+                                    className="w-12 h-12 object-contain"
+                                    referrerPolicy="no-referrer"
+                                  />
+                                ) : (
+                                  <div className="w-12 h-12 rounded-full bg-[#008751]/10 flex items-center justify-center text-[#008751] font-bold text-xs border border-[#008751]/20">
+                                    {activeCoin.symbol.slice(0, 3).toUpperCase()}
+                                  </div>
+                                )}
+                                <div className="absolute -bottom-1 -right-1 bg-[#008751] text-white p-0.5 rounded-full border-2 border-white">
+                                  <Check className="w-2.5 h-2.5 stroke-[3]" />
+                                </div>
+                              </div>
+                              <div>
+                                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">
+                                  Selected Asset
+                                </span>
+                                <span className="font-extrabold text-sm text-slate-800 leading-none">
+                                  {activeCoin.name}
+                                </span>
+                                <div className="flex items-center gap-1.5 mt-1">
+                                  <span className="text-[10px] font-mono text-slate-500 uppercase font-bold bg-slate-200/60 px-1.5 py-0.5 rounded">
+                                    Token: {activeCoin.symbol}
+                                  </span>
+                                  <span className="text-slate-300">•</span>
+                                  <span className="text-[10px] font-semibold text-slate-500 bg-emerald-50 text-emerald-800 px-1.5 py-0.5 rounded">
+                                    Network: {activeCoin.network}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="sm:text-right">
+                              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">
+                                Active Rate
+                              </span>
+                              <span className="font-extrabold text-sm text-[#008751]">
+                                ₦{activeRate.toLocaleString()}/$
+                              </span>
+                              <span className="block text-[9px] text-slate-400 font-medium">
+                                Escrow Protected Guarantee
+                              </span>
+                              {liveNgnRate && (
+                                <span className="block text-[9px] text-slate-400 mt-0.5">
+                                  Market:{' '}
+                                  <span className="text-slate-600 font-semibold">
+                                    ₦{Math.round(liveNgnRate).toLocaleString()}
+                                  </span>
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Conditional Flow Instructions */}
+                        <div className="bg-[#F0F7F2] border border-[#D1E6D8] rounded-2xl p-5 space-y-4">
+                          {tradeType === 'buy' ? (
+                            <>
+                              <h4 className="font-bold text-[#008751] text-sm flex items-center gap-1.5">
+                                <CheckCircle2 className="w-5 h-5 text-[#008751]" />
+                                Step 1: Transfer Naira amount to the Admin's provided Account
+                              </h4>
+                              <p className="text-xs text-gray-600 leading-relaxed">
+                                Please transfer exactly{' '}
+                                <span className="font-bold text-[#008751]">
+                                  {calculatedNgnAmount
+                                    ? `₦${calculatedNgnAmount.toLocaleString()}`
+                                    : 'the calculated amount'}
+                                </span>{' '}
+                                to the admin bank credentials below. Your{' '}
+                                {activeCoin ? activeCoin.symbol : 'USDT'} will be released to your
+                                registered blockchain address once the admin validates the receipt.
+                              </p>
+                              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-white p-3 rounded-xl border border-[#D1E6D8] text-xs">
+                                <div>
+                                  <span className="text-[10px] text-gray-400 block font-mono">
+                                    BANK NAME
+                                  </span>
+                                  <span className="font-bold text-[#1A1A1A]">
+                                    {settings.ngnBankName}
+                                  </span>
+                                </div>
+                                <div>
+                                  <span className="text-[10px] text-gray-400 block font-mono">
+                                    ACCOUNT NUMBER
+                                  </span>
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="font-mono font-bold text-[#1A1A1A]">
+                                      {settings.ngnAccountNumber}
+                                    </span>
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        copyToClipboard(settings.ngnAccountNumber, 'Account number')
+                                      }
+                                      className="p-0.5 rounded text-[#008751] hover:bg-[#008751]/10 transition cursor-pointer shrink-0"
+                                      title="Copy account number"
+                                    >
+                                      <Copy className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
+                                </div>
+                                <div>
+                                  <span className="text-[10px] text-gray-400 block font-mono">
+                                    ACCOUNT NAME
+                                  </span>
+                                  <span className="font-bold text-[#1A1A1A]">
+                                    {settings.ngnAccountName}
+                                  </span>
+                                </div>
+                              </div>
+                            </>
+                          ) : (
+                            <>
+                              <h4 className="font-bold text-rose-950 text-sm flex items-center gap-1.5">
+                                <CheckCircle2 className="w-5 h-5 text-rose-600" />
+                                Step 1: Transfer {activeCoin ? activeCoin.symbol : 'USDT'} to the
+                                Admin's provided Escrow Wallet
+                              </h4>
+                              <p className="text-xs text-gray-600 leading-relaxed">
+                                Please deposit exactly{' '}
+                                <span className="font-bold text-[#1A1A1A]">
+                                  {cryptoAmount || 0} {activeCoin ? activeCoin.symbol : 'USDT'}
+                                </span>{' '}
+                                on the{' '}
+                                <span className="font-bold text-[#1A1A1A]">
+                                  {activeCoin ? activeCoin.network : network}
+                                </span>{' '}
+                                network to the admin wallet address below. Do not send on other
+                                networks.
+                              </p>
+                              <div className="bg-white p-3 rounded-xl border border-rose-100 text-xs flex flex-col justify-center">
+                                <span className="text-[10px] text-gray-400 block font-mono">
+                                  ADMIN {activeCoin ? activeCoin.network : network} WALLET ADDRESS
+                                </span>
+                                <div className="flex items-start gap-2 py-1">
+                                  <span className="font-mono font-bold text-[#1A1A1A] break-all select-all flex-1">
+                                    {activeCoin
+                                      ? activeCoin.walletAddress
+                                      : settings.wallets[network] || ''}
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      copyToClipboard(
+                                        activeCoin
+                                          ? activeCoin.walletAddress
+                                          : settings.wallets[network] || '',
+                                        'Wallet address'
+                                      )
+                                    }
+                                    className="p-0.5 rounded text-[#008751] hover:bg-[#008751]/10 transition cursor-pointer shrink-0 mt-0.5"
+                                    title="Copy wallet address"
+                                  >
+                                    <Copy className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              </div>
+                            </>
+                          )}
+                        </div>
+
+                        {/* If buying, user must input their crypto wallet address to receive crypto */}
+                        {tradeType === 'buy' && (
+                          <div className="space-y-2">
+                            <h4 className="font-bold text-[#1A1A1A] text-sm">
+                              Step 2: Enter Your Crypto Receiving Address
+                            </h4>
+                            <p className="text-xs text-gray-500">
+                              Provide the {activeCoin ? activeCoin.network : network} wallet address
+                              where you want to receive your{' '}
+                              {activeCoin ? activeCoin.symbol : 'USDT'} after admin approval.
+                            </p>
+                            <input
+                              type="text"
+                              required
+                              value={userWalletAddress}
+                              onChange={(e) => setUserWalletAddress(e.target.value)}
+                              placeholder={`Your ${activeCoin ? activeCoin.network : network} wallet address`}
+                              className="block w-full px-3 py-2.5 border border-[#E0E7E0] rounded-xl text-xs font-mono bg-[#F7F9F7] text-[#1A1A1A]"
                             />
                           </div>
                         )}
-                      </div>
-                    );
-                  })}
-                  {/* Load more disputes button */}
-                  {hasMoreDisputes && onLoadMoreDisputes && (
-                    <button
-                      onClick={onLoadMoreDisputes}
-                      className="w-full py-3 text-xs font-bold text-[#008751] border border-[#008751]/30 rounded-xl hover:bg-[#F0F7F2] transition cursor-pointer uppercase tracking-wide"
-                    >
-                      Load More Disputes
-                    </button>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-          </motion.div>
-          </AnimatePresence>
-          </div>
 
+                        {/* If selling, user must input NGN details to receive cash */}
+                        {tradeType === 'sell' && (
+                          <div className="space-y-4">
+                            <h4 className="font-bold text-[#1A1A1A] text-sm">
+                              Step 2: Enter Your NGN Receiving Bank Details
+                            </h4>
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                              <div>
+                                <label className="block text-xs font-medium text-gray-600 mb-1">
+                                  Bank Name
+                                </label>
+                                <input
+                                  type="text"
+                                  required
+                                  value={userBankName}
+                                  onChange={(e) => setUserBankName(e.target.value)}
+                                  placeholder="e.g. GTBank"
+                                  className="block w-full px-3 py-2.5 border border-[#E0E7E0] rounded-xl text-xs bg-[#F7F9F7]"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-xs font-medium text-gray-600 mb-1">
+                                  Account Number
+                                </label>
+                                <input
+                                  type="text"
+                                  required
+                                  value={userAccountNumber}
+                                  onChange={(e) => setUserAccountNumber(e.target.value)}
+                                  placeholder="10 Digits"
+                                  maxLength={10}
+                                  className="block w-full px-3 py-2.5 border border-[#E0E7E0] rounded-xl text-xs font-mono bg-[#F7F9F7]"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-xs font-medium text-gray-600 mb-1">
+                                  Account Name
+                                </label>
+                                <input
+                                  type="text"
+                                  required
+                                  value={userAccountName}
+                                  onChange={(e) => setUserAccountName(e.target.value)}
+                                  placeholder="As shown in Bank App"
+                                  className="block w-full px-3 py-2.5 border border-[#E0E7E0] rounded-xl text-xs bg-[#F7F9F7]"
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Blockchain Tx Hash input for sell orders */}
+                        {tradeType === 'sell' && (
+                          <div className="space-y-2">
+                            <h4 className="font-bold text-[#1A1A1A] text-sm">
+                              Step 3: Enter Blockchain Transaction Hash
+                            </h4>
+                            <p className="text-xs text-gray-500">
+                              Paste the transaction hash (TxID) from your crypto wallet after
+                              sending to the admin wallet above.
+                            </p>
+                            <input
+                              type="text"
+                              required
+                              value={sellTxHash}
+                              onChange={(e) => setSellTxHash(e.target.value)}
+                              placeholder="e.g. 0xabc123... or TxID from your wallet"
+                              className="block w-full px-3 py-2.5 border border-[#E0E7E0] rounded-xl text-xs font-mono bg-[#F7F9F7] text-[#1A1A1A]"
+                            />
+                          </div>
+                        )}
+
+                        {/* Step 3/4: Screenshot Upload (Drag & Drop + Click) */}
+                        <div className="space-y-2">
+                          <h4 className="font-bold text-[#1A1A1A] text-sm">
+                            {tradeType === 'buy'
+                              ? 'Step 3: Upload NGN Transfer Receipt'
+                              : 'Step 4: Upload Crypto Transfer Receipt'}
+                          </h4>
+                          <p className="text-xs text-gray-500">
+                            Provide an authentic screenshot proof of the transfer to trigger admin
+                            approval.
+                          </p>
+
+                          <div
+                            onDragOver={handleDragOver}
+                            onDragLeave={handleDragLeave}
+                            onDrop={(e) => handleDrop(e, false)}
+                            onClick={() => fileInputRef.current?.click()}
+                            className={`border border-dashed rounded-3xl p-6 text-center cursor-pointer transition flex flex-col items-center justify-center gap-3 ${
+                              isDragging
+                                ? 'border-[#008751] bg-[#F0F7F2]'
+                                : screenshot
+                                  ? 'border-[#D1E6D8] bg-[#F7F9F7]'
+                                  : 'border-[#E0E7E0] hover:border-gray-400 bg-[#F7F9F7]/50'
+                            }`}
+                          >
+                            <input
+                              type="file"
+                              ref={fileInputRef}
+                              onChange={(e) => handleFileChange(e, false)}
+                              accept="image/*"
+                              className="hidden"
+                            />
+                            {screenshot ? (
+                              <div className="relative group max-w-[200px]">
+                                <img
+                                  src={screenshot}
+                                  alt="Payment receipt preview"
+                                  className="h-32 w-auto object-cover rounded-xl shadow-sm border border-[#E0E7E0]"
+                                />
+                                <div className="absolute inset-0 bg-black/40 rounded-xl opacity-0 group-hover:opacity-100 flex items-center justify-center transition">
+                                  <span className="text-[10px] text-white font-bold uppercase tracking-wider">
+                                    Change Photo
+                                  </span>
+                                </div>
+                              </div>
+                            ) : (
+                              <>
+                                <div className="p-3 bg-white rounded-full border border-[#E0E7E0] shadow-sm text-gray-500">
+                                  <Upload className="w-5 h-5 text-[#008751]" />
+                                </div>
+                                <div>
+                                  <span className="text-xs font-bold text-[#1A1A1A] block">
+                                    Drag & Drop transfer screenshot
+                                  </span>
+                                  <span className="text-[10px] text-gray-400 block mt-0.5">
+                                    Or click to browse files (max 2MB)
+                                  </span>
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Action Button */}
+                        <div>
+                          <button
+                            type="submit"
+                            disabled={isSubmittingOrder}
+                            className={`w-full py-4 rounded-xl text-sm font-bold text-center text-white transition shadow-sm cursor-pointer flex justify-center items-center gap-2 ${
+                              tradeType === 'buy'
+                                ? 'bg-[#008751] hover:bg-[#007043]'
+                                : 'bg-rose-600 hover:bg-rose-500'
+                            }`}
+                          >
+                            {isSubmittingOrder ? (
+                              <>
+                                <Clock className="w-4 h-4 animate-spin" />
+                                Saving escrow contract...
+                              </>
+                            ) : (
+                              <>
+                                {tradeType === 'buy'
+                                  ? 'Submit Buy Order Proof'
+                                  : 'Submit Sell Order Proof'}
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      </form>
+                    )}
+                  </div>
+                )}
+
+                {/* TAB 2: Order History */}
+                {activeTab === 'history' && (
+                  <div className="bg-white rounded-3xl border border-[#E0E7E0] shadow-sm overflow-hidden">
+                    <div className="p-6 border-b border-[#E0E7E0]">
+                      <h3 className="text-lg font-bold text-[#1A1A1A] tracking-tight">
+                        Your Escrow Transactions
+                      </h3>
+                      <p className="text-xs text-gray-500">
+                        Track and view receipts for all buy/sell requests.
+                      </p>
+                    </div>
+
+                    {orders.length === 0 ? (
+                      <div className="text-center py-16 px-4">
+                        <div className="w-12 h-12 bg-slate-50 border border-slate-200 text-slate-400 rounded-xl flex items-center justify-center mx-auto mb-4">
+                          <Smartphone className="w-6 h-6" />
+                        </div>
+                        <h4 className="text-sm font-bold text-slate-700">
+                          No transactions recorded
+                        </h4>
+                        <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
+                          Start a buy or sell contract from the "Start Order" tab to record your
+                          first ledger item.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="overflow-x-auto" data-horizontal-scroll>
+                        <table className="w-full text-left border-collapse">
+                          <thead>
+                            <tr className="bg-slate-50 text-[10px] text-slate-400 uppercase tracking-wider font-mono border-b border-slate-100">
+                              <th className="py-4 px-6">ID / Date</th>
+                              <th className="py-4 px-6">Type</th>
+                              <th className="py-4 px-6">Crypto Amount</th>
+                              <th className="py-4 px-6">NGN Payout</th>
+                              <th className="py-4 px-6">Status</th>
+                              <th className="py-4 px-6 text-center">Receipt</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100 text-xs">
+                            {orders.slice(0, ordersLimit).map((ord) => {
+                              const isBuy = ord.type === 'buy';
+                              const dateStr = formatNGTDate(ord.createdAt);
+
+                              return (
+                                <tr key={ord.id} className="hover:bg-slate-50/50">
+                                  <td className="py-4 px-6 font-mono">
+                                    <span className="font-bold text-slate-700 text-xs block">
+                                      #{ord.id.substring(0, 6).toUpperCase()}
+                                    </span>
+                                    <span className="text-[10px] text-slate-400">{dateStr}</span>
+                                  </td>
+                                  <td className="py-4 px-6">
+                                    <span
+                                      className={`inline-flex items-center gap-1 font-bold text-[10px] uppercase px-2 py-0.5 rounded-full ${
+                                        isBuy
+                                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-100'
+                                          : 'bg-rose-50 text-rose-700 border border-rose-100'
+                                      }`}
+                                    >
+                                      {isBuy
+                                        ? ord.token === 'USDT'
+                                          ? `Buy USDT`
+                                          : `Buy ${ord.token}/USDT`
+                                        : ord.token === 'USDT'
+                                          ? `Sell USDT`
+                                          : `Sell ${ord.token}/USDT`}
+                                    </span>
+                                  </td>
+                                  <td className="py-4 px-6 font-semibold text-slate-700">
+                                    {ord.cryptoAmount} {ord.token}
+                                    <span className="block text-[10px] text-slate-400 font-mono">
+                                      {ord.network}
+                                    </span>
+                                  </td>
+                                  <td className="py-4 px-6 font-bold text-slate-800">
+                                    ₦{ord.ngnAmount.toLocaleString()}
+                                    <span className="block text-[10px] text-slate-400 font-mono">
+                                      Rate: ₦{ord.rate.toLocaleString()}/{ord.token}
+                                    </span>
+                                  </td>
+                                  <td className="py-4 px-6">
+                                    {ord.status === 'pending' && (
+                                      <span className="inline-flex items-center gap-1 text-amber-600 bg-amber-50 border border-amber-100 px-2 py-0.5 rounded-full font-semibold text-[10px]">
+                                        <Clock className="w-3 h-3 animate-spin" /> Pending
+                                      </span>
+                                    )}
+                                    {ord.status === 'completed' && (
+                                      <span className="inline-flex items-center gap-1 text-emerald-600 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-full font-semibold text-[10px]">
+                                        <CheckCircle2 className="w-3 h-3" /> Completed
+                                      </span>
+                                    )}
+                                    {ord.status === 'rejected' && (
+                                      <div className="space-y-0.5">
+                                        <span className="inline-flex items-center gap-1 text-rose-600 bg-rose-50 border border-rose-100 px-2 py-0.5 rounded-full font-semibold text-[10px]">
+                                          <XCircle className="w-3 h-3" /> Declined
+                                        </span>
+                                        {ord.rejectionReason && (
+                                          <span className="block text-[9px] text-rose-500 font-medium truncate max-w-[120px]">
+                                            {ord.rejectionReason}
+                                          </span>
+                                        )}
+                                      </div>
+                                    )}
+                                  </td>
+                                  <td className="py-4 px-6 text-center">
+                                    <button
+                                      onClick={() => setViewReceipt(ord)}
+                                      className="p-1.5 hover:bg-emerald-50 text-slate-400 hover:text-emerald-700 rounded-lg cursor-pointer transition inline-flex items-center justify-center border border-transparent hover:border-emerald-100"
+                                    >
+                                      <Eye className="w-4 h-4" />
+                                    </button>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                        {orders.length > ordersLimit && (
+                          <div className="px-6 py-4 border-t border-[#E0E7E0] text-center">
+                            <button
+                              onClick={() => setOrdersLimit((prev) => prev + 5)}
+                              className="text-xs font-bold text-[#008751] hover:text-[#007043] border border-[#D1E6D8] hover:border-[#008751] bg-[#F7F9F7] hover:bg-[#F0F7F2] px-5 py-2 rounded-xl transition cursor-pointer"
+                            >
+                              Load more orders ({orders.length - ordersLimit} remaining)
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+                {/* TAB 3: KYC Submission Form */}
+                {activeTab === 'kyc' && (
+                  <div className="bg-white p-6 rounded-3xl border border-[#E0E7E0] shadow-sm space-y-6">
+                    <div>
+                      <h3 className="text-lg font-bold text-[#1A1A1A] tracking-tight">
+                        Identity Verification
+                      </h3>
+                      <p className="text-xs text-gray-500">
+                        Provide official details to verify account safety.
+                      </p>
+                    </div>
+
+                    {userProfile.kycStatus === 'approved' && (
+                      <div className="bg-[#F0F7F2] border border-[#D1E6D8] rounded-2xl p-6 text-center space-y-3">
+                        <div className="w-12 h-12 rounded-full bg-[#E6F4EA] text-[#008751] flex items-center justify-center mx-auto shadow-inner">
+                          <UserCheck className="w-6 h-6" />
+                        </div>
+                        <h4 className="font-extrabold text-[#1A1A1A] text-base">
+                          Account Fully Verified!
+                        </h4>
+                        <p className="text-xs text-gray-600 max-w-md mx-auto">
+                          Your KYC records (submitted by {userProfile.kycData?.fullName}) are
+                          manually approved by the 9ija Escrow security team. You can operate the
+                          Buy and Sell terminals with zero limitations.
+                        </p>
+                        <div className="bg-white p-3.5 rounded-xl border border-[#D1E6D8] max-w-sm mx-auto text-left text-xs space-y-1">
+                          <div className="flex justify-between">
+                            <span className="text-gray-400 font-mono">FULL NAME:</span>
+                            <span className="font-bold text-[#1A1A1A]">
+                              {userProfile.kycData?.fullName}
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-400 font-mono">ID TYPE:</span>
+                            <span className="font-bold text-[#1A1A1A]">
+                              {userProfile.kycData?.idType === 'nin_paper' && 'NIN (Paper Slip)'}
+                              {userProfile.kycData?.idType === 'nin_plastic' &&
+                                'NIN (Premium Plastic Card)'}
+                              {userProfile.kycData?.idType === 'voters_card' && "Voter's Card"}
+                              {userProfile.kycData?.idType === 'drivers_license' &&
+                                "Driver's License"}
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-400 font-mono">ID NUMBER:</span>
+                            <span className="font-bold text-[#1A1A1A] font-mono">
+                              {userProfile.kycData?.idNumber}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {userProfile.kycStatus === 'pending' && (
+                      <div className="bg-amber-50 border border-amber-100 rounded-2xl p-6 text-center space-y-3">
+                        <div className="w-12 h-12 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center mx-auto animate-pulse">
+                          <Clock className="w-6 h-6" />
+                        </div>
+                        <h4 className="font-extrabold text-amber-950 text-base">
+                          Verification in Progress
+                        </h4>
+                        <p className="text-xs text-gray-600 max-w-md mx-auto leading-relaxed">
+                          Your submitted identity card ({userProfile.kycData?.fullName}) is
+                          currently in the admin verification queue. Most documents are verified
+                          within 10-20 minutes.
+                        </p>
+                        <div className="bg-white p-3.5 rounded-xl border border-amber-100 max-w-sm mx-auto text-left text-xs space-y-1">
+                          <div className="flex justify-between">
+                            <span className="text-gray-400 font-mono font-medium">
+                              SUBMITTED ON:
+                            </span>
+                            <span className="font-bold text-gray-800">
+                              {userProfile.kycData?.submittedAt
+                                ? formatNGT(userProfile.kycData.submittedAt)
+                                : 'Just now'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {(userProfile.kycStatus === 'none' || userProfile.kycStatus === 'rejected') && (
+                      <form onSubmit={handleKycSubmit} className="space-y-6">
+                        {userProfile.kycStatus === 'rejected' && (
+                          <div className="bg-rose-50 border border-rose-100 text-rose-950 rounded-xl p-4 flex gap-3 items-start">
+                            <AlertCircle className="w-5 h-5 text-rose-600 mt-0.5 shrink-0" />
+                            <div>
+                              <h4 className="font-bold text-sm">Previous Verification Rejected</h4>
+                              <p className="text-xs text-gray-600 mt-1">
+                                <span className="font-bold text-rose-900">Reason:</span>{' '}
+                                {userProfile.kycData?.rejectionReason ||
+                                  'Uploaded document was blurry. Please upload a high-resolution screenshot.'}
+                              </p>
+                              <p className="text-xs text-gray-400 mt-1">
+                                Please update your details below and re-submit for review.
+                              </p>
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-xs font-bold text-[#1A1A1A] uppercase tracking-wider mb-1">
+                              Full Legal Name
+                            </label>
+                            <input
+                              type="text"
+                              required
+                              value={kycName}
+                              onChange={(e) => setKycName(e.target.value)}
+                              placeholder="e.g. John Obi Okechukwu"
+                              className="block w-full px-4 py-3 border border-[#E0E7E0] rounded-xl bg-[#F7F9F7] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#008751] text-sm font-semibold text-[#1A1A1A]"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-xs font-bold text-[#1A1A1A] uppercase tracking-wider mb-1">
+                              Select Document Type
+                            </label>
+                            <select
+                              value={kycIdType}
+                              onChange={(e) => setKycIdType(e.target.value as KYCData['idType'])}
+                              className="block w-full px-4 py-3 border border-[#E0E7E0] rounded-xl bg-[#F7F9F7] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#008751] text-sm font-semibold text-[#1A1A1A]"
+                            >
+                              <option value="nin_paper">
+                                NIN Paper Slip (Direct PDF Screenshot)
+                              </option>
+                              <option value="nin_plastic">NIN Premium Plastic ID Card</option>
+                              <option value="voters_card">Voter's Card</option>
+                              <option value="drivers_license">Driver's License</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-bold text-[#1A1A1A] uppercase tracking-wider mb-1">
+                            Identity Document Number (NIN / Voter / DL Number)
+                          </label>
+                          <input
+                            type="text"
+                            required
+                            value={kycIdNumber}
+                            onChange={(e) => setKycIdNumber(e.target.value)}
+                            placeholder="e.g. 12345678901 (11 digits for NIN)"
+                            className="block w-full px-4 py-3 border border-[#E0E7E0] rounded-xl bg-[#F7F9F7] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#008751] text-sm font-semibold text-[#1A1A1A]"
+                          />
+                        </div>
+
+                        {/* ID Document Photo Dropzone */}
+                        <div className="space-y-2">
+                          <label className="block text-xs font-bold text-[#1A1A1A] uppercase tracking-wider mb-1">
+                            Upload Identity Document Photo
+                          </label>
+                          <div
+                            onDragOver={handleDragOver}
+                            onDragLeave={handleDragLeave}
+                            onDrop={(e) => handleDrop(e, true)}
+                            onClick={() => kycFileInputRef.current?.click()}
+                            className={`border border-dashed rounded-3xl p-6 text-center cursor-pointer transition flex flex-col items-center justify-center gap-3 ${
+                              isDragging
+                                ? 'border-[#008751] bg-[#F0F7F2]'
+                                : kycScreenshot
+                                  ? 'border-[#D1E6D8] bg-[#F7F9F7]'
+                                  : 'border-[#E0E7E0] hover:border-gray-400 bg-[#F7F9F7]/50'
+                            }`}
+                          >
+                            <input
+                              type="file"
+                              ref={kycFileInputRef}
+                              onChange={(e) => handleFileChange(e, true)}
+                              accept="image/*"
+                              className="hidden"
+                            />
+                            {kycScreenshot ? (
+                              <div className="relative group max-w-[200px]">
+                                <img
+                                  src={kycScreenshot}
+                                  alt="ID preview"
+                                  className="h-28 w-auto object-cover rounded-xl shadow-sm border border-[#E0E7E0]"
+                                />
+                                <div className="absolute inset-0 bg-black/40 rounded-xl opacity-0 group-hover:opacity-100 flex items-center justify-center transition">
+                                  <span className="text-[10px] text-white font-bold uppercase tracking-wider">
+                                    Change Photo
+                                  </span>
+                                </div>
+                              </div>
+                            ) : (
+                              <>
+                                <div className="p-3 bg-white rounded-full border border-[#E0E7E0] shadow-sm text-gray-500">
+                                  <FileText className="w-5 h-5 text-[#008751]" />
+                                </div>
+                                <div>
+                                  <span className="text-xs font-bold text-[#1A1A1A] block">
+                                    Drag & Drop identity image
+                                  </span>
+                                  <span className="text-[10px] text-gray-400 block mt-0.5">
+                                    Or click to browse files (max 2MB)
+                                  </span>
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Holding ID Photo (Upload or Live Camera snap) */}
+                        <div className="space-y-3 pt-2">
+                          <div className="space-y-1">
+                            <label className="block text-xs font-bold text-[#1A1A1A] uppercase tracking-wider">
+                              Selfie Verification: Hold ID beside Face
+                            </label>
+                            <p className="text-[11px] text-gray-500 leading-relaxed bg-amber-50 border border-amber-200/50 rounded-xl p-3">
+                              👉 <strong>Security Guideline:</strong> Please hold your physical ID
+                              card with your <strong>left hand</strong> beside your face. Ensure
+                              that both your full face and the details on the ID card are completely
+                              clear and legible. <strong>Live camera capture is required</strong> —
+                              file uploads are not accepted for this step.
+                            </p>
+                          </div>
+
+                          {/* Live Camera — only option; file upload intentionally removed for security */}
+                          <div className="border border-[#E0E7E0] rounded-3xl p-5 bg-[#F7F9F7]/30 flex flex-col items-center justify-center gap-3 min-h-[220px]">
+                            {isCameraActive ? (
+                              <div className="w-full flex flex-col items-center gap-3">
+                                <div className="relative rounded-2xl overflow-hidden border-2 border-[#008751] w-full max-w-[360px] aspect-[4/3] bg-black">
+                                  <video
+                                    ref={videoRef}
+                                    autoPlay
+                                    playsInline
+                                    muted
+                                    className={`w-full h-full object-cover ${facingMode === 'user' ? 'scale-x-[-1]' : ''}`}
+                                  />
+                                  {/* Camera mode badge */}
+                                  <span className="absolute bottom-2 left-2 bg-black/60 text-white font-mono text-[9px] px-2 py-0.5 rounded-full uppercase tracking-wider">
+                                    {facingMode === 'user' ? 'Front Camera' : 'Back Camera'}
+                                  </span>
+                                  {/* Switch camera button */}
+                                  <button
+                                    type="button"
+                                    onClick={switchCamera}
+                                    title="Switch Camera"
+                                    className="absolute top-2 right-2 bg-black/50 hover:bg-black/75 text-white rounded-full p-2 transition cursor-pointer"
+                                  >
+                                    <RotateCw className="w-4 h-4" />
+                                  </button>
+                                </div>
+                                <div className="flex gap-2 w-full max-w-[360px]">
+                                  <button
+                                    type="button"
+                                    onClick={capturePhoto}
+                                    className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 rounded-xl text-xs transition cursor-pointer text-center font-sans"
+                                  >
+                                    Take Photo
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={stopCamera}
+                                    className="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-4 py-2 rounded-xl text-xs transition cursor-pointer"
+                                  >
+                                    Cancel
+                                  </button>
+                                </div>
+                              </div>
+                            ) : kycHoldingId ? (
+                              <div className="flex flex-col items-center gap-3">
+                                <div className="max-w-[260px] mx-auto text-center">
+                                  <img
+                                    src={kycHoldingId}
+                                    alt="Captured selfie with ID"
+                                    className="h-36 w-auto object-cover rounded-xl shadow-sm border border-[#E0E7E0] mx-auto"
+                                  />
+                                  <span className="text-[9px] text-[#008751] font-bold uppercase tracking-wider block mt-2">
+                                    ✅ Photo Captured!
+                                  </span>
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => startCamera()}
+                                  className="bg-white hover:bg-[#F7F9F7] text-[#008751] font-bold px-4 py-2 rounded-xl text-xs border border-[#008751]/20 cursor-pointer transition shadow-sm"
+                                >
+                                  Retake Photo
+                                </button>
+                              </div>
+                            ) : (
+                              <div className="text-center space-y-3">
+                                <div className="w-12 h-12 rounded-full bg-[#008751]/10 flex items-center justify-center mx-auto text-[#008751]">
+                                  <Camera className="w-6 h-6" />
+                                </div>
+                                <div className="space-y-1">
+                                  <span className="text-xs font-bold text-[#1A1A1A] block">
+                                    Live Camera Capture Required
+                                  </span>
+                                  <span className="text-[10px] text-gray-400 block">
+                                    File uploads are not accepted for this step
+                                  </span>
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => startCamera()}
+                                  className="bg-white hover:bg-[#F7F9F7] text-[#008751] font-bold px-4 py-2 rounded-xl text-xs border border-[#008751]/20 cursor-pointer transition shadow-sm"
+                                >
+                                  Open Camera
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        <div>
+                          <button
+                            type="submit"
+                            disabled={isSubmittingKyc}
+                            className="w-full py-4 rounded-xl text-sm font-bold text-center text-white bg-[#008751] hover:bg-[#007043] transition shadow-sm cursor-pointer flex justify-center items-center gap-2"
+                          >
+                            {isSubmittingKyc ? (
+                              <>
+                                <Clock className="w-4 h-4 animate-spin" />
+                                Submitting for audit...
+                              </>
+                            ) : (
+                              'Submit Verification Files'
+                            )}
+                          </button>
+                        </div>
+                      </form>
+                    )}
+                  </div>
+                )}
+
+                {/* TAB 4: Disputes */}
+                {activeTab === 'disputes' && (
+                  <div className="bg-white p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-[#E0E7E0] shadow-sm space-y-5">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <h3 className="text-lg font-bold text-[#1A1A1A] tracking-tight">
+                          My Disputes
+                        </h3>
+                        <p className="text-xs text-gray-500">
+                          Track and follow up on your trade disputes with the 9ija Escrow team.
+                        </p>
+                      </div>
+                      {disputes.filter((d) => d.status === 'open').length > 0 && (
+                        <span className="shrink-0 bg-amber-100 text-amber-800 text-[10px] font-bold px-2.5 py-1 rounded-full border border-amber-200">
+                          {disputes.filter((d) => d.status === 'open').length} Open
+                        </span>
+                      )}
+                    </div>
+
+                    {disputes.length === 0 ? (
+                      <div className="text-center py-16 px-4">
+                        <div className="w-14 h-14 bg-slate-50 border border-slate-200 text-slate-400 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                          <MessageSquare className="w-7 h-7" />
+                        </div>
+                        <h4 className="text-sm font-bold text-slate-700">No Disputes Filed</h4>
+                        <p className="text-xs text-slate-400 mt-1.5 max-w-sm mx-auto leading-relaxed">
+                          If you have an issue with a rejected order, you can open a dispute from
+                          the receipt in your Order History.
+                        </p>
+                        <button
+                          onClick={() => setActiveTab('history')}
+                          className="mt-4 inline-flex items-center gap-2 text-xs font-bold text-[#008751] hover:text-[#007043] border border-[#008751]/30 hover:border-[#008751] bg-[#F7F9F7] hover:bg-[#F0F7F2] px-4 py-2 rounded-xl transition cursor-pointer"
+                        >
+                          <Receipt className="w-3.5 h-3.5" />
+                          Go to Order History
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {disputes.map((d) => {
+                          const isExpanded = expandedDisputeIds.has(d.id);
+                          const isOpen = d.status === 'open';
+                          const toggleExpand = () =>
+                            setExpandedDisputeIds((prev) => {
+                              const next = new Set(prev);
+                              if (next.has(d.id)) next.delete(d.id);
+                              else next.add(d.id);
+                              return next;
+                            });
+
+                          return (
+                            <div
+                              key={d.id}
+                              className={`rounded-2xl border overflow-hidden transition-colors ${
+                                isOpen ? 'border-amber-200' : 'border-[#E0E7E0]'
+                              }`}
+                            >
+                              {/* Dispute header row */}
+                              <button
+                                onClick={toggleExpand}
+                                className={`w-full flex items-center gap-3 px-4 py-3.5 text-left cursor-pointer transition-colors ${
+                                  isOpen
+                                    ? 'bg-amber-50/60 hover:bg-amber-50'
+                                    : 'bg-white hover:bg-[#F7F9F7]'
+                                }`}
+                              >
+                                <div
+                                  className={`shrink-0 w-9 h-9 rounded-xl flex items-center justify-center ${
+                                    isOpen
+                                      ? 'bg-amber-100 text-amber-700'
+                                      : 'bg-emerald-100 text-emerald-700'
+                                  }`}
+                                >
+                                  <MessageSquare className="w-4 h-4" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <span className="font-bold text-xs text-[#1A1A1A]">
+                                      Order #{d.orderId.substring(0, 6).toUpperCase()}
+                                    </span>
+                                    <span
+                                      className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${
+                                        isOpen
+                                          ? 'bg-amber-100 text-amber-800 border border-amber-200'
+                                          : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                                      }`}
+                                    >
+                                      {isOpen ? '● OPEN' : '✓ RESOLVED'}
+                                    </span>
+                                  </div>
+                                  <p className="text-[10px] text-gray-400 font-mono mt-0.5 truncate max-w-[200px]">
+                                    {d.message}
+                                  </p>
+                                  <p className="text-[9px] text-gray-400 mt-0.5">
+                                    {formatNGT(d.createdAt)}
+                                  </p>
+                                </div>
+                                <ChevronRight
+                                  className={`w-4 h-4 text-gray-400 shrink-0 transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`}
+                                />
+                              </button>
+
+                              {/* Expanded body */}
+                              {isExpanded && (
+                                <div
+                                  className={`px-4 pb-4 pt-3 border-t ${isOpen ? 'border-amber-200/60 bg-amber-50/20' : 'border-[#E0E7E0] bg-white'}`}
+                                >
+                                  <DisputeChat
+                                    disputeId={d.id}
+                                    currentUserId={userProfile.uid}
+                                    currentUserEmail={userProfile.email}
+                                    currentUserRole="user"
+                                    isOpen={isOpen}
+                                    currentUserDisplayName={
+                                      userProfile.kycData?.fullName
+                                        ?.trim()
+                                        .split(/\s+/)
+                                        .slice(0, 2)
+                                        .join(' ') || undefined
+                                    }
+                                    initialMessage={d.message}
+                                    initialMessageAt={d.createdAt}
+                                    initialMessageEmail={userProfile.email}
+                                    initialMessageDisplayName={
+                                      userProfile.kycData?.fullName
+                                        ?.trim()
+                                        .split(/\s+/)
+                                        .slice(0, 2)
+                                        .join(' ') || undefined
+                                    }
+                                    evidenceUrls={d.imageUrls}
+                                    adminResponse={d.adminResponse}
+                                    resolvedAt={d.resolvedAt}
+                                    onEvidenceClick={(url) => setLightboxUrl(url)}
+                                  />
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                        {/* Load more disputes button */}
+                        {hasMoreDisputes && onLoadMoreDisputes && (
+                          <button
+                            onClick={onLoadMoreDisputes}
+                            className="w-full py-3 text-xs font-bold text-[#008751] border border-[#008751]/30 rounded-xl hover:bg-[#F0F7F2] transition cursor-pointer uppercase tracking-wide"
+                          >
+                            Load More Disputes
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </motion.div>
+            </AnimatePresence>
+          </div>
         </div>
 
         {/* Right column (Notice board & Guidelines) */}
@@ -2302,19 +2847,18 @@ export default function UserDashboard({
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.4, delay: 0.15, ease: 'easeOut' }}
         >
-          
           {/* System Bulletin — desktop/large screen only; mobile uses the bell drawer */}
           <div className="hidden lg:block bg-white rounded-3xl border border-[#E0E7E0] shadow-sm p-6 space-y-4">
             {/* Header */}
             <div className="flex items-center gap-2 text-[#1A1A1A] border-b border-[#E0E7E0] pb-3">
               <div className="relative shrink-0">
                 <Bell className="w-4 h-4 text-[#008751]" />
-                {(localNotifs.length + privateAnnouncements.length) > 0 && (
+                {localNotifs.length + privateAnnouncements.length > 0 && (
                   <span className="absolute -top-1 -right-1 w-2 h-2 bg-rose-500 rounded-full border border-white" />
                 )}
               </div>
               <h4 className="font-bold text-xs uppercase tracking-wider">Notifications</h4>
-              {(localNotifs.length + privateAnnouncements.length) > 0 && (
+              {localNotifs.length + privateAnnouncements.length > 0 && (
                 <span className="ml-auto shrink-0 bg-rose-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full leading-none">
                   {localNotifs.length + privateAnnouncements.length}
                 </span>
@@ -2325,12 +2869,13 @@ export default function UserDashboard({
               <p className="text-xs text-gray-400">No notifications right now.</p>
             ) : (
               <div className="space-y-2 max-h-[420px] overflow-y-auto">
-
                 {/* ── Activity notifications (real-time) ── */}
                 {localNotifs.length > 0 && (
                   <>
                     <div className="flex items-center justify-between pb-1">
-                      <span className="text-[9px] font-bold uppercase tracking-wider text-gray-400">Activity</span>
+                      <span className="text-[9px] font-bold uppercase tracking-wider text-gray-400">
+                        Activity
+                      </span>
                       <button
                         onClick={() => setLocalNotifs([])}
                         className="text-[9px] text-gray-400 hover:text-rose-500 font-bold transition cursor-pointer"
@@ -2345,13 +2890,15 @@ export default function UserDashboard({
                           n.type === 'success'
                             ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
                             : n.type === 'error'
-                            ? 'bg-red-50 border-red-200 text-red-900'
-                            : 'bg-blue-50 border-blue-200 text-blue-900'
+                              ? 'bg-red-50 border-red-200 text-red-900'
+                              : 'bg-blue-50 border-blue-200 text-blue-900'
                         }`}
                       >
                         <span className="flex-1">{n.message}</span>
                         <button
-                          onClick={() => setLocalNotifs((prev) => prev.filter((x) => x.id !== n.id))}
+                          onClick={() =>
+                            setLocalNotifs((prev) => prev.filter((x) => x.id !== n.id))
+                          }
                           className="shrink-0 opacity-40 hover:opacity-100 cursor-pointer transition mt-px"
                           aria-label="Dismiss"
                         >
@@ -2365,7 +2912,9 @@ export default function UserDashboard({
                 {/* Divider between sections when both present */}
                 {localNotifs.length > 0 && privateAnnouncements.length > 0 && (
                   <div className="pt-1 pb-0.5">
-                    <span className="text-[9px] font-bold uppercase tracking-wider text-gray-400">Platform Bulletins</span>
+                    <span className="text-[9px] font-bold uppercase tracking-wider text-gray-400">
+                      Platform Bulletins
+                    </span>
                   </div>
                 )}
 
@@ -2373,7 +2922,10 @@ export default function UserDashboard({
                 {privateAnnouncements.map((ann) => {
                   const isExpanded = expandedAnnIds.includes(ann.id);
                   return (
-                    <div key={ann.id} className="bg-[#F7F9F7] rounded-2xl border border-[#E0E7E0] overflow-hidden">
+                    <div
+                      key={ann.id}
+                      className="bg-[#F7F9F7] rounded-2xl border border-[#E0E7E0] overflow-hidden"
+                    >
                       {/* Row: div instead of button to avoid nested-button invalid HTML */}
                       <div
                         role="button"
@@ -2382,11 +2934,20 @@ export default function UserDashboard({
                         onKeyDown={(e) => e.key === 'Enter' && toggleAnn(ann.id)}
                         className="w-full flex items-center gap-2 px-4 py-3 text-left cursor-pointer hover:bg-[#F0F5F1] transition select-none"
                       >
-                        <ChevronRight className={`w-3 h-3 text-[#008751] shrink-0 transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`} />
-                        <h5 className="font-bold text-[#1A1A1A] text-xs flex-1 leading-snug">{ann.title}</h5>
-                        <span className="text-[9px] text-gray-400 font-mono shrink-0">{formatNGTDate(ann.createdAt)}</span>
+                        <ChevronRight
+                          className={`w-3 h-3 text-[#008751] shrink-0 transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`}
+                        />
+                        <h5 className="font-bold text-[#1A1A1A] text-xs flex-1 leading-snug">
+                          {ann.title}
+                        </h5>
+                        <span className="text-[9px] text-gray-400 font-mono shrink-0">
+                          {formatNGTDate(ann.createdAt)}
+                        </span>
                         <button
-                          onClick={(e) => { e.stopPropagation(); dismissAnnouncement(ann.id); }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            dismissAnnouncement(ann.id);
+                          }}
                           title="Dismiss permanently"
                           className="shrink-0 text-gray-300 hover:text-rose-400 transition cursor-pointer ml-1"
                         >
@@ -2395,7 +2956,9 @@ export default function UserDashboard({
                       </div>
                       {isExpanded && (
                         <div className="px-4 pb-3 border-t border-[#E8EFE8]">
-                          <p className="text-[11px] text-gray-600 leading-relaxed pt-2">{ann.content}</p>
+                          <p className="text-[11px] text-gray-600 leading-relaxed pt-2">
+                            {ann.content}
+                          </p>
                         </div>
                       )}
                     </div>
@@ -2411,31 +2974,35 @@ export default function UserDashboard({
               <AlertCircle className="w-4 h-4 text-[#008751]" />
               <h4 className="font-bold text-xs uppercase tracking-wider">Rules of the Escrow</h4>
             </div>
-            
+
             <ul className="text-xs text-gray-500 space-y-3 list-none pl-0 leading-relaxed">
               <li className="flex gap-2 items-start">
                 <span className="text-[#008751] font-bold mt-0.5">•</span>
                 <div>
-                  <strong className="text-[#1A1A1A]">Matching Names</strong>: Your receiving bank account name or paying bank account name must match your legal KYC documents exactly. Third party accounts trigger audits.
+                  <strong className="text-[#1A1A1A]">Matching Names</strong>: Your receiving bank
+                  account name or paying bank account name must match your legal KYC documents
+                  exactly. Third party accounts trigger audits.
                 </div>
               </li>
               <li className="flex gap-2 items-start">
                 <span className="text-[#008751] font-bold mt-0.5">•</span>
                 <div>
-                  <strong className="text-[#1A1A1A]">Network Accuracy</strong>: Always double-check blockchain networks. For instance, depositing BEP20 USDT to a TRC20 address will lead to irreversible asset loss.
+                  <strong className="text-[#1A1A1A]">Network Accuracy</strong>: Always double-check
+                  blockchain networks. For instance, depositing BEP20 USDT to a TRC20 address will
+                  lead to irreversible asset loss.
                 </div>
               </li>
               <li className="flex gap-2 items-start">
                 <span className="text-[#008751] font-bold mt-0.5">•</span>
                 <div>
-                  <strong className="text-[#1A1A1A]">Verification Proof</strong>: Screenshots must show standard banking reference codes, timestamps, and beneficiary names clearly. Blurred sheets will be declined.
+                  <strong className="text-[#1A1A1A]">Verification Proof</strong>: Screenshots must
+                  show standard banking reference codes, timestamps, and beneficiary names clearly.
+                  Blurred sheets will be declined.
                 </div>
               </li>
             </ul>
           </div>
-
         </motion.div>
-
       </div>
 
       {/* DETAIL RECEIPT MODAL */}
@@ -2466,14 +3033,17 @@ export default function UserDashboard({
               {/* Receipt body */}
               <div className="p-6 space-y-5 overflow-y-auto flex-1">
                 <div className="text-center">
-                  <span className="text-[10px] text-gray-400 font-mono uppercase">TOTAL TRANSACTION PAYOUT</span>
+                  <span className="text-[10px] text-gray-400 font-mono uppercase">
+                    TOTAL TRANSACTION PAYOUT
+                  </span>
                   <div className="text-3xl font-bold text-[#1A1A1A] mt-1">
                     {viewReceipt.type === 'buy'
                       ? `${viewReceipt.cryptoAmount} ${viewReceipt.token}`
                       : `₦${viewReceipt.ngnAmount.toLocaleString()}`}
                   </div>
                   <span className="text-[10px] text-gray-400 font-mono uppercase block mt-1">
-                    Via {viewReceipt.network} network at rate ₦{viewReceipt.rate.toLocaleString()}/{viewReceipt.token}
+                    Via {viewReceipt.network} network at rate ₦{viewReceipt.rate.toLocaleString()}/
+                    {viewReceipt.token}
                   </span>
                 </div>
 
@@ -2481,33 +3051,51 @@ export default function UserDashboard({
                 <div className="border-t border-dashed border-[#E0E7E0] pt-4 space-y-2 text-xs">
                   <div className="flex justify-between">
                     <span className="text-gray-400 font-mono">ORDER TYPE:</span>
-                    <span className="font-bold text-[#1A1A1A] uppercase">{viewReceipt.type === 'buy' ? viewReceipt.token === "USDT" ? `Buy USDT` : `Buy ${viewReceipt.token}/USDT` : viewReceipt.token === "USDT" ? `Sell USDT` : `Sell ${viewReceipt.token}/USDT`}</span>
+                    <span className="font-bold text-[#1A1A1A] uppercase">
+                      {viewReceipt.type === 'buy'
+                        ? viewReceipt.token === 'USDT'
+                          ? `Buy USDT`
+                          : `Buy ${viewReceipt.token}/USDT`
+                        : viewReceipt.token === 'USDT'
+                          ? `Sell USDT`
+                          : `Sell ${viewReceipt.token}/USDT`}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-400 font-mono">AMOUNT:</span>
-                    <span className="font-bold text-[#1A1A1A]">{viewReceipt.cryptoAmount} {viewReceipt.token}</span>
+                    <span className="font-bold text-[#1A1A1A]">
+                      {viewReceipt.cryptoAmount} {viewReceipt.token}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-400 font-mono">RATE:</span>
-                    <span className="font-bold text-[#1A1A1A]">₦{viewReceipt.rate.toLocaleString()}/{viewReceipt.token}</span>
+                    <span className="font-bold text-[#1A1A1A]">
+                      ₦{viewReceipt.rate.toLocaleString()}/{viewReceipt.token}
+                    </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-400 font-mono">{viewReceipt.type === 'buy' ? 'YOU PAY (NGN):' : 'YOU RECEIVE (NGN):'}</span>
-                    <span className="font-bold text-[#1A1A1A]">₦{viewReceipt.ngnAmount.toLocaleString()}</span>
+                    <span className="text-gray-400 font-mono">
+                      {viewReceipt.type === 'buy' ? 'YOU PAY (NGN):' : 'YOU RECEIVE (NGN):'}
+                    </span>
+                    <span className="font-bold text-[#1A1A1A]">
+                      ₦{viewReceipt.ngnAmount.toLocaleString()}
+                    </span>
                   </div>
                   {viewReceipt.token !== 'USDT' && (
                     <div className="flex justify-between text-emerald-700">
                       <span className="text-gray-400 font-mono">TOTAL USDT:</span>
                       <span className="font-bold">
                         {(() => {
-                          const coin = coins.find(c => c.symbol === viewReceipt.token);
+                          const coin = coins.find((c) => c.symbol === viewReceipt.token);
                           const isLiveCoin = coin?.pricePegged === true;
                           // Live (CoinGecko-pegged) coins: order.rate is NGN-per-token (not NGN-per-USDT),
                           // so use effective USDT rate (market + markup) to convert NGN → USDT.
                           // Custom-rate coins: admin sets rate as NGN-per-USDT directly,
                           // so viewReceipt.rate IS the correct NGN-per-USDT denominator.
                           const ngnPerUsdt = isLiveCoin
-                            ? (viewReceipt.type === 'buy' ? effectiveBuyRate : effectiveSellRate)
+                            ? viewReceipt.type === 'buy'
+                              ? effectiveBuyRate
+                              : effectiveSellRate
                             : viewReceipt.rate;
                           const usdt = ngnPerUsdt > 0 ? viewReceipt.ngnAmount / ngnPerUsdt : 0;
                           return `≈ ${usdt.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDT`;
@@ -2517,27 +3105,36 @@ export default function UserDashboard({
                   )}
 
                   {/* Fee breakdown — BUY orders with coin fee > 0 */}
-                  {viewReceipt.type === 'buy' && (() => {
-                    const coin = coins.find(c => c.symbol === viewReceipt.token);
-                    const feePct = coin?.feePercentage ?? 0;
-                    if (feePct <= 0) return null;
-                    const minTrade = coin?.minBuyAmount ?? coin?.minTradeAmount ?? 1;
-                    const feeBase = Math.min(Number(viewReceipt.cryptoAmount), minTrade);
-                    const feeAmount = feeBase * feePct / 100;
-                    const netAmount = Number(viewReceipt.cryptoAmount) - feeAmount;
-                    return (
-                      <div className="space-y-1.5 pt-2 border-t border-[#E0E7E0]">
-                        <div className="flex justify-between">
-                          <span className="text-gray-400 font-mono">NETWORK FEE ({feePct}%):</span>
-                          <span className="font-bold text-rose-600">−{feeAmount.toLocaleString(undefined, { maximumFractionDigits: 8 })} {viewReceipt.token}</span>
+                  {viewReceipt.type === 'buy' &&
+                    (() => {
+                      const coin = coins.find((c) => c.symbol === viewReceipt.token);
+                      const feePct = coin?.feePercentage ?? 0;
+                      if (feePct <= 0) return null;
+                      const minTrade = coin?.minBuyAmount ?? coin?.minTradeAmount ?? 1;
+                      const feeBase = Math.min(Number(viewReceipt.cryptoAmount), minTrade);
+                      const feeAmount = (feeBase * feePct) / 100;
+                      const netAmount = Number(viewReceipt.cryptoAmount) - feeAmount;
+                      return (
+                        <div className="space-y-1.5 pt-2 border-t border-[#E0E7E0]">
+                          <div className="flex justify-between">
+                            <span className="text-gray-400 font-mono">
+                              NETWORK FEE ({feePct}%):
+                            </span>
+                            <span className="font-bold text-rose-600">
+                              −{feeAmount.toLocaleString(undefined, { maximumFractionDigits: 8 })}{' '}
+                              {viewReceipt.token}
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-400 font-mono">YOU RECEIVE:</span>
+                            <span className="font-bold text-emerald-700">
+                              {netAmount.toLocaleString(undefined, { maximumFractionDigits: 8 })}{' '}
+                              {viewReceipt.token}
+                            </span>
+                          </div>
                         </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-400 font-mono">YOU RECEIVE:</span>
-                          <span className="font-bold text-emerald-700">{netAmount.toLocaleString(undefined, { maximumFractionDigits: 8 })} {viewReceipt.token}</span>
-                        </div>
-                      </div>
-                    );
-                  })()}
+                      );
+                    })()}
                 </div>
                 <div className="border-t border-dashed border-[#E0E7E0] pt-4 space-y-2 text-xs">
                   <div className="flex justify-between">
@@ -2546,26 +3143,48 @@ export default function UserDashboard({
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-400 font-mono">SUBMISSION TIME:</span>
-                    <span className="font-mono text-gray-600">{formatNGT(viewReceipt.createdAt)}</span>
+                    <span className="font-mono text-gray-600">
+                      {formatNGT(viewReceipt.createdAt)}
+                    </span>
                   </div>
                   {viewReceipt.processedAt && (
                     <div className="flex justify-between">
                       <span className="text-gray-400 font-mono">PROCESSED TIME:</span>
-                      <span className="font-mono text-gray-600">{formatNGT(viewReceipt.processedAt)}</span>
+                      <span className="font-mono text-gray-600">
+                        {formatNGT(viewReceipt.processedAt)}
+                      </span>
                     </div>
                   )}
-                  
+
                   {/* Admin Bank Details displayed for buy receipts */}
                   {viewReceipt.adminBankDetails && (
                     <div className="pt-2 border-t border-[#E0E7E0] space-y-1">
-                      <span className="text-[9px] text-gray-400 font-mono block">BENEFICIARY BANK ACCOUNT:</span>
+                      <span className="text-[9px] text-gray-400 font-mono block">
+                        BENEFICIARY BANK ACCOUNT:
+                      </span>
                       <div className="bg-[#F7F9F7] border border-[#E0E7E0] p-3 rounded-xl text-[11px] font-mono">
-                        <div className="font-bold text-[#1A1A1A]">{viewReceipt.adminBankDetails.bankName}</div>
+                        <div className="font-bold text-[#1A1A1A]">
+                          {viewReceipt.adminBankDetails.bankName}
+                        </div>
                         <div className="flex items-center gap-1.5 text-[#1A1A1A]">
                           No: {viewReceipt.adminBankDetails.accountNumber}
-                          <button type="button" onClick={() => copyToClipboard(viewReceipt!.adminBankDetails!.accountNumber, 'Account number')} className="p-0.5 rounded text-slate-400 hover:text-[#008751] transition cursor-pointer" title="Copy"><Copy className="w-3 h-3" /></button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              copyToClipboard(
+                                viewReceipt!.adminBankDetails!.accountNumber,
+                                'Account number'
+                              )
+                            }
+                            className="p-0.5 rounded text-slate-400 hover:text-[#008751] transition cursor-pointer"
+                            title="Copy"
+                          >
+                            <Copy className="w-3 h-3" />
+                          </button>
                         </div>
-                        <div className="text-gray-500">{viewReceipt.adminBankDetails.accountName}</div>
+                        <div className="text-gray-500">
+                          {viewReceipt.adminBankDetails.accountName}
+                        </div>
                       </div>
                     </div>
                   )}
@@ -2573,13 +3192,28 @@ export default function UserDashboard({
                   {/* User Crypto Receiving Address displayed for buy receipts */}
                   {viewReceipt.type === 'buy' && viewReceipt.userWalletAddress && (
                     <div className="pt-2 border-t border-[#E0E7E0] space-y-1">
-                      <span className="text-[9px] text-gray-400 font-mono block">YOUR CRYPTO RECEIVING ADDRESS:</span>
+                      <span className="text-[9px] text-gray-400 font-mono block">
+                        YOUR CRYPTO RECEIVING ADDRESS:
+                      </span>
                       <div className="bg-[#F0F7F2] border border-[#D1E6D8] p-3 rounded-xl text-[11px] font-mono">
                         <div className="flex items-start gap-1.5 text-[#1A1A1A]">
-                          <span className="break-all flex-1 font-bold">{viewReceipt.userWalletAddress}</span>
-                          <button type="button" onClick={() => copyToClipboard(viewReceipt!.userWalletAddress!, 'Wallet address')} className="p-0.5 rounded text-slate-400 hover:text-[#008751] transition cursor-pointer shrink-0 mt-0.5" title="Copy"><Copy className="w-3 h-3" /></button>
+                          <span className="break-all flex-1 font-bold">
+                            {viewReceipt.userWalletAddress}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              copyToClipboard(viewReceipt!.userWalletAddress!, 'Wallet address')
+                            }
+                            className="p-0.5 rounded text-slate-400 hover:text-[#008751] transition cursor-pointer shrink-0 mt-0.5"
+                            title="Copy"
+                          >
+                            <Copy className="w-3 h-3" />
+                          </button>
                         </div>
-                        <div className="text-[10px] text-gray-500 mt-1">Network: {viewReceipt.network}</div>
+                        <div className="text-[10px] text-gray-500 mt-1">
+                          Network: {viewReceipt.network}
+                        </div>
                       </div>
                     </div>
                   )}
@@ -2587,14 +3221,32 @@ export default function UserDashboard({
                   {/* User Bank Details displayed for sell receipts */}
                   {viewReceipt.userBankDetails && (
                     <div className="pt-2 border-t border-[#E0E7E0] space-y-1">
-                      <span className="text-[9px] text-gray-400 font-mono block">PAYEE BANK ACCOUNT:</span>
+                      <span className="text-[9px] text-gray-400 font-mono block">
+                        PAYEE BANK ACCOUNT:
+                      </span>
                       <div className="bg-[#F7F9F7] border border-[#E0E7E0] p-3 rounded-xl text-[11px] font-mono">
-                        <div className="font-bold text-[#1A1A1A]">{viewReceipt.userBankDetails.bankName}</div>
+                        <div className="font-bold text-[#1A1A1A]">
+                          {viewReceipt.userBankDetails.bankName}
+                        </div>
                         <div className="flex items-center gap-1.5 text-[#1A1A1A]">
                           No: {viewReceipt.userBankDetails.accountNumber}
-                          <button type="button" onClick={() => copyToClipboard(viewReceipt!.userBankDetails!.accountNumber, 'Account number')} className="p-0.5 rounded text-slate-400 hover:text-[#008751] transition cursor-pointer" title="Copy"><Copy className="w-3 h-3" /></button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              copyToClipboard(
+                                viewReceipt!.userBankDetails!.accountNumber,
+                                'Account number'
+                              )
+                            }
+                            className="p-0.5 rounded text-slate-400 hover:text-[#008751] transition cursor-pointer"
+                            title="Copy"
+                          >
+                            <Copy className="w-3 h-3" />
+                          </button>
                         </div>
-                        <div className="text-gray-500">{viewReceipt.userBankDetails.accountName}</div>
+                        <div className="text-gray-500">
+                          {viewReceipt.userBankDetails.accountName}
+                        </div>
                       </div>
                     </div>
                   )}
@@ -2602,16 +3254,24 @@ export default function UserDashboard({
                   <div className="pt-2 border-t border-[#E0E7E0]">
                     <div className="flex justify-between items-center mb-1">
                       <span className="text-gray-400 font-mono uppercase text-[9px]">
-                        {viewReceipt.status === 'rejected' ? 'ORDER STATUS:' : 'BLOCKCHAIN TRANSACTION ID:'}
+                        {viewReceipt.status === 'rejected'
+                          ? 'ORDER STATUS:'
+                          : 'BLOCKCHAIN TRANSACTION ID:'}
                       </span>
                       {viewReceipt.status === 'completed' && (
-                        <span className="text-[#008751] font-bold text-[9px] uppercase">COMPLETED</span>
+                        <span className="text-[#008751] font-bold text-[9px] uppercase">
+                          COMPLETED
+                        </span>
                       )}
                       {viewReceipt.status === 'pending' && (
-                        <span className="text-amber-600 font-bold text-[9px] uppercase">PROCESSING...</span>
+                        <span className="text-amber-600 font-bold text-[9px] uppercase">
+                          PROCESSING...
+                        </span>
                       )}
                       {viewReceipt.status === 'rejected' && (
-                        <span className="text-red-500 font-bold text-[9px] uppercase">REJECTED</span>
+                        <span className="text-red-500 font-bold text-[9px] uppercase">
+                          REJECTED
+                        </span>
                       )}
                     </div>
                     {viewReceipt.status === 'completed' && viewReceipt.blockchainTxId && (
@@ -2629,7 +3289,9 @@ export default function UserDashboard({
                         <div>This order was rejected by the admin.</div>
                         {viewReceipt.rejectionReason && (
                           <div className="pt-1 border-t border-red-200">
-                            <span className="font-bold uppercase text-[9px] text-red-500 block mb-0.5">Admin Reason:</span>
+                            <span className="font-bold uppercase text-[9px] text-red-500 block mb-0.5">
+                              Admin Reason:
+                            </span>
                             {viewReceipt.rejectionReason}
                           </div>
                         )}
@@ -2639,222 +3301,293 @@ export default function UserDashboard({
                 </div>
 
                 {/* Dispute section — only shown for rejected orders */}
-                {viewReceipt.status === 'rejected' && (() => {
-                  const orderDisputes = disputes.filter(d => d.orderId === viewReceipt.id);
-                  return (
-                    <div className="border-t border-[#E0E7E0] pt-4 space-y-4">
-
-                      {/* Past dispute history — collapsible cards, load more if >5 */}
-                      {orderDisputes.length > 0 && (
-                        <div className="space-y-2">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <MessageSquare className="w-4 h-4 text-[#008751]" />
-                              <span className="text-xs font-bold text-[#1A1A1A]">
-                                Dispute History ({orderDisputes.length})
-                              </span>
+                {viewReceipt.status === 'rejected' &&
+                  (() => {
+                    const orderDisputes = disputes.filter((d) => d.orderId === viewReceipt.id);
+                    return (
+                      <div className="border-t border-[#E0E7E0] pt-4 space-y-4">
+                        {/* Past dispute history — collapsible cards, load more if >5 */}
+                        {orderDisputes.length > 0 && (
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <MessageSquare className="w-4 h-4 text-[#008751]" />
+                                <span className="text-xs font-bold text-[#1A1A1A]">
+                                  Dispute History ({orderDisputes.length})
+                                </span>
+                              </div>
+                              {orderDisputes.length > 1 && (
+                                <button
+                                  onClick={() => {
+                                    if (expandedDisputeIds.size === orderDisputes.length) {
+                                      setExpandedDisputeIds(new Set());
+                                    } else {
+                                      setExpandedDisputeIds(
+                                        new Set(orderDisputes.map((d) => d.id))
+                                      );
+                                    }
+                                  }}
+                                  className="text-[9px] text-[#008751] font-bold uppercase tracking-wide cursor-pointer hover:underline"
+                                >
+                                  {expandedDisputeIds.size === orderDisputes.length
+                                    ? 'Collapse all'
+                                    : 'Expand all'}
+                                </button>
+                              )}
                             </div>
-                            {orderDisputes.length > 1 && (
+                            {(disputeShowAll ? orderDisputes : orderDisputes.slice(0, 5)).map(
+                              (d, i) => {
+                                const isExpanded = expandedDisputeIds.has(d.id);
+                                const toggleExpand = () =>
+                                  setExpandedDisputeIds((prev) => {
+                                    const next = new Set(prev);
+                                    if (next.has(d.id)) next.delete(d.id);
+                                    else next.add(d.id);
+                                    return next;
+                                  });
+                                return (
+                                  <div
+                                    key={d.id}
+                                    className="bg-[#F7F9F7] border border-[#E0E7E0] rounded-xl overflow-hidden text-[11px]"
+                                  >
+                                    {/* Header — always visible, click to expand */}
+                                    <button
+                                      onClick={toggleExpand}
+                                      className="w-full flex items-center justify-between px-3 py-2.5 text-left cursor-pointer hover:bg-[#F0F5F1] transition"
+                                    >
+                                      <span className="text-[9px] text-gray-400 font-mono">
+                                        Dispute #{i + 1} · {formatNGT(d.createdAt)}
+                                      </span>
+                                      <div className="flex items-center gap-1.5">
+                                        <span
+                                          className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase ${
+                                            d.status === 'open'
+                                              ? 'bg-amber-100 text-amber-700'
+                                              : 'bg-emerald-100 text-emerald-700'
+                                          }`}
+                                        >
+                                          {d.status}
+                                        </span>
+                                        <ChevronRight
+                                          className={`w-3 h-3 text-gray-400 transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`}
+                                        />
+                                      </div>
+                                    </button>
+                                    {/* Collapsible body */}
+                                    <AnimatePresence initial={false}>
+                                      {isExpanded && (
+                                        <motion.div
+                                          key="body"
+                                          initial={{ height: 0, opacity: 0 }}
+                                          animate={{ height: 'auto', opacity: 1 }}
+                                          exit={{ height: 0, opacity: 0 }}
+                                          transition={{ duration: 0.2, ease: 'easeInOut' }}
+                                          className="overflow-hidden"
+                                        >
+                                          <div className="px-3 pb-3 pt-2 border-t border-[#E0E7E0]">
+                                            <DisputeChat
+                                              disputeId={d.id}
+                                              currentUserId={userProfile.uid}
+                                              currentUserEmail={userProfile.email}
+                                              currentUserRole="user"
+                                              isOpen={d.status === 'open'}
+                                              currentUserDisplayName={
+                                                userProfile.kycData?.fullName
+                                                  ?.trim()
+                                                  .split(/\s+/)
+                                                  .slice(0, 2)
+                                                  .join(' ') || undefined
+                                              }
+                                              initialMessage={d.message}
+                                              initialMessageAt={d.createdAt}
+                                              initialMessageEmail={userProfile.email}
+                                              initialMessageDisplayName={
+                                                userProfile.kycData?.fullName
+                                                  ?.trim()
+                                                  .split(/\s+/)
+                                                  .slice(0, 2)
+                                                  .join(' ') || undefined
+                                              }
+                                              evidenceUrls={d.imageUrls}
+                                              adminResponse={d.adminResponse}
+                                              resolvedAt={d.resolvedAt}
+                                              onEvidenceClick={(url) => setLightboxUrl(url)}
+                                            />
+                                          </div>
+                                        </motion.div>
+                                      )}
+                                    </AnimatePresence>
+                                  </div>
+                                );
+                              }
+                            )}
+                            {/* Load more button */}
+                            {orderDisputes.length > 5 && !disputeShowAll && (
                               <button
-                                onClick={() => {
-                                  if (expandedDisputeIds.size === orderDisputes.length) {
-                                    setExpandedDisputeIds(new Set());
-                                  } else {
-                                    setExpandedDisputeIds(new Set(orderDisputes.map(d => d.id)));
-                                  }
-                                }}
-                                className="text-[9px] text-[#008751] font-bold uppercase tracking-wide cursor-pointer hover:underline"
+                                onClick={() => setDisputeShowAll(true)}
+                                className="w-full py-2 text-[10px] font-bold text-[#008751] border border-[#008751]/30 rounded-xl hover:bg-[#F0F7F2] transition cursor-pointer uppercase tracking-wide"
                               >
-                                {expandedDisputeIds.size === orderDisputes.length ? 'Collapse all' : 'Expand all'}
+                                Load {orderDisputes.length - 5} more dispute
+                                {orderDisputes.length - 5 > 1 ? 's' : ''}
+                              </button>
+                            )}
+                            {disputeShowAll && orderDisputes.length > 5 && (
+                              <button
+                                onClick={() => setDisputeShowAll(false)}
+                                className="w-full py-2 text-[10px] font-bold text-gray-400 border border-gray-200 rounded-xl hover:bg-gray-50 transition cursor-pointer uppercase tracking-wide"
+                              >
+                                Show fewer
                               </button>
                             )}
                           </div>
-                          {(disputeShowAll ? orderDisputes : orderDisputes.slice(0, 5)).map((d, i) => {
-                            const isExpanded = expandedDisputeIds.has(d.id);
-                            const toggleExpand = () => setExpandedDisputeIds(prev => {
-                              const next = new Set(prev);
-                              if (next.has(d.id)) next.delete(d.id); else next.add(d.id);
-                              return next;
-                            });
-                            return (
-                              <div key={d.id} className="bg-[#F7F9F7] border border-[#E0E7E0] rounded-xl overflow-hidden text-[11px]">
-                                {/* Header — always visible, click to expand */}
-                                <button
-                                  onClick={toggleExpand}
-                                  className="w-full flex items-center justify-between px-3 py-2.5 text-left cursor-pointer hover:bg-[#F0F5F1] transition"
-                                >
-                                  <span className="text-[9px] text-gray-400 font-mono">
-                                    Dispute #{i + 1} · {formatNGT(d.createdAt)}
-                                  </span>
-                                  <div className="flex items-center gap-1.5">
-                                    <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase ${
-                                      d.status === 'open' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'
-                                    }`}>{d.status}</span>
-                                    <ChevronRight className={`w-3 h-3 text-gray-400 transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`} />
-                                  </div>
-                                </button>
-                                {/* Collapsible body */}
-                                <AnimatePresence initial={false}>
-                                  {isExpanded && (
-                                    <motion.div
-                                      key="body"
-                                      initial={{ height: 0, opacity: 0 }}
-                                      animate={{ height: 'auto', opacity: 1 }}
-                                      exit={{ height: 0, opacity: 0 }}
-                                      transition={{ duration: 0.2, ease: 'easeInOut' }}
-                                      className="overflow-hidden"
-                                    >
-                                      <div className="px-3 pb-3 pt-2 border-t border-[#E0E7E0]">
-                                        <DisputeChat
-                                          disputeId={d.id}
-                                          currentUserId={userProfile.uid}
-                                          currentUserEmail={userProfile.email}
-                                          currentUserRole="user"
-                                          isOpen={d.status === 'open'}
-                                          currentUserDisplayName={userProfile.kycData?.fullName?.trim().split(/\s+/).slice(0, 2).join(' ') || undefined}
-                                          initialMessage={d.message}
-                                          initialMessageAt={d.createdAt}
-                                          initialMessageEmail={userProfile.email}
-                                          initialMessageDisplayName={userProfile.kycData?.fullName?.trim().split(/\s+/).slice(0, 2).join(' ') || undefined}
-                                          evidenceUrls={d.imageUrls}
-                                          adminResponse={d.adminResponse}
-                                          resolvedAt={d.resolvedAt}
-                                          onEvidenceClick={(url) => setLightboxUrl(url)}
-                                        />
-                                      </div>
-                                    </motion.div>
-                                  )}
-                                </AnimatePresence>
-                              </div>
-                            );
-                          })}
-                          {/* Load more button */}
-                          {orderDisputes.length > 5 && !disputeShowAll && (
-                            <button
-                              onClick={() => setDisputeShowAll(true)}
-                              className="w-full py-2 text-[10px] font-bold text-[#008751] border border-[#008751]/30 rounded-xl hover:bg-[#F0F7F2] transition cursor-pointer uppercase tracking-wide"
-                            >
-                              Load {orderDisputes.length - 5} more dispute{orderDisputes.length - 5 > 1 ? 's' : ''}
-                            </button>
-                          )}
-                          {disputeShowAll && orderDisputes.length > 5 && (
-                            <button
-                              onClick={() => setDisputeShowAll(false)}
-                              className="w-full py-2 text-[10px] font-bold text-gray-400 border border-gray-200 rounded-xl hover:bg-gray-50 transition cursor-pointer uppercase tracking-wide"
-                            >
-                              Show fewer
-                            </button>
-                          )}
-                        </div>
-                      )}
-
-                      {/* Submit new dispute */}
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          <MessageSquare className="w-4 h-4 text-[#008751]" />
-                          <span className="text-xs font-bold text-[#1A1A1A]">
-                            {orderDisputes.length > 0 ? 'Submit Another Dispute' : 'Submit a Dispute'}
-                          </span>
-                        </div>
-                        {disputeSubmitted === viewReceipt.id ? (
-                          <div className="bg-[#F0F7F2] border border-[#D1E6D8] text-emerald-800 p-3 rounded-xl text-[11px] font-mono text-center">
-                            ✅ Dispute submitted. The admin will review and respond.
-                          </div>
-                        ) : (
-                          <>
-                            <textarea
-                              rows={3}
-                              value={disputeMessage}
-                              onChange={(e) => setDisputeMessage(e.target.value)}
-                              maxLength={1000}
-                              placeholder="Describe your challenge — include your reference number, transaction details, or any relevant info…"
-                              className="w-full px-3 py-2 border border-[#E0E7E0] rounded-xl text-[11px] text-[#1A1A1A] resize-none focus:outline-none focus:ring-1 focus:ring-[#008751]"
-                            />
-                            <p className="text-[9px] text-slate-400 font-mono text-right -mt-1">{disputeMessage.length}/1 000</p>
-
-                            {/* Multi-image upload — up to 3 */}
-                            <div className="space-y-1.5">
-                              <label className="text-[10px] text-gray-500 font-mono uppercase block">
-                                Attach Payment Proof ({disputeImageUrls.length}/3 images)
-                              </label>
-                              <div className="flex gap-2 flex-wrap">
-                                {disputeImageUrls.map((url, i) => (
-                                  <div key={i} className="relative w-20 h-16 rounded-lg overflow-hidden border border-[#D1E6D8]">
-                                    <img src={url} alt={`proof ${i + 1}`} className="w-full h-full object-cover" />
-                                    <button
-                                      onClick={() => setDisputeImageUrls(prev => prev.filter((_, idx) => idx !== i))}
-                                      className="absolute top-0.5 right-0.5 bg-white/90 hover:bg-white text-red-600 rounded-full p-0.5 cursor-pointer"
-                                    >
-                                      <X className="w-2.5 h-2.5" />
-                                    </button>
-                                  </div>
-                                ))}
-                                {disputeImageUrls.length < 3 && (
-                                  <label className="w-20 h-16 flex flex-col items-center justify-center border border-dashed border-[#D1E6D8] rounded-lg cursor-pointer hover:bg-[#F7FBF8] transition gap-1">
-                                    <Upload className="w-3.5 h-3.5 text-[#008751]" />
-                                    <span className="text-[9px] text-gray-400">Add</span>
-                                    <input
-                                      type="file"
-                                      accept="image/*"
-                                      className="hidden"
-                                      onChange={async (e) => {
-                                        const file = e.target.files?.[0];
-                                        if (!file) return;
-                                        const reader = new FileReader();
-                                        reader.onload = async (ev) => {
-                                          try {
-                                            const compressed = await compressImage(ev.target?.result as string, 250);
-                                            setDisputeImageUrls(prev => [...prev, compressed]);
-                                          } catch { addToast('Failed to process image.', 'error'); }
-                                        };
-                                        reader.readAsDataURL(file);
-                                        e.target.value = '';
-                                      }}
-                                    />
-                                  </label>
-                                )}
-                              </div>
-                            </div>
-
-                            <button
-                              onClick={async () => {
-                                if (!disputeMessage.trim()) { addToast('Please enter a dispute message.', 'error'); return; }
-                                if (disputeMessage.trim().length > 1000) { addToast('Dispute message must be under 1 000 characters.', 'error'); return; }
-                                setIsSubmittingDispute(true);
-                                try {
-                                  await submitDispute(viewReceipt.id, userProfile.uid, userProfile.email, disputeMessage.trim(), disputeImageUrls.length > 0 ? disputeImageUrls : undefined);
-                                  setDisputeSubmitted(viewReceipt.id);
-                                  setDisputeMessage('');
-                                  setDisputeImageUrls([]);
-                                  addToast('Dispute submitted to admin panel.', 'success');
-                                } catch (err: any) {
-                                  addToast('Failed to submit dispute: ' + err.message, 'error');
-                                } finally {
-                                  setIsSubmittingDispute(false);
-                                }
-                              }}
-                              disabled={isSubmittingDispute}
-                              className="w-full bg-[#1A1A1A] hover:bg-[#333] text-white py-2.5 rounded-xl text-xs font-bold transition cursor-pointer disabled:opacity-60"
-                            >
-                              {isSubmittingDispute ? 'Submitting…' : 'Submit Dispute'}
-                            </button>
-                          </>
                         )}
+
+                        {/* Submit new dispute */}
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <MessageSquare className="w-4 h-4 text-[#008751]" />
+                            <span className="text-xs font-bold text-[#1A1A1A]">
+                              {orderDisputes.length > 0
+                                ? 'Submit Another Dispute'
+                                : 'Submit a Dispute'}
+                            </span>
+                          </div>
+                          {disputeSubmitted === viewReceipt.id ? (
+                            <div className="bg-[#F0F7F2] border border-[#D1E6D8] text-emerald-800 p-3 rounded-xl text-[11px] font-mono text-center">
+                              ✅ Dispute submitted. The admin will review and respond.
+                            </div>
+                          ) : (
+                            <>
+                              <textarea
+                                rows={3}
+                                value={disputeMessage}
+                                onChange={(e) => setDisputeMessage(e.target.value)}
+                                maxLength={1000}
+                                placeholder="Describe your challenge — include your reference number, transaction details, or any relevant info…"
+                                className="w-full px-3 py-2 border border-[#E0E7E0] rounded-xl text-[11px] text-[#1A1A1A] resize-none focus:outline-none focus:ring-1 focus:ring-[#008751]"
+                              />
+                              <p className="text-[9px] text-slate-400 font-mono text-right -mt-1">
+                                {disputeMessage.length}/1 000
+                              </p>
+
+                              {/* Multi-image upload — up to 3 */}
+                              <div className="space-y-1.5">
+                                <label className="text-[10px] text-gray-500 font-mono uppercase block">
+                                  Attach Payment Proof ({disputeImageUrls.length}/3 images)
+                                </label>
+                                <div className="flex gap-2 flex-wrap">
+                                  {disputeImageUrls.map((url, i) => (
+                                    <div
+                                      key={i}
+                                      className="relative w-20 h-16 rounded-lg overflow-hidden border border-[#D1E6D8]"
+                                    >
+                                      <img
+                                        src={url}
+                                        alt={`proof ${i + 1}`}
+                                        className="w-full h-full object-cover"
+                                      />
+                                      <button
+                                        onClick={() =>
+                                          setDisputeImageUrls((prev) =>
+                                            prev.filter((_, idx) => idx !== i)
+                                          )
+                                        }
+                                        className="absolute top-0.5 right-0.5 bg-white/90 hover:bg-white text-red-600 rounded-full p-0.5 cursor-pointer"
+                                      >
+                                        <X className="w-2.5 h-2.5" />
+                                      </button>
+                                    </div>
+                                  ))}
+                                  {disputeImageUrls.length < 3 && (
+                                    <label className="w-20 h-16 flex flex-col items-center justify-center border border-dashed border-[#D1E6D8] rounded-lg cursor-pointer hover:bg-[#F7FBF8] transition gap-1">
+                                      <Upload className="w-3.5 h-3.5 text-[#008751]" />
+                                      <span className="text-[9px] text-gray-400">Add</span>
+                                      <input
+                                        type="file"
+                                        accept="image/*"
+                                        className="hidden"
+                                        onChange={async (e) => {
+                                          const file = e.target.files?.[0];
+                                          if (!file) return;
+                                          const reader = new FileReader();
+                                          reader.onload = async (ev) => {
+                                            try {
+                                              const compressed = await compressImage(
+                                                ev.target?.result as string,
+                                                250
+                                              );
+                                              setDisputeImageUrls((prev) => [...prev, compressed]);
+                                            } catch {
+                                              addToast('Failed to process image.', 'error');
+                                            }
+                                          };
+                                          reader.readAsDataURL(file);
+                                          e.target.value = '';
+                                        }}
+                                      />
+                                    </label>
+                                  )}
+                                </div>
+                              </div>
+
+                              <button
+                                onClick={async () => {
+                                  if (!disputeMessage.trim()) {
+                                    addToast('Please enter a dispute message.', 'error');
+                                    return;
+                                  }
+                                  if (disputeMessage.trim().length > 1000) {
+                                    addToast(
+                                      'Dispute message must be under 1 000 characters.',
+                                      'error'
+                                    );
+                                    return;
+                                  }
+                                  setIsSubmittingDispute(true);
+                                  try {
+                                    await submitDispute(
+                                      viewReceipt.id,
+                                      userProfile.uid,
+                                      userProfile.email,
+                                      disputeMessage.trim(),
+                                      disputeImageUrls.length > 0 ? disputeImageUrls : undefined
+                                    );
+                                    setDisputeSubmitted(viewReceipt.id);
+                                    setDisputeMessage('');
+                                    setDisputeImageUrls([]);
+                                    addToast('Dispute submitted to admin panel.', 'success');
+                                  } catch (err: any) {
+                                    addToast('Failed to submit dispute: ' + err.message, 'error');
+                                  } finally {
+                                    setIsSubmittingDispute(false);
+                                  }
+                                }}
+                                disabled={isSubmittingDispute}
+                                className="w-full bg-[#1A1A1A] hover:bg-[#333] text-white py-2.5 rounded-xl text-xs font-bold transition cursor-pointer disabled:opacity-60"
+                              >
+                                {isSubmittingDispute ? 'Submitting…' : 'Submit Dispute'}
+                              </button>
+                            </>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  );
-                })()}
+                    );
+                  })()}
 
                 <div className="pt-2">
                   <button
-                    onClick={() => { setViewReceipt(null); setDisputeMessage(''); setDisputeImageUrls([]); setDisputeSubmitted(null); }}
+                    onClick={() => {
+                      setViewReceipt(null);
+                      setDisputeMessage('');
+                      setDisputeImageUrls([]);
+                      setDisputeSubmitted(null);
+                    }}
                     className="w-full bg-[#008751] hover:bg-[#007043] text-white py-3 rounded-xl text-xs font-bold transition cursor-pointer"
                   >
                     Close Receipt
                   </button>
                 </div>
               </div>
-
             </motion.div>
           </div>
         )}
@@ -2889,8 +3622,10 @@ export default function UserDashboard({
               <div className="flex items-center justify-between px-6 py-3 border-b border-[#E0E7E0] shrink-0">
                 <div className="flex items-center gap-2">
                   <Bell className="w-4 h-4 text-[#008751]" />
-                  <h4 className="font-bold text-sm text-[#1A1A1A] uppercase tracking-wider">Notification</h4>
-                  {(localNotifs.length + privateAnnouncements.length) > 0 && (
+                  <h4 className="font-bold text-sm text-[#1A1A1A] uppercase tracking-wider">
+                    Notification
+                  </h4>
+                  {localNotifs.length + privateAnnouncements.length > 0 && (
                     <span className="bg-rose-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full leading-none">
                       {localNotifs.length + privateAnnouncements.length}
                     </span>
@@ -2907,13 +3642,17 @@ export default function UserDashboard({
               {/* Sheet body — scrollable */}
               <div className="overflow-y-auto flex-1 min-h-0 px-5 py-4 space-y-2">
                 {localNotifs.length === 0 && privateAnnouncements.length === 0 ? (
-                  <p className="text-xs text-gray-400 text-center py-8">No notifications right now.</p>
+                  <p className="text-xs text-gray-400 text-center py-8">
+                    No notifications right now.
+                  </p>
                 ) : (
                   <>
                     {localNotifs.length > 0 && (
                       <>
                         <div className="flex items-center justify-between pb-1">
-                          <span className="text-[9px] font-bold uppercase tracking-wider text-gray-400">Activity</span>
+                          <span className="text-[9px] font-bold uppercase tracking-wider text-gray-400">
+                            Activity
+                          </span>
                           <button
                             onClick={() => setLocalNotifs([])}
                             className="text-[9px] text-gray-400 hover:text-rose-500 font-bold transition cursor-pointer"
@@ -2928,13 +3667,15 @@ export default function UserDashboard({
                               n.type === 'success'
                                 ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
                                 : n.type === 'error'
-                                ? 'bg-red-50 border-red-200 text-red-900'
-                                : 'bg-blue-50 border-blue-200 text-blue-900'
+                                  ? 'bg-red-50 border-red-200 text-red-900'
+                                  : 'bg-blue-50 border-blue-200 text-blue-900'
                             }`}
                           >
                             <span className="flex-1">{n.message}</span>
                             <button
-                              onClick={() => setLocalNotifs((prev) => prev.filter((x) => x.id !== n.id))}
+                              onClick={() =>
+                                setLocalNotifs((prev) => prev.filter((x) => x.id !== n.id))
+                              }
                               className="shrink-0 opacity-40 hover:opacity-100 cursor-pointer transition mt-px"
                               aria-label="Dismiss"
                             >
@@ -2947,14 +3688,19 @@ export default function UserDashboard({
 
                     {localNotifs.length > 0 && privateAnnouncements.length > 0 && (
                       <div className="pt-2 pb-0.5">
-                        <span className="text-[9px] font-bold uppercase tracking-wider text-gray-400">Platform Bulletins</span>
+                        <span className="text-[9px] font-bold uppercase tracking-wider text-gray-400">
+                          Platform Bulletins
+                        </span>
                       </div>
                     )}
 
                     {privateAnnouncements.map((ann) => {
                       const isExpanded = expandedAnnIds.includes(ann.id);
                       return (
-                        <div key={ann.id} className="bg-[#F7F9F7] rounded-2xl border border-[#E0E7E0] overflow-hidden">
+                        <div
+                          key={ann.id}
+                          className="bg-[#F7F9F7] rounded-2xl border border-[#E0E7E0] overflow-hidden"
+                        >
                           {/* Row: div instead of button to avoid nested-button invalid HTML */}
                           <div
                             role="button"
@@ -2963,11 +3709,20 @@ export default function UserDashboard({
                             onKeyDown={(e) => e.key === 'Enter' && toggleAnn(ann.id)}
                             className="w-full flex items-center gap-2 px-4 py-3 text-left cursor-pointer hover:bg-[#F0F5F1] transition select-none"
                           >
-                            <ChevronRight className={`w-3 h-3 text-[#008751] shrink-0 transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`} />
-                            <h5 className="font-bold text-[#1A1A1A] text-xs flex-1 leading-snug">{ann.title}</h5>
-                            <span className="text-[9px] text-gray-400 font-mono shrink-0">{formatNGTDate(ann.createdAt)}</span>
+                            <ChevronRight
+                              className={`w-3 h-3 text-[#008751] shrink-0 transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`}
+                            />
+                            <h5 className="font-bold text-[#1A1A1A] text-xs flex-1 leading-snug">
+                              {ann.title}
+                            </h5>
+                            <span className="text-[9px] text-gray-400 font-mono shrink-0">
+                              {formatNGTDate(ann.createdAt)}
+                            </span>
                             <button
-                              onClick={(e) => { e.stopPropagation(); dismissAnnouncement(ann.id); }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                dismissAnnouncement(ann.id);
+                              }}
                               title="Dismiss"
                               className="shrink-0 text-gray-300 hover:text-rose-400 transition cursor-pointer ml-1"
                             >
@@ -2976,7 +3731,9 @@ export default function UserDashboard({
                           </div>
                           {isExpanded && (
                             <div className="px-4 pb-3 border-t border-[#E8EFE8]">
-                              <p className="text-[11px] text-gray-600 leading-relaxed pt-2">{ann.content}</p>
+                              <p className="text-[11px] text-gray-600 leading-relaxed pt-2">
+                                {ann.content}
+                              </p>
                             </div>
                           )}
                         </div>
@@ -3020,7 +3777,6 @@ export default function UserDashboard({
           </motion.div>
         )}
       </AnimatePresence>
-
     </div>
   );
 }

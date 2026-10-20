@@ -1,5 +1,16 @@
 import { supabase } from './supabase';
-import { UserProfile, KYCData, Order, AdminSettings, Announcement, CoinListing, Dispute, NotificationPreferences } from '../types';
+import {
+  UserProfile,
+  KYCData,
+  Order,
+  AdminSettings,
+  Announcement,
+  CoinListing,
+  Dispute,
+  NotificationPreferences,
+} from '../types';
+import { logger } from './logger';
+import { SupabaseError, ValidationError } from './errors';
 
 export const DEFAULT_SETTINGS: AdminSettings = {
   ngnBankName: 'Zenith Bank',
@@ -10,13 +21,17 @@ export const DEFAULT_SETTINGS: AdminSettings = {
   wallets: {
     BSC: '0x71C7656EC7ab88b098defB751B7401B5f6d1476B',
     Tron: 'TYG9xLq5Ym6296U6g1m29P1Pq9T7Pz8D8W',
-    Polygon: '0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC'
-  }
+    Polygon: '0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC',
+  },
 };
 
 export async function ensureDefaultSettings() {
   try {
-    const { data } = await supabase.from('settings').select('*').eq('id', 'admin_settings').single();
+    const { data } = await supabase
+      .from('settings')
+      .select('*')
+      .eq('id', 'admin_settings')
+      .single();
     if (!data) {
       await supabase.from('settings').insert({
         id: 'admin_settings',
@@ -27,11 +42,11 @@ export async function ensureDefaultSettings() {
         usdt_buy_markup: DEFAULT_SETTINGS.usdtBuyMarkup,
         wallet_bsc: DEFAULT_SETTINGS.wallets.BSC,
         wallet_tron: DEFAULT_SETTINGS.wallets.Tron,
-        wallet_polygon: DEFAULT_SETTINGS.wallets.Polygon
+        wallet_polygon: DEFAULT_SETTINGS.wallets.Polygon,
       });
     }
   } catch (err) {
-    console.error('Error seeding default settings:', err);
+    logger.error('Error seeding default settings', 'dbHelpers', err);
   }
 }
 
@@ -43,29 +58,32 @@ export async function ensureDefaultAnnouncements() {
       await supabase.from('announcements').insert([
         {
           title: 'System Upgrade Notice',
-          content: 'We have updated our Polygon USDT wallet addresses. Please ensure you send payments to the newly displayed address to avoid loss of funds.',
+          content:
+            'We have updated our Polygon USDT wallet addresses. Please ensure you send payments to the newly displayed address to avoid loss of funds.',
           scope: 'all',
           is_active: true,
-          created_at: now - 3600000 * 2
+          created_at: now - 3600000 * 2,
         },
         {
           title: 'Welcome to 9ija Escrow',
-          content: 'Trade securely with local bank transfers and instant blockchain execution. Fast, secure, and fully verified.',
+          content:
+            'Trade securely with local bank transfers and instant blockchain execution. Fast, secure, and fully verified.',
           scope: 'public',
           is_active: true,
-          created_at: now - 3600000 * 24
+          created_at: now - 3600000 * 24,
         },
         {
           title: 'KYC Notice for All Users',
-          content: 'In compliance with financial regulations, all traders must complete their KYC verification. It takes less than 3 minutes to verify your identity.',
+          content:
+            'In compliance with financial regulations, all traders must complete their KYC verification. It takes less than 3 minutes to verify your identity.',
           scope: 'private',
           is_active: true,
-          created_at: now - 3600000 * 4
-        }
+          created_at: now - 3600000 * 4,
+        },
       ]);
     }
   } catch (err) {
-    console.error('Error seeding announcements:', err);
+    logger.error('Error seeding announcements', 'dbHelpers', err);
   }
 }
 
@@ -83,7 +101,7 @@ export async function ensureDefaultCoins() {
           rate: 1540,
           logo_url: 'https://cryptologos.cc/logos/tether-usdt-logo.png?v=040',
           published: true,
-          created_at: now
+          created_at: now,
         },
         {
           name: 'USDT (Tron)',
@@ -93,7 +111,7 @@ export async function ensureDefaultCoins() {
           rate: 1540,
           logo_url: 'https://cryptologos.cc/logos/tether-usdt-logo.png?v=040',
           published: true,
-          created_at: now - 1
+          created_at: now - 1,
         },
         {
           name: 'USDT (Polygon)',
@@ -103,12 +121,12 @@ export async function ensureDefaultCoins() {
           rate: 1540,
           logo_url: 'https://cryptologos.cc/logos/tether-usdt-logo.png?v=040',
           published: true,
-          created_at: now - 2
-        }
+          created_at: now - 2,
+        },
       ]);
     }
   } catch (err) {
-    console.error('Error seeding default coins:', err);
+    logger.error('Error seeding default coins', 'dbHelpers', err);
   }
 }
 
@@ -121,12 +139,12 @@ export function rowToSettings(row: any): AdminSettings {
     ngnAccountNumber: row.ngn_account_number,
     ngnAccountName: row.ngn_account_name,
     usdtSellMarkup: row.usdt_sell_markup ?? legacyRate ?? DEFAULT_SETTINGS.usdtSellMarkup,
-    usdtBuyMarkup:  row.usdt_buy_markup  ?? legacyRate ?? DEFAULT_SETTINGS.usdtBuyMarkup,
+    usdtBuyMarkup: row.usdt_buy_markup ?? legacyRate ?? DEFAULT_SETTINGS.usdtBuyMarkup,
     wallets: {
       BSC: row.wallet_bsc,
       Tron: row.wallet_tron,
-      Polygon: row.wallet_polygon
-    }
+      Polygon: row.wallet_polygon,
+    },
   };
 }
 
@@ -142,7 +160,7 @@ export function rowToUserProfile(row: any): UserProfile {
     terminateReason: row.terminate_reason || undefined,
     notificationPreferences: row.notification_preferences || undefined,
     createdAt: row.created_at,
-    deletedAt: row.deleted_at || undefined
+    deletedAt: row.deleted_at || undefined,
   };
 }
 
@@ -167,7 +185,7 @@ export function rowToOrder(row: any): Order {
     rejectionReason: row.rejection_reason || undefined,
     createdAt: row.created_at,
     processedAt: row.processed_at || undefined,
-    usdtEquivalent: row.usdt_equivalent ?? undefined
+    usdtEquivalent: row.usdt_equivalent ?? undefined,
   };
 }
 
@@ -178,7 +196,7 @@ export function rowToAnnouncement(row: any): Announcement {
     content: row.content,
     scope: row.scope,
     isActive: row.is_active,
-    createdAt: row.created_at
+    createdAt: row.created_at,
   };
 }
 
@@ -198,14 +216,18 @@ export function rowToCoin(row: any): CoinListing {
     minBuyAmount: row.min_buy_amount ?? row.min_trade_amount ?? 1,
     minSellAmount: row.min_sell_amount ?? row.min_trade_amount ?? 1,
     coinGeckoId: row.coin_gecko_id || undefined,
-    createdAt: row.created_at
+    createdAt: row.created_at,
   };
 }
 
 export function rowToDispute(row: any): Dispute {
   const imageUrls: string[] = (() => {
     if (row.image_urls) {
-      try { return JSON.parse(row.image_urls) as string[]; } catch { return []; }
+      try {
+        return JSON.parse(row.image_urls) as string[];
+      } catch {
+        return [];
+      }
     }
     if (row.image_url) return [row.image_url];
     return [];
@@ -220,7 +242,7 @@ export function rowToDispute(row: any): Dispute {
     status: row.status,
     adminResponse: row.admin_response || undefined,
     createdAt: row.created_at,
-    resolvedAt: row.resolved_at || undefined
+    resolvedAt: row.resolved_at || undefined,
   };
 }
 
@@ -228,9 +250,14 @@ export async function getOrCreateUserProfile(uid: string, email: string): Promis
   const isAdmin = email.toLowerCase() === 'cryptogangstar247@gmail.com';
 
   // Select only the columns needed by rowToUserProfile — avoids pulling unused data.
-  const USER_COLS = 'id,email,role,kyc_status,kyc_data,account_status,suspend_reason,terminate_reason,notification_preferences,created_at,deleted_at';
+  const USER_COLS =
+    'id,email,role,kyc_status,kyc_data,account_status,suspend_reason,terminate_reason,notification_preferences,created_at,deleted_at';
 
-  const { data: existing } = await supabase.from('users').select(USER_COLS).eq('id', uid).maybeSingle();
+  const { data: existing } = await supabase
+    .from('users')
+    .select(USER_COLS)
+    .eq('id', uid)
+    .maybeSingle();
 
   if (existing) {
     if (isAdmin && existing.role !== 'admin') {
@@ -247,11 +274,13 @@ export async function getOrCreateUserProfile(uid: string, email: string): Promis
   // same email and stops deleted users from being treated as fresh unverified
   // traders on re-registration. The RPC is SECURITY DEFINER and only matches
   // rows where account_status='deleted' AND deleted_email matches.
-  const { data: restored, error: restoreError } = await supabase
-    .rpc('restore_deleted_user', { p_new_uid: uid, p_email: email });
+  const { data: restored, error: restoreError } = await supabase.rpc('restore_deleted_user', {
+    p_new_uid: uid,
+    p_email: email,
+  });
 
   if (restoreError) {
-    console.error('restore_deleted_user RPC error:', restoreError.message);
+    logger.error('restore_deleted_user RPC error', 'dbHelpers', restoreError);
   } else if (restored && restored.length > 0) {
     const restoredRow = restored[0];
     if (isAdmin && restoredRow.role !== 'admin') {
@@ -268,32 +297,46 @@ export async function getOrCreateUserProfile(uid: string, email: string): Promis
     role: isAdmin ? 'admin' : 'user',
     kyc_status: isAdmin ? 'approved' : 'none',
     account_status: 'active',
-    created_at: Date.now()
+    created_at: Date.now(),
   };
 
-  const { data: inserted, error: insertError } = await supabase.from('users').insert(newRow).select(USER_COLS).single();
+  const { data: inserted, error: insertError } = await supabase
+    .from('users')
+    .insert(newRow)
+    .select(USER_COLS)
+    .single();
   if (inserted) return rowToUserProfile(inserted);
 
   // PostgreSQL unique-violation (23505) means a concurrent call already inserted the row — safe to fetch.
   // Any other error code is a real failure (RLS denied, schema mismatch, network) — surface it.
   if (insertError && insertError.code !== '23505') {
-    throw new Error(`Could not create user profile: ${insertError.message}`);
+    throw new SupabaseError(`Could not create user profile: ${insertError.message}`, insertError);
   }
 
   // Race-condition retry: the concurrent insert won, so the row must now exist.
-  const { data: retried, error: retryError } = await supabase.from('users').select(USER_COLS).eq('id', uid).maybeSingle();
+  const { data: retried, error: retryError } = await supabase
+    .from('users')
+    .select(USER_COLS)
+    .eq('id', uid)
+    .maybeSingle();
   if (retried) return rowToUserProfile(retried);
 
-  throw new Error(`Failed to retrieve user profile after insert race: ${retryError?.message ?? 'unknown'}`);
+  throw new SupabaseError(
+    `Failed to retrieve user profile after insert race: ${retryError?.message ?? 'unknown'}`,
+    retryError
+  );
 }
 
 export async function submitKYC(uid: string, kycData: Omit<KYCData, 'submittedAt'>) {
   const fullKYC: KYCData = { ...kycData, submittedAt: Date.now() };
-  const { error } = await supabase.from('users').update({
-    kyc_status: 'pending',
-    kyc_data: fullKYC
-  }).eq('id', uid);
-  if (error) throw new Error(error.message);
+  const { error } = await supabase
+    .from('users')
+    .update({
+      kyc_status: 'pending',
+      kyc_data: fullKYC,
+    })
+    .eq('id', uid);
+  if (error) throw new SupabaseError(error.message, error);
 }
 
 export async function handleKYCReview(uid: string, approve: boolean, rejectionReason?: string) {
@@ -302,18 +345,21 @@ export async function handleKYCReview(uid: string, approve: boolean, rejectionRe
     .select('kyc_data')
     .eq('id', uid)
     .single();
-  if (fetchError) throw new Error(fetchError.message);
+  if (fetchError) throw new SupabaseError(fetchError.message, fetchError);
   const kycData = existing?.kyc_data || {};
   const updatedKyc = {
     ...kycData,
     reviewedAt: Date.now(),
-    rejectionReason: approve ? '' : (rejectionReason || '')
+    rejectionReason: approve ? '' : rejectionReason || '',
   };
-  const { error } = await supabase.from('users').update({
-    kyc_status: approve ? 'approved' : 'rejected',
-    kyc_data: updatedKyc
-  }).eq('id', uid);
-  if (error) throw new Error(error.message);
+  const { error } = await supabase
+    .from('users')
+    .update({
+      kyc_status: approve ? 'approved' : 'rejected',
+      kyc_data: updatedKyc,
+    })
+    .eq('id', uid);
+  if (error) throw new SupabaseError(error.message, error);
 }
 
 export async function createOrder(
@@ -333,26 +379,30 @@ export async function createOrder(
   usdtEquivalent?: number
 ) {
   const ngnAmount = cryptoAmount * rate;
-  const { data, error } = await supabase.from('orders').insert({
-    user_id: userId,
-    user_email: userEmail,
-    type,
-    crypto_amount: cryptoAmount,
-    ngn_amount: ngnAmount,
-    rate,
-    status: 'pending',
-    network,
-    token,
-    payment_screenshot: paymentScreenshot,
-    user_bank_details: userBankDetails || null,
-    admin_bank_details: adminBankDetails || null,
-    admin_wallet_address: adminWalletAddress || null,
-    blockchain_tx_id: blockchainTxId || null,
-    user_wallet_address: userWalletAddress || null,
-    usdt_equivalent: usdtEquivalent ?? cryptoAmount,
-    created_at: Date.now()
-  }).select().single();
-  if (error) throw new Error(error.message);
+  const { data, error } = await supabase
+    .from('orders')
+    .insert({
+      user_id: userId,
+      user_email: userEmail,
+      type,
+      crypto_amount: cryptoAmount,
+      ngn_amount: ngnAmount,
+      rate,
+      status: 'pending',
+      network,
+      token,
+      payment_screenshot: paymentScreenshot,
+      user_bank_details: userBankDetails || null,
+      admin_bank_details: adminBankDetails || null,
+      admin_wallet_address: adminWalletAddress || null,
+      blockchain_tx_id: blockchainTxId || null,
+      user_wallet_address: userWalletAddress || null,
+      usdt_equivalent: usdtEquivalent ?? cryptoAmount,
+      created_at: Date.now(),
+    })
+    .select()
+    .single();
+  if (error) throw new SupabaseError(error.message, error);
   return data.id;
 }
 
@@ -366,7 +416,7 @@ export async function processOrder(
   if (status === 'completed' && blockchainTxId) updates.blockchain_tx_id = blockchainTxId;
   if (status === 'rejected' && rejectionReason) updates.rejection_reason = rejectionReason;
   const { error } = await supabase.from('orders').update(updates).eq('id', orderId);
-  if (error) throw new Error(error.message);
+  if (error) throw new SupabaseError(error.message, error);
 }
 
 export async function updateAdminSettings(settings: AdminSettings) {
@@ -379,9 +429,9 @@ export async function updateAdminSettings(settings: AdminSettings) {
     usdt_buy_markup: settings.usdtBuyMarkup,
     wallet_bsc: settings.wallets.BSC,
     wallet_tron: settings.wallets.Tron,
-    wallet_polygon: settings.wallets.Polygon
+    wallet_polygon: settings.wallets.Polygon,
   });
-  if (error) throw new Error(error.message);
+  if (error) throw new SupabaseError(error.message, error);
 }
 
 export async function sendDisputeMessage(
@@ -399,7 +449,7 @@ export async function sendDisputeMessage(
     message,
     created_at: Date.now(),
   });
-  if (error) throw new Error(error.message);
+  if (error) throw new SupabaseError(error.message, error);
 }
 
 export async function createAnnouncement(ann: Omit<Announcement, 'id' | 'createdAt'>) {
@@ -408,24 +458,27 @@ export async function createAnnouncement(ann: Omit<Announcement, 'id' | 'created
     content: ann.content,
     scope: ann.scope,
     is_active: ann.isActive,
-    created_at: Date.now()
+    created_at: Date.now(),
   });
-  if (error) throw new Error(error.message);
+  if (error) throw new SupabaseError(error.message, error);
 }
 
 export async function deleteAnnouncement(id: string) {
   const { error } = await supabase.from('announcements').update({ is_active: false }).eq('id', id);
-  if (error) throw new Error(error.message);
+  if (error) throw new SupabaseError(error.message, error);
 }
 
-export async function updateAnnouncement(id: string, fields: { title?: string; content?: string; scope?: string; is_active?: boolean }) {
+export async function updateAnnouncement(
+  id: string,
+  fields: { title?: string; content?: string; scope?: string; is_active?: boolean }
+) {
   const { error } = await supabase.from('announcements').update(fields).eq('id', id);
-  if (error) throw new Error(error.message);
+  if (error) throw new SupabaseError(error.message, error);
 }
 
 export async function hardDeleteAnnouncement(id: string) {
   const { error } = await supabase.from('announcements').delete().eq('id', id);
-  if (error) throw new Error(error.message);
+  if (error) throw new SupabaseError(error.message, error);
 }
 
 export async function createCoinListing(coin: Omit<CoinListing, 'id' | 'createdAt'>) {
@@ -443,37 +496,47 @@ export async function createCoinListing(coin: Omit<CoinListing, 'id' | 'createdA
     min_buy_amount: coin.minBuyAmount ?? coin.minTradeAmount ?? 1,
     min_sell_amount: coin.minSellAmount ?? coin.minTradeAmount ?? 1,
     coin_gecko_id: coin.coinGeckoId || null,
-    created_at: Date.now()
+    created_at: Date.now(),
   });
-  if (error) throw new Error(error.message);
+  if (error) throw new SupabaseError(error.message, error);
 }
 
-export async function updateCoinFees(id: string, feePercentage: number, minTradeAmount: number, pricePegged?: boolean, minBuyAmount?: number, minSellAmount?: number) {
+export async function updateCoinFees(
+  id: string,
+  feePercentage: number,
+  minTradeAmount: number,
+  pricePegged?: boolean,
+  minBuyAmount?: number,
+  minSellAmount?: number
+) {
   const updates: any = {
     fee_percentage: feePercentage,
-    min_trade_amount: minTradeAmount
+    min_trade_amount: minTradeAmount,
   };
   if (minBuyAmount !== undefined) updates.min_buy_amount = minBuyAmount;
   if (minSellAmount !== undefined) updates.min_sell_amount = minSellAmount;
   if (pricePegged !== undefined) updates.price_pegged = pricePegged;
   const { error } = await supabase.from('coins').update(updates).eq('id', id);
-  if (error) throw new Error(error.message);
+  if (error) throw new SupabaseError(error.message, error);
 }
 
-export async function updateCoinDetails(id: string, fields: {
-  name?: string;
-  symbol?: string;
-  network?: string;
-  walletAddress?: string;
-  rate?: number;
-  logoUrl?: string;
-  feePercentage?: number;
-  minTradeAmount?: number;
-  minBuyAmount?: number;
-  minSellAmount?: number;
-  pricePegged?: boolean;
-  coinGeckoId?: string | null;
-}) {
+export async function updateCoinDetails(
+  id: string,
+  fields: {
+    name?: string;
+    symbol?: string;
+    network?: string;
+    walletAddress?: string;
+    rate?: number;
+    logoUrl?: string;
+    feePercentage?: number;
+    minTradeAmount?: number;
+    minBuyAmount?: number;
+    minSellAmount?: number;
+    pricePegged?: boolean;
+    coinGeckoId?: string | null;
+  }
+) {
   const updates: any = {};
   if (fields.name !== undefined) updates.name = fields.name;
   if (fields.symbol !== undefined) updates.symbol = fields.symbol;
@@ -488,17 +551,17 @@ export async function updateCoinDetails(id: string, fields: {
   if (fields.pricePegged !== undefined) updates.price_pegged = fields.pricePegged;
   updates.coin_gecko_id = fields.coinGeckoId || null;
   const { error } = await supabase.from('coins').update(updates).eq('id', id);
-  if (error) throw new Error(error.message);
+  if (error) throw new SupabaseError(error.message, error);
 }
 
 export async function deleteCoinListing(id: string) {
   const { error } = await supabase.from('coins').update({ published: false }).eq('id', id);
-  if (error) throw new Error(error.message);
+  if (error) throw new SupabaseError(error.message, error);
 }
 
 export async function toggleCoinPublish(id: string, published: boolean) {
   const { error } = await supabase.from('coins').update({ published }).eq('id', id);
-  if (error) throw new Error(error.message);
+  if (error) throw new SupabaseError(error.message, error);
 }
 
 export async function updateUserAdminAction(uid: string, fields: Partial<UserProfile>) {
@@ -510,35 +573,44 @@ export async function updateUserAdminAction(uid: string, fields: Partial<UserPro
   if (fields.suspendReason !== undefined) updates.suspend_reason = fields.suspendReason;
   if (fields.terminateReason !== undefined) updates.terminate_reason = fields.terminateReason;
   const { error } = await supabase.from('users').update(updates).eq('id', uid);
-  if (error) throw new Error(error.message);
+  if (error) throw new SupabaseError(error.message, error);
 }
 
 export async function suspendUser(uid: string, reason: string) {
-  const { error } = await supabase.from('users').update({
-    account_status: 'suspended',
-    suspend_reason: reason
-  }).eq('id', uid);
-  if (error) throw new Error(error.message);
+  const { error } = await supabase
+    .from('users')
+    .update({
+      account_status: 'suspended',
+      suspend_reason: reason,
+    })
+    .eq('id', uid);
+  if (error) throw new SupabaseError(error.message, error);
 }
 
 export async function terminateUser(uid: string, reason: string) {
-  const { error } = await supabase.from('users').update({
-    account_status: 'terminated',
-    terminate_reason: reason
-  }).eq('id', uid);
-  if (error) throw new Error(error.message);
+  const { error } = await supabase
+    .from('users')
+    .update({
+      account_status: 'terminated',
+      terminate_reason: reason,
+    })
+    .eq('id', uid);
+  if (error) throw new SupabaseError(error.message, error);
 }
 
 export async function updateNotificationPreferences(uid: string, prefs: NotificationPreferences) {
-  const { error } = await supabase.from('users').update({
-    notification_preferences: prefs
-  }).eq('id', uid);
-  if (error) throw new Error(error.message);
+  const { error } = await supabase
+    .from('users')
+    .update({
+      notification_preferences: prefs,
+    })
+    .eq('id', uid);
+  if (error) throw new SupabaseError(error.message, error);
 }
 
 export async function changePassword(newPassword: string) {
   const { error } = await supabase.auth.updateUser({ password: newPassword });
-  if (error) throw new Error(error.message);
+  if (error) throw new SupabaseError(error.message, error);
 }
 
 // Permanently deletes the caller's own auth account and scrubs their profile,
@@ -549,7 +621,7 @@ export async function changePassword(newPassword: string) {
 export async function deleteAccount() {
   const { data: sessionData } = await supabase.auth.getSession();
   const accessToken = sessionData.session?.access_token;
-  if (!accessToken) throw new Error('You must be signed in to delete your account.');
+  if (!accessToken) throw new ValidationError('You must be signed in to delete your account.');
 
   const response = await fetch('/api/delete-account', {
     method: 'POST',
@@ -557,16 +629,19 @@ export async function deleteAccount() {
   });
 
   const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(data?.error || 'Failed to delete account.');
+  if (!response.ok) throw new SupabaseError(data?.error || 'Failed to delete account.');
 }
 
 export async function reinstateUser(uid: string) {
-  const { error } = await supabase.from('users').update({
-    account_status: 'active',
-    suspend_reason: null,
-    terminate_reason: null
-  }).eq('id', uid);
-  if (error) throw new Error(error.message);
+  const { error } = await supabase
+    .from('users')
+    .update({
+      account_status: 'active',
+      suspend_reason: null,
+      terminate_reason: null,
+    })
+    .eq('id', uid);
+  if (error) throw new SupabaseError(error.message, error);
 }
 
 // Reactivates a user whose account_status is 'pending_reactivation' (a deleted
@@ -575,12 +650,19 @@ export async function reinstateUser(uid: string) {
 // the caller is an admin and only flips rows in the pending_reactivation state.
 export async function reactivatePendingUser(uid: string) {
   const { data, error } = await supabase.rpc('reactivate_pending_user', { p_uid: uid });
-  if (error) throw new Error(error.message);
-  if (!data || data.length === 0) throw new Error('No pending account found for this user.');
+  if (error) throw new SupabaseError(error.message, error);
+  if (!data || data.length === 0)
+    throw new SupabaseError('No pending account found for this user.');
   return data[0];
 }
 
-export async function submitDispute(orderId: string, userId: string, userEmail: string, message: string, imageUrls?: string[]) {
+export async function submitDispute(
+  orderId: string,
+  userId: string,
+  userEmail: string,
+  message: string,
+  imageUrls?: string[]
+) {
   const { error } = await supabase.from('disputes').insert({
     order_id: orderId,
     user_id: userId,
@@ -588,9 +670,9 @@ export async function submitDispute(orderId: string, userId: string, userEmail: 
     message,
     image_urls: imageUrls && imageUrls.length > 0 ? JSON.stringify(imageUrls) : null,
     status: 'open',
-    created_at: Date.now()
+    created_at: Date.now(),
   });
-  if (error) throw new Error(error.message);
+  if (error) throw new SupabaseError(error.message, error);
 }
 
 export interface PublicStats {
@@ -604,19 +686,22 @@ export async function getPublicStats(): Promise<PublicStats> {
   // does not block anonymous visitors — only aggregate totals are returned,
   // no individual row data is exposed.
   const { data, error } = await supabase.rpc('get_public_stats');
-  if (error) throw new Error(error.message);
+  if (error) throw new SupabaseError(error.message, error);
   return {
-    tradesCompleted: data?.trades_completed  ?? 0,
-    usdtVolume:      data?.usdt_volume       ?? 0,
-    activeTraders:   data?.active_traders    ?? 0,
+    tradesCompleted: data?.trades_completed ?? 0,
+    usdtVolume: data?.usdt_volume ?? 0,
+    activeTraders: data?.active_traders ?? 0,
   };
 }
 
 export async function resolveDispute(disputeId: string, adminResponse: string) {
-  const { error } = await supabase.from('disputes').update({
-    status: 'resolved',
-    admin_response: adminResponse,
-    resolved_at: Date.now()
-  }).eq('id', disputeId);
-  if (error) throw new Error(error.message);
+  const { error } = await supabase
+    .from('disputes')
+    .update({
+      status: 'resolved',
+      admin_response: adminResponse,
+      resolved_at: Date.now(),
+    })
+    .eq('id', disputeId);
+  if (error) throw new SupabaseError(error.message, error);
 }

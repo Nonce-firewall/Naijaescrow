@@ -11,15 +11,18 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
-      exclude: [
-        'node_modules/',
-        'src/test/',
-      ]
-    }
+      exclude: ['node_modules/**', 'src/test/**', 'netlify/**', 'dist/**'],
+      thresholds: {
+        lines: 25,
+        branches: 50,
+        functions: 35,
+        statements: 25,
+      },
+    },
   },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
-    }
-  }
+    },
+  },
 });

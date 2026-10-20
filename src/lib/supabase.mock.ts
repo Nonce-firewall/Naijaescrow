@@ -60,7 +60,7 @@ export function createMockSupabase(initialStore?: Partial<MockStore>) {
 
         single: vi.fn(async () => {
           const rows = store[table] || [];
-          let matches = rows.filter(r => filters.every(f => r[f.field] === f.val));
+          let matches = rows.filter((r) => filters.every((f) => r[f.field] === f.val));
           if (matches.length === 0) {
             return { data: null, error: null };
           }
@@ -69,31 +69,57 @@ export function createMockSupabase(initialStore?: Partial<MockStore>) {
 
         maybeSingle: vi.fn(async () => {
           const rows = store[table] || [];
-          let matches = rows.filter(r => filters.every(f => r[f.field] === f.val));
+          let matches = rows.filter((r) => filters.every((f) => r[f.field] === f.val));
           return { data: matches[0] || null, error: null };
         }),
 
         then: (resolve: any, reject?: any) => {
           const rows = store[table] || [];
-          let matches = rows.filter(r => filters.every(f => r[f.field] === f.val));
+          let matches = rows.filter((r) => filters.every((f) => r[f.field] === f.val));
           if (limitCount !== null) {
             matches = matches.slice(0, limitCount);
           }
           return Promise.resolve({ data: matches, error: null }).then(resolve, reject);
         },
 
-        insert: vi.fn(async (payload: any) => {
+        insert: vi.fn((payload: any) => {
+          insertCalls.push({ table, data: payload });
+          const rawRows = Array.isArray(payload) ? payload : [payload];
+          const rowsToInsert = rawRows.map((row) => ({
+            id: row.id || `mock-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+            ...row,
+          }));
+          if (!store[table]) store[table] = [];
+          store[table].push(...rowsToInsert);
+
+          const resultPromise = Promise.resolve({ data: rowsToInsert[0] || payload, error: null });
+          const insertChain: any = {
+            then: (res: any, rej?: any) => resultPromise.then(res, rej),
+            select: vi.fn((_cols?: string) => ({
+              then: (res: any, rej?: any) => Promise.resolve({ data: rowsToInsert, error: null }).then(res, rej),
+              single: vi.fn(async () => ({ data: rowsToInsert[0] || { id: 'mock-id-123' }, error: null })),
+              maybeSingle: vi.fn(async () => ({ data: rowsToInsert[0] || null, error: null })),
+            })),
+            single: vi.fn(async () => ({ data: rowsToInsert[0] || { id: 'mock-id-123' }, error: null })),
+          };
+          return insertChain;
+        }),
+
+        upsert: vi.fn((payload: any) => {
           insertCalls.push({ table, data: payload });
           const rowsToInsert = Array.isArray(payload) ? payload : [payload];
           if (!store[table]) store[table] = [];
           store[table].push(...rowsToInsert);
-          return {
-            data: payload,
-            error: null,
+
+          const resultPromise = Promise.resolve({ data: rowsToInsert[0] || payload, error: null });
+          const upsertChain: any = {
+            then: (res: any, rej?: any) => resultPromise.then(res, rej),
             select: vi.fn(() => ({
-              single: vi.fn(async () => ({ data: rowsToInsert[0], error: null })),
+              then: (res: any, rej?: any) => Promise.resolve({ data: rowsToInsert, error: null }).then(res, rej),
+              single: vi.fn(async () => ({ data: rowsToInsert[0] || { id: 'mock-id-123' }, error: null })),
             })),
           };
+          return upsertChain;
         }),
 
         update: vi.fn((payload: any) => {
@@ -103,7 +129,9 @@ export function createMockSupabase(initialStore?: Partial<MockStore>) {
               updateFilter = { field, val };
               updateCalls.push({ table, data: payload, filter: updateFilter });
               if (store[table]) {
-                store[table] = store[table].map(row => (row[field] === val ? { ...row, ...payload } : row));
+                store[table] = store[table].map((row) =>
+                  row[field] === val ? { ...row, ...payload } : row
+                );
               }
               return { data: payload, error: null };
             }),
@@ -116,7 +144,7 @@ export function createMockSupabase(initialStore?: Partial<MockStore>) {
             eq: vi.fn(async (field: string, val: any) => {
               deleteCalls.push({ table, filter: { field, val } });
               if (store[table]) {
-                store[table] = store[table].filter(row => row[field] !== val);
+                store[table] = store[table].filter((row) => row[field] !== val);
               }
               return { error: null };
             }),
@@ -129,13 +157,25 @@ export function createMockSupabase(initialStore?: Partial<MockStore>) {
     }),
 
     auth: {
-      signInWithPassword: vi.fn(() => Promise.resolve({ data: { user: { id: 'test-user-id', email: 'test@example.com' } }, error: null })),
-      signUp: vi.fn(() => Promise.resolve({ data: { user: { id: 'test-user-id', email: 'test@example.com' } }, error: null })),
+      signInWithPassword: vi.fn(() =>
+        Promise.resolve({
+          data: { user: { id: 'test-user-id', email: 'test@example.com' } },
+          error: null,
+        })
+      ),
+      signUp: vi.fn(() =>
+        Promise.resolve({
+          data: { user: { id: 'test-user-id', email: 'test@example.com' } },
+          error: null,
+        })
+      ),
       signOut: vi.fn(() => Promise.resolve({ error: null })),
       resetPasswordForEmail: vi.fn(() => Promise.resolve({ error: null })),
       signInWithOAuth: vi.fn(() => Promise.resolve({ error: null })),
       getSession: vi.fn(() => Promise.resolve({ data: { session: null }, error: null })),
-      updateUser: vi.fn(() => Promise.resolve({ data: { user: { id: 'test-user-id' } }, error: null })),
+      updateUser: vi.fn(() =>
+        Promise.resolve({ data: { user: { id: 'test-user-id' } }, error: null })
+      ),
       onAuthStateChange: vi.fn(() => ({ data: { subscription: { unsubscribe: vi.fn() } } })),
     },
 

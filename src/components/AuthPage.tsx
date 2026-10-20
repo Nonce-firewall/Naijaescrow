@@ -2,15 +2,37 @@ import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { supabase } from '../lib/supabase';
 import { getOrCreateUserProfile } from '../lib/dbHelpers';
-import { Mail, UserPlus, KeyRound, ArrowLeft, Loader as Loader2, CircleAlert as AlertCircle, MailCheck, Eye, EyeOff } from 'lucide-react';
+import {
+  Mail,
+  UserPlus,
+  KeyRound,
+  ArrowLeft,
+  Loader as Loader2,
+  CircleAlert as AlertCircle,
+  MailCheck,
+  Eye,
+  EyeOff,
+} from 'lucide-react';
 
 function GoogleIcon() {
   return (
     <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M17.64 9.2045C17.64 8.5663 17.5827 7.9527 17.4764 7.3636H9V10.845H13.8436C13.635 11.97 13.0009 12.9231 12.0477 13.5613V15.8195H14.9564C16.6582 14.2527 17.64 11.9454 17.64 9.2045Z" fill="#4285F4"/>
-      <path d="M9 18C11.43 18 13.4673 17.1941 14.9564 15.8195L12.0477 13.5613C11.2418 14.1013 10.2109 14.4204 9 14.4204C6.65591 14.4204 4.67182 12.8372 3.96409 10.71H0.957275V13.0418C2.43818 15.9831 5.48182 18 9 18Z" fill="#34A853"/>
-      <path d="M3.96409 10.71C3.78409 10.17 3.68182 9.5931 3.68182 9C3.68182 8.4069 3.78409 7.83 3.96409 7.29V4.9582H0.957275C0.347727 6.1731 0 7.5477 0 9C0 10.4523 0.347727 11.8269 0.957275 13.0418L3.96409 10.71Z" fill="#FBBC05"/>
-      <path d="M9 3.5795C10.3214 3.5795 11.5077 4.0336 12.4405 4.9254L15.0218 2.344C13.4632 0.891818 11.4259 0 9 0C5.48182 0 2.43818 2.01682 0.957275 4.9582L3.96409 7.29C4.67182 5.1627 6.65591 3.5795 9 3.5795Z" fill="#EA4335"/>
+      <path
+        d="M17.64 9.2045C17.64 8.5663 17.5827 7.9527 17.4764 7.3636H9V10.845H13.8436C13.635 11.97 13.0009 12.9231 12.0477 13.5613V15.8195H14.9564C16.6582 14.2527 17.64 11.9454 17.64 9.2045Z"
+        fill="#4285F4"
+      />
+      <path
+        d="M9 18C11.43 18 13.4673 17.1941 14.9564 15.8195L12.0477 13.5613C11.2418 14.1013 10.2109 14.4204 9 14.4204C6.65591 14.4204 4.67182 12.8372 3.96409 10.71H0.957275V13.0418C2.43818 15.9831 5.48182 18 9 18Z"
+        fill="#34A853"
+      />
+      <path
+        d="M3.96409 10.71C3.78409 10.17 3.68182 9.5931 3.68182 9C3.68182 8.4069 3.78409 7.83 3.96409 7.29V4.9582H0.957275C0.347727 6.1731 0 7.5477 0 9C0 10.4523 0.347727 11.8269 0.957275 13.0418L3.96409 10.71Z"
+        fill="#FBBC05"
+      />
+      <path
+        d="M9 3.5795C10.3214 3.5795 11.5077 4.0336 12.4405 4.9254L15.0218 2.344C13.4632 0.891818 11.4259 0 9 0C5.48182 0 2.43818 2.01682 0.957275 4.9582L3.96409 7.29C4.67182 5.1627 6.65591 3.5795 9 3.5795Z"
+        fill="#EA4335"
+      />
     </svg>
   );
 }
@@ -27,23 +49,28 @@ const SLIDE_VARIANTS = {
   forward: {
     initial: { opacity: 0, x: 40 },
     animate: { opacity: 1, x: 0 },
-    exit:    { opacity: 0, x: -40 },
+    exit: { opacity: 0, x: -40 },
   },
   back: {
     initial: { opacity: 0, x: -40 },
     animate: { opacity: 1, x: 0 },
-    exit:    { opacity: 0, x: 40 },
+    exit: { opacity: 0, x: 40 },
   },
   fade: {
     initial: { opacity: 0, y: 20 },
     animate: { opacity: 1, y: 0 },
-    exit:    { opacity: 0, y: -20 },
+    exit: { opacity: 0, y: -20 },
   },
 };
 
 const TRANSITION = { duration: 0.32, ease: [0.16, 1, 0.3, 1] as const };
 
-export default function AuthPage({ onBack, onAuthSuccess, addToast, initialMode = 'signin' }: AuthPageProps) {
+export default function AuthPage({
+  onBack,
+  onAuthSuccess,
+  addToast,
+  initialMode = 'signin',
+}: AuthPageProps) {
   const [isLogin, setIsLogin] = useState(initialMode === 'signin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -80,7 +107,10 @@ export default function AuthPage({ onBack, onAuthSuccess, addToast, initialMode 
 
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!forgotEmail.trim()) { addToast('Please enter your email address.', 'error'); return; }
+    if (!forgotEmail.trim()) {
+      addToast('Please enter your email address.', 'error');
+      return;
+    }
     setIsForgotLoading(true);
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(forgotEmail.trim(), {
@@ -122,13 +152,25 @@ export default function AuthPage({ onBack, onAuthSuccess, addToast, initialMode 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthErrorAlert(null);
-    if (!email || !password) { addToast('Please fill in all fields', 'error'); return; }
-    if (!isLogin && password !== confirmPassword) { addToast('Passwords do not match', 'error'); return; }
-    if (password.length < 6) { addToast('Password must be at least 6 characters', 'error'); return; }
+    if (!email || !password) {
+      addToast('Please fill in all fields', 'error');
+      return;
+    }
+    if (!isLogin && password !== confirmPassword) {
+      addToast('Passwords do not match', 'error');
+      return;
+    }
+    if (password.length < 6) {
+      addToast('Password must be at least 6 characters', 'error');
+      return;
+    }
 
     // Block admin emails from registering via the public signup form
     if (!isLogin && isAdminEmail(email)) {
-      addToast('Admin accounts are provisioned by the platform. Please sign in or contact support.', 'error');
+      addToast(
+        'Admin accounts are provisioned by the platform. Please sign in or contact support.',
+        'error'
+      );
       return;
     }
 
@@ -141,17 +183,23 @@ export default function AuthPage({ onBack, onAuthSuccess, addToast, initialMode 
         if (profile.accountStatus === 'terminated') {
           await supabase.auth.signOut();
           const reason = profile.terminateReason ? ` Reason: ${profile.terminateReason}` : '';
-          setAuthErrorAlert(`Your account has been permanently terminated!${reason} Contact support for assistance.`);
+          setAuthErrorAlert(
+            `Your account has been permanently terminated!${reason} Contact support for assistance.`
+          );
           return;
         }
         if (profile.accountStatus === 'pending_reactivation') {
           await supabase.auth.signOut();
-          setAuthErrorAlert('This account was previously deleted! Please contact the administrator to restore your access.');
+          setAuthErrorAlert(
+            'This account was previously deleted! Please contact the administrator to restore your access.'
+          );
           return;
         }
         if (profile.accountStatus === 'deleted') {
           await supabase.auth.signOut();
-          setAuthErrorAlert('This account has been deleted. Please contact the administrator if you believe this is a mistake.');
+          setAuthErrorAlert(
+            'This account has been deleted. Please contact the administrator if you believe this is a mistake.'
+          );
           return;
         }
         addToast('Sign in successful!', 'success');
@@ -168,24 +216,36 @@ export default function AuthPage({ onBack, onAuthSuccess, addToast, initialMode 
         });
         if (existingUser.session) {
           // Account exists AND the password matches — log them in directly.
-          const profile = await getOrCreateUserProfile(existingUser.user.id, existingUser.user.email || '');
+          const profile = await getOrCreateUserProfile(
+            existingUser.user.id,
+            existingUser.user.email || ''
+          );
           if (profile.accountStatus === 'terminated') {
             await supabase.auth.signOut();
             const reason = profile.terminateReason ? ` Reason: ${profile.terminateReason}` : '';
-            setAuthErrorAlert(`Your account has been permanently terminated.${reason} Contact support for assistance.`);
+            setAuthErrorAlert(
+              `Your account has been permanently terminated.${reason} Contact support for assistance.`
+            );
             return;
           }
           if (profile.accountStatus === 'pending_reactivation') {
             await supabase.auth.signOut();
-            setAuthErrorAlert('This account was previously deleted. Please contact the administrator to restore your access.');
+            setAuthErrorAlert(
+              'This account was previously deleted. Please contact the administrator to restore your access.'
+            );
             return;
           }
           if (profile.accountStatus === 'deleted') {
             await supabase.auth.signOut();
-            setAuthErrorAlert('This account has been deleted. Please contact the administrator if you believe this is a mistake.');
+            setAuthErrorAlert(
+              'This account has been deleted. Please contact the administrator if you believe this is a mistake.'
+            );
             return;
           }
-          addToast('Welcome back! You already have an account — signed in successfully.', 'success');
+          addToast(
+            'Welcome back! You already have an account — signed in successfully.',
+            'success'
+          );
           onAuthSuccess();
           return;
         }
@@ -206,9 +266,14 @@ export default function AuthPage({ onBack, onAuthSuccess, addToast, initialMode 
           // pending_reactivation. Ignoring the return value would let them straight
           // through to the dashboard with the wrong status.
           const newProfile = await getOrCreateUserProfile(data.user!.id, data.user!.email || '');
-          if (newProfile.accountStatus === 'pending_reactivation' || newProfile.accountStatus === 'deleted') {
+          if (
+            newProfile.accountStatus === 'pending_reactivation' ||
+            newProfile.accountStatus === 'deleted'
+          ) {
             await supabase.auth.signOut();
-            setAuthErrorAlert('This email address belongs to a previously deleted account. Please contact the administrator to request reactivation.');
+            setAuthErrorAlert(
+              'This email address belongs to a previously deleted account. Please contact the administrator to request reactivation.'
+            );
             return;
           }
           addToast('Account created successfully!', 'success');
@@ -238,7 +303,10 @@ export default function AuthPage({ onBack, onAuthSuccess, addToast, initialMode 
         msg = isLogin
           ? "Invalid email or password. If you signed up with Google, use 'Continue with Google'. Otherwise, use 'Forgot password?' to set or reset your password."
           : 'Invalid email or password.';
-      } else if (err.message?.includes('already registered') || err.message?.includes('already been registered')) {
+      } else if (
+        err.message?.includes('already registered') ||
+        err.message?.includes('already been registered')
+      ) {
         msg = 'Email already registered. Please sign in.';
       } else if (err.message?.includes('valid email')) {
         msg = 'Please enter a valid email address.';
@@ -253,17 +321,16 @@ export default function AuthPage({ onBack, onAuthSuccess, addToast, initialMode 
   const screenKey = resetEmailSent
     ? 'reset-sent'
     : verificationPending
-    ? 'verify'
-    : forgotMode
-    ? 'forgot'
-    : 'main';
+      ? 'verify'
+      : forgotMode
+        ? 'forgot'
+        : 'main';
 
   const variants = SLIDE_VARIANTS[slideDir.current];
 
   return (
     <div className="min-h-screen bg-[#F7F9F7] font-sans text-[#1A1A1A] overflow-hidden">
       <AnimatePresence mode="wait" initial={false}>
-
         {/* ── Reset email sent ───────────────────────────────────────────── */}
         {screenKey === 'reset-sent' && (
           <motion.div
@@ -285,19 +352,28 @@ export default function AuthPage({ onBack, onAuthSuccess, addToast, initialMode 
                   <h2 className="text-xl font-bold text-[#1A1A1A]">Check your inbox</h2>
                   <p className="text-sm text-gray-500 leading-relaxed">
                     We sent a password reset link to{' '}
-                    <span className="font-semibold text-[#1A1A1A]">{forgotEmail}</span>.
-                    Click the link in your email to set a new password — it expires in 1 hour.
+                    <span className="font-semibold text-[#1A1A1A]">{forgotEmail}</span>. Click the
+                    link in your email to set a new password — it expires in 1 hour.
                   </p>
                 </div>
                 <div className="pt-2 space-y-3">
                   <button
-                    onClick={() => { slideDir.current = 'back'; setResetEmailSent(false); setForgotMode(false); setPassword(''); }}
+                    onClick={() => {
+                      slideDir.current = 'back';
+                      setResetEmailSent(false);
+                      setForgotMode(false);
+                      setPassword('');
+                    }}
                     className="w-full py-3 rounded-xl bg-[#008751] hover:bg-[#007043] text-white font-bold text-sm transition cursor-pointer"
                   >
                     Back to Sign In
                   </button>
                   <button
-                    onClick={() => { slideDir.current = 'back'; setResetEmailSent(false); setForgotEmail(''); }}
+                    onClick={() => {
+                      slideDir.current = 'back';
+                      setResetEmailSent(false);
+                      setForgotEmail('');
+                    }}
                     className="w-full py-3 rounded-xl border border-[#E0E7E0] text-gray-500 hover:text-[#008751] font-semibold text-sm transition cursor-pointer"
                   >
                     Try a different email
@@ -330,11 +406,7 @@ export default function AuthPage({ onBack, onAuthSuccess, addToast, initialMode 
 
             <div className="w-full max-w-md mx-auto">
               <div className="flex justify-center mb-6">
-                <img
-                  src="/logo-icon.png"
-                  alt="9ija Escrow"
-                  className="h-16 w-auto"
-                />
+                <img src="/logo-icon.png" alt="9ija Escrow" className="h-16 w-auto" />
               </div>
               <h2 className="text-center text-2xl sm:text-3xl font-bold text-[#1A1A1A] tracking-tight">
                 Forgot your password?
@@ -406,13 +478,20 @@ export default function AuthPage({ onBack, onAuthSuccess, addToast, initialMode 
                   <h2 className="text-xl font-bold text-[#1A1A1A]">Check your email</h2>
                   <p className="text-sm text-gray-500 leading-relaxed">
                     We sent a verification link to{' '}
-                    <span className="font-semibold text-[#1A1A1A]">{verificationEmail}</span>.
-                    Click the link to activate your account, then come back to refresh your browser or sign in.
+                    <span className="font-semibold text-[#1A1A1A]">{verificationEmail}</span>. Click
+                    the link to activate your account, then come back to refresh your browser or
+                    sign in.
                   </p>
                 </div>
                 <div className="pt-2 space-y-3">
                   <button
-                    onClick={() => { slideDir.current = 'back'; setVerificationPending(false); setIsLogin(true); setPassword(''); setConfirmPassword(''); }}
+                    onClick={() => {
+                      slideDir.current = 'back';
+                      setVerificationPending(false);
+                      setIsLogin(true);
+                      setPassword('');
+                      setConfirmPassword('');
+                    }}
                     className="w-full py-3 rounded-xl bg-[#008751] hover:bg-[#007043] text-white font-bold text-sm transition cursor-pointer"
                   >
                     Back to Sign In
@@ -467,7 +546,11 @@ export default function AuthPage({ onBack, onAuthSuccess, addToast, initialMode 
               <p className="mt-2 text-center text-sm text-gray-500">
                 Or{' '}
                 <button
-                  onClick={() => { setIsLogin(!isLogin); setPassword(''); setConfirmPassword(''); }}
+                  onClick={() => {
+                    setIsLogin(!isLogin);
+                    setPassword('');
+                    setConfirmPassword('');
+                  }}
                   className="font-bold text-[#008751] hover:text-[#007043] cursor-pointer"
                 >
                   {isLogin ? 'Create a new trader account' : 'Sign in to your existing account'}
@@ -503,7 +586,9 @@ export default function AuthPage({ onBack, onAuthSuccess, addToast, initialMode 
                 {/* Divider */}
                 <div className="relative flex items-center mb-5">
                   <div className="flex-1 border-t border-[#E0E7E0]" />
-                  <span className="px-3 text-[11px] text-gray-400 font-medium bg-white">or use email</span>
+                  <span className="px-3 text-[11px] text-gray-400 font-medium bg-white">
+                    or use email
+                  </span>
                   <div className="flex-1 border-t border-[#E0E7E0]" />
                 </div>
 
@@ -562,7 +647,11 @@ export default function AuthPage({ onBack, onAuthSuccess, addToast, initialMode 
                         className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-400 hover:text-gray-600 cursor-pointer"
                         tabIndex={-1}
                       >
-                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        {showPassword ? (
+                          <EyeOff className="w-4 h-4" />
+                        ) : (
+                          <Eye className="w-4 h-4" />
+                        )}
                       </button>
                     </div>
                   </div>
@@ -597,7 +686,11 @@ export default function AuthPage({ onBack, onAuthSuccess, addToast, initialMode 
                             className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-400 hover:text-gray-600 cursor-pointer"
                             tabIndex={-1}
                           >
-                            {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                            {showConfirm ? (
+                              <EyeOff className="w-4 h-4" />
+                            ) : (
+                              <Eye className="w-4 h-4" />
+                            )}
                           </button>
                         </div>
                       </motion.div>
@@ -613,14 +706,17 @@ export default function AuthPage({ onBack, onAuthSuccess, addToast, initialMode 
                       <span className="flex items-center gap-2">
                         <Loader2 className="w-4 h-4 animate-spin" /> Connecting...
                       </span>
-                    ) : isLogin ? 'Sign In' : 'Create Account'}
+                    ) : isLogin ? (
+                      'Sign In'
+                    ) : (
+                      'Create Account'
+                    )}
                   </button>
                 </form>
               </div>
             </div>
           </motion.div>
         )}
-
       </AnimatePresence>
     </div>
   );

@@ -68,8 +68,8 @@ export default function SupportPage() {
           </div>
           <h1 className="text-3xl sm:text-4xl font-bold text-[#1A1A1A] tracking-tight">Support</h1>
           <p className="mt-2 text-sm text-gray-500 leading-relaxed">
-            Our support team is available Monday–Friday, 9 AM–6 PM WAT.
-            We typically respond within 2–4 business hours.
+            Our support team is available Monday–Friday, 9 AM–6 PM WAT. We typically respond within
+            2–4 business hours.
           </p>
         </div>
 
@@ -96,7 +96,9 @@ export default function SupportPage() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
                   <span className="font-bold text-[#1A1A1A]">{ch.label}</span>
-                  <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${ch.badge}`}>{ch.badgeLabel}</span>
+                  <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${ch.badge}`}>
+                    {ch.badgeLabel}
+                  </span>
                 </div>
                 <p className="text-xs text-gray-500">{ch.desc}</p>
                 <p className={`text-sm font-semibold mt-1.5 ${ch.handleColor}`}>{ch.handle}</p>
@@ -118,8 +120,12 @@ export default function SupportPage() {
             </div>
             <div className="flex-1 min-w-0">
               <p className="font-bold text-[#1A1A1A] mb-1">Email Support</p>
-              <p className="text-xs text-gray-500">For account issues, KYC reviews, and trade disputes</p>
-              <p className="text-sm font-semibold text-[#008751] mt-1.5">contact@9ijaescrow.com.ng</p>
+              <p className="text-xs text-gray-500">
+                For account issues, KYC reviews, and trade disputes
+              </p>
+              <p className="text-sm font-semibold text-[#008751] mt-1.5">
+                contact@9ijaescrow.com.ng
+              </p>
             </div>
           </motion.a>
         </div>
@@ -132,7 +138,8 @@ export default function SupportPage() {
           transition={{ duration: 0.4, delay: 0.22 }}
         >
           <span className="font-bold block mb-1">Before reaching out</span>
-          Please have your order ID or registered email address ready to help us resolve your issue faster.
+          Please have your order ID or registered email address ready to help us resolve your issue
+          faster.
         </motion.div>
 
         {/* Footer note */}

@@ -39,9 +39,9 @@ export default function SettingsTab({ settings, onSettingsUpdated, addToast }: S
   };
 
   const handleChange = (field: keyof AdminSettings, value: any) => {
-    setFormState(prev => ({
+    setFormState((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
     setIsDirty(true);
   };
@@ -102,7 +102,9 @@ export default function SettingsTab({ settings, onSettingsUpdated, addToast }: S
                 <input
                   type="text"
                   value={formState.wallets.BSC}
-                  onChange={(e) => handleChange('wallets', { ...formState.wallets, BSC: e.target.value })}
+                  onChange={(e) =>
+                    handleChange('wallets', { ...formState.wallets, BSC: e.target.value })
+                  }
                   className="w-full px-3 py-2 border border-[#E0E7E0] rounded-xl bg-[#F7F9F7] focus:outline-none focus:ring-2 focus:ring-[#008751] text-sm font-mono text-xs"
                 />
               </div>
@@ -111,7 +113,9 @@ export default function SettingsTab({ settings, onSettingsUpdated, addToast }: S
                 <input
                   type="text"
                   value={formState.wallets.Tron}
-                  onChange={(e) => handleChange('wallets', { ...formState.wallets, Tron: e.target.value })}
+                  onChange={(e) =>
+                    handleChange('wallets', { ...formState.wallets, Tron: e.target.value })
+                  }
                   className="w-full px-3 py-2 border border-[#E0E7E0] rounded-xl bg-[#F7F9F7] focus:outline-none focus:ring-2 focus:ring-[#008751] text-sm font-mono text-xs"
                 />
               </div>
@@ -120,7 +124,9 @@ export default function SettingsTab({ settings, onSettingsUpdated, addToast }: S
                 <input
                   type="text"
                   value={formState.wallets.Polygon}
-                  onChange={(e) => handleChange('wallets', { ...formState.wallets, Polygon: e.target.value })}
+                  onChange={(e) =>
+                    handleChange('wallets', { ...formState.wallets, Polygon: e.target.value })
+                  }
                   className="w-full px-3 py-2 border border-[#E0E7E0] rounded-xl bg-[#F7F9F7] focus:outline-none focus:ring-2 focus:ring-[#008751] text-sm font-mono text-xs"
                 />
               </div>

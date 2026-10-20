@@ -43,9 +43,7 @@ export default function SupportButton({ className = '' }: SupportButtonProps) {
       >
         <Headphones className="w-4 h-4" />
       </button>
-      <AnimatePresence>
-        {open && <SupportDropdown onClose={close} />}
-      </AnimatePresence>
+      <AnimatePresence>{open && <SupportDropdown onClose={close} />}</AnimatePresence>
     </div>
   );
 }

@@ -37,13 +37,7 @@ describe('SettingsTab', () => {
   });
 
   it('resets form state when reset button is clicked', () => {
-    render(
-      <SettingsTab
-        settings={mockSettings}
-        onSettingsUpdated={vi.fn()}
-        addToast={vi.fn()}
-      />
-    );
+    render(<SettingsTab settings={mockSettings} onSettingsUpdated={vi.fn()} addToast={vi.fn()} />);
 
     const bankInput = screen.getByDisplayValue('Zenith Bank');
     fireEvent.change(bankInput, { target: { value: 'First Bank' } });

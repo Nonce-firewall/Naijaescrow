@@ -18,17 +18,21 @@ RLS policies control rows, not columns. To block privilege escalation (e.g. `rol
 The `delete-account` Netlify function uses service-role key → it bypasses RLS with no extra policy needed. Don't add policies for service-role operations.
 
 **Columns users CAN update themselves:**
+
 - `notification_preferences` — user settings
 - `kyc_status` → only to 'pending' or 'none' (submit / reset)
 - `kyc_data` — KYC submission payload
 
 **Columns blocked for non-admin updates:**
+
 - `role`, `account_status`, `suspend_reason`, `terminate_reason`, `deleted_at`, `email`
 
 ## SQL migration location
+
 `supabase/migrations/20260706_rls_indexes.sql` — run in Supabase SQL Editor (idempotent).
 
 ## Input validation added (UserDashboard.tsx)
+
 - Bank account: `/^\d{10}$/` (NUBAN)
 - BSC/Polygon TX hash: `/^0x[0-9a-fA-F]{64}$/`
 - Tron TX hash: `/^[0-9a-fA-F]{64}$/` (no 0x prefix); detected via `.includes('tron')` on network name
@@ -37,12 +41,14 @@ The `delete-account` Netlify function uses service-role key → it bypasses RLS 
 - Dispute message: maxLength 1000 chars, validated before submit
 
 ## DB query optimizations (App.tsx + dbHelpers.ts)
+
 - All `select('*')` replaced with explicit column strings matching the rowTo* mapper functions
 - Admin orders: `.limit(2000)` cap
 - Admin users: `.limit(5000)` cap
 - `submitKYC` and `handleKYCReview` now throw on Supabase errors (were silently failing)
 
 ## Security headers
+
 - `netlify.toml` — global headers block with CSP, X-Frame-Options, X-Content-Type-Options, X-XSS-Protection, Referrer-Policy, Permissions-Policy
 - `delete-account.mts` — security headers on success response
 - **Gotcha:** `Permissions-Policy` was originally set to `camera=()`, which blocked the KYC live-camera capture site-wide with no permission prompt at all (not a browser-permission issue — the policy blocks the API before the browser can prompt). Fixed to `camera=(self)`. Any feature this app actually uses (camera, mic, etc.) must be set to `(self)`, not `()`, in this header — audit the full allowlist against real feature usage before hardening it further.

@@ -27,14 +27,15 @@ jobs:
 
       - name: Security audit
         run: npm audit --audit-level=high
-        continue-on-error: true
 
-      - name: Type check (tsc)
+      - name: Lint (ESLint)
         run: npm run lint
+
+      - name: Type check
+        run: npm run typecheck
 
       - name: Format check (Prettier)
         run: npm run format:check
-        continue-on-error: true
 
       - name: Run tests with coverage
         run: npm test -- --coverage

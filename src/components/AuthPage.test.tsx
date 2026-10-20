@@ -70,7 +70,9 @@ describe('AuthPage', () => {
 
     const emailInput = screen.getByPlaceholderText(/name@example.com/i);
     const passwordInput = screen.getAllByPlaceholderText(/Min. 6 characters|Repeat password/i)[0];
-    const confirmPasswordInput = screen.getAllByPlaceholderText(/Min. 6 characters|Repeat password/i)[1];
+    const confirmPasswordInput = screen.getAllByPlaceholderText(
+      /Min. 6 characters|Repeat password/i
+    )[1];
     const submitButton = screen.getByRole('button', { name: /Create Account/i });
 
     await user.type(emailInput, 'test@example.com');
@@ -79,10 +81,7 @@ describe('AuthPage', () => {
     await user.click(submitButton);
 
     await waitFor(() => {
-      expect(mockAddToast).toHaveBeenCalledWith(
-        'Passwords do not match',
-        'error'
-      );
+      expect(mockAddToast).toHaveBeenCalledWith('Passwords do not match', 'error');
     });
   });
 
@@ -100,7 +99,9 @@ describe('AuthPage', () => {
 
     const emailInput = screen.getByPlaceholderText(/name@example.com/i);
     const passwordInput = screen.getAllByPlaceholderText(/Min. 6 characters|Repeat password/i)[0];
-    const confirmPasswordInput = screen.getAllByPlaceholderText(/Min. 6 characters|Repeat password/i)[1];
+    const confirmPasswordInput = screen.getAllByPlaceholderText(
+      /Min. 6 characters|Repeat password/i
+    )[1];
     const submitButton = screen.getByRole('button', { name: /Create Account/i });
 
     await user.type(emailInput, 'test@example.com');
@@ -109,10 +110,7 @@ describe('AuthPage', () => {
     await user.click(submitButton);
 
     await waitFor(() => {
-      expect(mockAddToast).toHaveBeenCalledWith(
-        'Password must be at least 6 characters',
-        'error'
-      );
+      expect(mockAddToast).toHaveBeenCalledWith('Password must be at least 6 characters', 'error');
     });
   });
 
@@ -144,11 +142,7 @@ describe('AuthPage', () => {
     const user = userEvent.setup();
 
     render(
-      <AuthPage
-        onBack={mockOnBack}
-        onAuthSuccess={mockOnAuthSuccess}
-        addToast={mockAddToast}
-      />
+      <AuthPage onBack={mockOnBack} onAuthSuccess={mockOnAuthSuccess} addToast={mockAddToast} />
     );
 
     const backButton = screen.getByRole('button', { name: /Back/i });
@@ -172,11 +166,7 @@ describe('AuthPage', () => {
 
   it('should show Google sign-in button', () => {
     render(
-      <AuthPage
-        onBack={mockOnBack}
-        onAuthSuccess={mockOnAuthSuccess}
-        addToast={mockAddToast}
-      />
+      <AuthPage onBack={mockOnBack} onAuthSuccess={mockOnAuthSuccess} addToast={mockAddToast} />
     );
 
     expect(screen.getByRole('button', { name: /Continue with Google/i })).toBeInTheDocument();

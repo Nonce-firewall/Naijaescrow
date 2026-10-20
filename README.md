@@ -17,6 +17,7 @@
 ## Why
 
 Traditional fiat-to-crypto onramps in Nigeria face barriers:
+
 - High fees (5-15%)
 - Long settlement times (24+ hours)
 - Limited payment methods
@@ -62,6 +63,7 @@ Dockerfile                     # Container image definition
 ```
 
 **Tech Stack**:
+
 - **Frontend**: React 19, Vite 6, TypeScript, Tailwind CSS
 - **Backend**: Supabase (PostgreSQL), Netlify Functions
 - **Blockchain**: Ethers.js (for wallet integration)
@@ -72,6 +74,7 @@ Dockerfile                     # Container image definition
 ## Prerequisites
 
 ### Local Development (without Docker)
+
 - Node.js 20 or higher
 - npm 10 or higher
 - Git
@@ -79,6 +82,7 @@ Dockerfile                     # Container image definition
 - Firebase account (optional, for analytics)
 
 ### Docker-based Development
+
 - Docker 20.10+
 - Docker Compose 2.0+
 - Git
@@ -102,12 +106,14 @@ docker compose up --build
 ```
 
 **Verify it works**:
+
 1. Open http://localhost:3000 in your browser
 2. The database and Redis are automatically initialized
 3. Click "Sign Up" and create a test account
 4. After login, access the user dashboard
 
 **Useful Docker commands**:
+
 ```bash
 # View logs
 docker compose logs -f app
@@ -145,6 +151,7 @@ npm -v   # Should be v10+
 ### Environment Setup
 
 1. **Copy the environment template**:
+
    ```bash
    cp .env.example .env.local
    ```
@@ -160,12 +167,13 @@ npm -v   # Should be v10+
      ```
 
 3. **Initialize the database schema**:
+
    ```bash
    # Option 1: Via Supabase Dashboard (recommended)
    # 1. Go to SQL Editor in Supabase Dashboard
    # 2. Create a new query
    # 3. Copy contents of supabase-schema.sql and execute
-   
+
    # Option 2: Via Supabase CLI
    supabase db push
    ```
@@ -190,6 +198,7 @@ npm run dev
 ```
 
 **Verify it works**:
+
 1. Open http://localhost:5000 in your browser
 2. Click "Sign Up" and create a test account
 3. You should see the authentication page
@@ -223,6 +232,7 @@ npm test -- --coverage
 ```
 
 **Test coverage targets**:
+
 - `src/lib/dbHelpers.ts`: Data access validation and transformations
 - `src/lib/schemas.ts`: Input validation rules
 - `src/components/AuthPage.tsx`: Authentication flow and validation
@@ -260,11 +270,13 @@ Full schema documentation: See `supabase-schema.sql`
 ### Making Changes
 
 1. **Create a feature branch**:
+
    ```bash
    git checkout -b feature/your-feature-name
    ```
 
 2. **Make your changes** and write tests alongside:
+
    ```bash
    # Edit your code
    npm test -- --watch  # Run tests as you code
@@ -272,6 +284,7 @@ Full schema documentation: See `supabase-schema.sql`
    ```
 
 3. **Commit with clear messages**:
+
    ```bash
    # Use conventional commits
    git commit -m "feat: add order validation schema"
@@ -279,6 +292,7 @@ Full schema documentation: See `supabase-schema.sql`
    ```
 
 4. **Push and create a Pull Request**:
+
    ```bash
    git push origin feature/your-feature-name
    # Open PR on GitHub
@@ -304,6 +318,7 @@ When working on AdminCMS.tsx or UserDashboard.tsx:
 ### Docker Issues
 
 **Container fails to start**:
+
 ```bash
 # Check logs for errors
 docker-compose logs app
@@ -314,12 +329,14 @@ docker-compose up --build
 ```
 
 **Port conflicts**:
+
 ```bash
 # If port 5000, 5432, or 6379 is already in use, edit docker-compose.yml
 # and change the host port in the `ports` section (e.g., "5001:5000")
 ```
 
 ### "Cannot find module" errors
+
 ```bash
 # Clear node_modules and reinstall
 rm -rf node_modules package-lock.json
@@ -327,15 +344,18 @@ npm install
 ```
 
 ### Supabase connection fails
+
 - Verify `.env.local` has correct `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`
 - Check that Supabase project is active in the dashboard
 - Ensure database schema is initialized via `supabase-schema.sql`
 
 ### Tests fail with "jsdom environment not found"
+
 - Ensure `vitest.config.ts` exists with jsdom environment configured
 - Run `npm install -D jsdom`
 
 ### Port 3000 already in use
+
 ```bash
 # Find and kill the process, or use a different port:
 npm run dev -- --port 3001
@@ -362,5 +382,6 @@ MIT
 ## Support
 
 For issues or questions:
+
 - Open an issue on [GitHub](https://github.com/Nonce-firewall/Naijaescrow/issues)
 - Contact: cryptogangstar247@gmail.com

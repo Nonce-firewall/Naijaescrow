@@ -41,7 +41,9 @@ const CHANNELS = [
 
 export default function SupportDropdown({ onClose }: SupportDropdownProps) {
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
   }, [onClose]);
@@ -58,7 +60,9 @@ export default function SupportDropdown({ onClose }: SupportDropdownProps) {
       <div className="flex items-center justify-between px-4 py-3 border-b border-[#F0F4F0]">
         <div>
           <p className="text-xs font-bold text-[#1A1A1A]">Contact Support</p>
-          <p className="text-[10px] text-gray-400 mt-0.5">Mon–Sun · 9AM – 6PM · 10–30 Mins response</p>
+          <p className="text-[10px] text-gray-400 mt-0.5">
+            Mon–Sun · 9AM – 6PM · 10–30 Mins response
+          </p>
         </div>
         <button
           onClick={onClose}
@@ -88,7 +92,11 @@ export default function SupportDropdown({ onClose }: SupportDropdownProps) {
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
                 <span className="text-xs font-bold text-[#1A1A1A] truncate">{ch.label}</span>
-                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full shrink-0 ${ch.badge}`}>{ch.badgeLabel}</span>
+                <span
+                  className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full shrink-0 ${ch.badge}`}
+                >
+                  {ch.badgeLabel}
+                </span>
               </div>
               <p className="text-[10px] text-gray-500 mt-0.5 truncate">{ch.desc}</p>
               <p className="text-[11px] font-semibold text-gray-700 mt-0.5">{ch.handle}</p>
@@ -108,7 +116,9 @@ export default function SupportDropdown({ onClose }: SupportDropdownProps) {
           <div className="flex-1 min-w-0">
             <p className="text-xs font-bold text-[#1A1A1A]">Email Support</p>
             <p className="text-[10px] text-gray-500 mt-0.5">KYC reviews & trade disputes</p>
-            <p className="text-[11px] font-semibold text-[#008751] mt-0.5">support@9ijaescrow.com.ng</p>
+            <p className="text-[11px] font-semibold text-[#008751] mt-0.5">
+              support@9ijaescrow.com.ng
+            </p>
           </div>
         </a>
       </div>

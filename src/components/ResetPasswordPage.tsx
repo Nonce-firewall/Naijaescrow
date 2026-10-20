@@ -71,9 +71,7 @@ export default function ResetPasswordPage({ onSuccess, addToast }: ResetPassword
           <h2 className="text-2xl sm:text-3xl font-bold text-[#1A1A1A] tracking-tight">
             Set a new password
           </h2>
-          <p className="text-sm text-gray-500">
-            Choose a strong password to secure your account.
-          </p>
+          <p className="text-sm text-gray-500">Choose a strong password to secure your account.</p>
         </div>
 
         <div className="bg-white py-8 px-5 sm:px-8 shadow-sm rounded-3xl border border-[#E0E7E0]">
@@ -155,10 +153,18 @@ export default function ResetPasswordPage({ onSuccess, addToast }: ResetPassword
               <div className="flex items-center gap-2">
                 {[1, 2, 3, 4].map((lvl) => {
                   const strength =
-                    newPassword.length >= 12 && /[A-Z]/.test(newPassword) && /[0-9]/.test(newPassword) && /[^A-Za-z0-9]/.test(newPassword) ? 4
-                    : newPassword.length >= 10 && /[A-Z]/.test(newPassword) && /[0-9]/.test(newPassword) ? 3
-                    : newPassword.length >= 8 ? 2
-                    : 1;
+                    newPassword.length >= 12 &&
+                    /[A-Z]/.test(newPassword) &&
+                    /[0-9]/.test(newPassword) &&
+                    /[^A-Za-z0-9]/.test(newPassword)
+                      ? 4
+                      : newPassword.length >= 10 &&
+                          /[A-Z]/.test(newPassword) &&
+                          /[0-9]/.test(newPassword)
+                        ? 3
+                        : newPassword.length >= 8
+                          ? 2
+                          : 1;
                   const colours = ['bg-red-400', 'bg-amber-400', 'bg-lime-500', 'bg-[#008751]'];
                   return (
                     <div
@@ -168,7 +174,13 @@ export default function ResetPasswordPage({ onSuccess, addToast }: ResetPassword
                   );
                 })}
                 <span className="text-[10px] text-slate-400 shrink-0">
-                  {newPassword.length < 8 ? 'Weak' : newPassword.length < 10 ? 'Fair' : newPassword.length < 12 ? 'Good' : 'Strong'}
+                  {newPassword.length < 8
+                    ? 'Weak'
+                    : newPassword.length < 10
+                      ? 'Fair'
+                      : newPassword.length < 12
+                        ? 'Good'
+                        : 'Strong'}
                 </span>
               </div>
             )}

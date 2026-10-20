@@ -28,10 +28,10 @@ export default function Notification({ toasts, onClose }: NotificationProps) {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.15 } }}
               className={`p-4 rounded-xl border flex items-start gap-3 shadow-lg bg-white ${
-                isSuccess 
-                  ? 'border-emerald-100 text-emerald-950' 
-                  : isError 
-                    ? 'border-rose-100 text-rose-950' 
+                isSuccess
+                  ? 'border-emerald-100 text-emerald-950'
+                  : isError
+                    ? 'border-rose-100 text-rose-950'
                     : 'border-slate-100 text-slate-950'
               }`}
             >

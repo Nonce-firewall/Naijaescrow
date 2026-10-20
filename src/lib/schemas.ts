@@ -16,14 +16,18 @@ export const OrderSchema = z.object({
   network: z.enum(['BSC', 'Tron', 'Polygon']),
   token: z.string(),
   paymentScreenshot: z.string().url(),
-  userBankDetails: z.object({
-    bank: z.string(),
-    account: z.string(),
-  }).optional(),
-  adminBankDetails: z.object({
-    bank: z.string(),
-    account: z.string(),
-  }).optional(),
+  userBankDetails: z
+    .object({
+      bank: z.string(),
+      account: z.string(),
+    })
+    .optional(),
+  adminBankDetails: z
+    .object({
+      bank: z.string(),
+      account: z.string(),
+    })
+    .optional(),
   adminWalletAddress: z.string().optional(),
   userWalletAddress: z.string().optional(),
   blockchainTxId: z.string().optional(),
@@ -42,20 +46,24 @@ export const UserProfileSchema = z.object({
   email: z.string().email(),
   role: z.enum(['user', 'admin']),
   kycStatus: z.enum(['none', 'pending', 'approved', 'rejected']),
-  kycData: z.object({
-    documentType: z.string(),
-    verified: z.boolean(),
-    submittedAt: z.number().optional(),
-    reviewedAt: z.number().optional(),
-    rejectionReason: z.string().optional(),
-  }).optional(),
+  kycData: z
+    .object({
+      documentType: z.string(),
+      verified: z.boolean(),
+      submittedAt: z.number().optional(),
+      reviewedAt: z.number().optional(),
+      rejectionReason: z.string().optional(),
+    })
+    .optional(),
   accountStatus: z.enum(['active', 'suspended', 'terminated', 'pending_reactivation']),
   suspendReason: z.string().optional(),
   terminateReason: z.string().optional(),
-  notificationPreferences: z.object({
-    email: z.boolean(),
-    sms: z.boolean(),
-  }).optional(),
+  notificationPreferences: z
+    .object({
+      email: z.boolean(),
+      sms: z.boolean(),
+    })
+    .optional(),
   createdAt: z.number(),
   deletedAt: z.number().optional(),
 });

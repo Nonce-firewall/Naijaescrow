@@ -35,7 +35,7 @@ export default async (req: Request) => {
   if (!supabaseUrl || !serviceRoleKey) {
     return Response.json(
       { error: 'Server misconfiguration: missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY.' },
-      { status: 500 },
+      { status: 500 }
     );
   }
 
@@ -61,7 +61,10 @@ export default async (req: Request) => {
     // 1. Verify the caller is a real, non-expired authenticated user.
     //    auth.getUser(jwt) validates the JWT signature against the project
     //    secret — it does NOT rely on a live session in the client.
-    const { data: { user }, error: authError } = await admin.auth.getUser(userJwt);
+    const {
+      data: { user },
+      error: authError,
+    } = await admin.auth.getUser(userJwt);
     if (authError || !user) {
       return Response.json({ error: 'Invalid or expired session.' }, { status: 401 });
     }
@@ -79,14 +82,14 @@ export default async (req: Request) => {
         deleted_email: user.email,
         account_status: 'deleted',
         notification_preferences: null,
-        deleted_at: Date.now(),   // bigint milliseconds — matches schema convention
+        deleted_at: Date.now(), // bigint milliseconds — matches schema convention
       })
       .eq('id', uid);
 
     if (scrubError) {
       return Response.json(
         { error: `Failed to scrub profile: ${scrubError.message}` },
-        { status: 500 },
+        { status: 500 }
       );
     }
 
@@ -95,17 +98,20 @@ export default async (req: Request) => {
     if (deleteError) {
       return Response.json(
         { error: `Failed to delete auth account: ${deleteError.message}` },
-        { status: 500 },
+        { status: 500 }
       );
     }
 
-    return Response.json({ success: true }, {
-      headers: {
-        'X-Content-Type-Options': 'nosniff',
-        'X-Frame-Options': 'DENY',
-        'Referrer-Policy': 'strict-origin-when-cross-origin',
-      },
-    });
+    return Response.json(
+      { success: true },
+      {
+        headers: {
+          'X-Content-Type-Options': 'nosniff',
+          'X-Frame-Options': 'DENY',
+          'Referrer-Policy': 'strict-origin-when-cross-origin',
+        },
+      }
+    );
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error.';
     return Response.json({ error: message }, { status: 500 });

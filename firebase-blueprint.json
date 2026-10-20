@@ -37,7 +37,19 @@
         "adminBankDetails": { "type": "object" },
         "adminWalletAddress": { "type": "string" }
       },
-      "required": ["userId", "userEmail", "type", "cryptoAmount", "ngnAmount", "rate", "status", "network", "token", "paymentScreenshot", "createdAt"]
+      "required": [
+        "userId",
+        "userEmail",
+        "type",
+        "cryptoAmount",
+        "ngnAmount",
+        "rate",
+        "status",
+        "network",
+        "token",
+        "paymentScreenshot",
+        "createdAt"
+      ]
     },
     "AdminSettings": {
       "title": "Admin Settings",

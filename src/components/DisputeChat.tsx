@@ -157,7 +157,15 @@ export default function DisputeChat({
       setIsSending(false);
       inputRef.current?.focus();
     }
-  }, [input, isSending, disputeId, currentUserId, currentUserEmail, currentUserRole, onMessageSent]);
+  }, [
+    input,
+    isSending,
+    disputeId,
+    currentUserId,
+    currentUserEmail,
+    currentUserRole,
+    onMessageSent,
+  ]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -167,18 +175,32 @@ export default function DisputeChat({
   };
 
   /** Avatar for a given sender */
-  function Avatar({ role, email, size = 'sm' }: { role: 'user' | 'admin'; email: string; size?: 'sm' | 'xs' }) {
+  function Avatar({
+    role,
+    email,
+    size = 'sm',
+  }: {
+    role: 'user' | 'admin';
+    email: string;
+    size?: 'sm' | 'xs';
+  }) {
     const dim = size === 'xs' ? 'w-6 h-6 text-[9px]' : 'w-8 h-8 text-[10px]';
     if (role === 'admin') {
       return (
-        <div className={`${dim} rounded-full bg-[#008751] flex items-center justify-center shrink-0`}>
-          <ShieldCheck className={size === 'xs' ? 'w-3 h-3 text-white' : 'w-3.5 h-3.5 text-white'} />
+        <div
+          className={`${dim} rounded-full bg-[#008751] flex items-center justify-center shrink-0`}
+        >
+          <ShieldCheck
+            className={size === 'xs' ? 'w-3 h-3 text-white' : 'w-3.5 h-3.5 text-white'}
+          />
         </div>
       );
     }
     const initial = (email || 'U')[0].toUpperCase();
     return (
-      <div className={`${dim} rounded-full bg-slate-300 flex items-center justify-center shrink-0 font-bold text-slate-600`}>
+      <div
+        className={`${dim} rounded-full bg-slate-300 flex items-center justify-center shrink-0 font-bold text-slate-600`}
+      >
         {initial}
       </div>
     );
@@ -199,19 +221,19 @@ export default function DisputeChat({
     const displayName = isAdminMsg
       ? 'Admin'
       : isMine
-        ? (currentUserDisplayName || (msg.senderEmail || '').split('@')[0])
+        ? currentUserDisplayName || (msg.senderEmail || '').split('@')[0]
         : (msg.senderEmail || '').split('@')[0];
 
     return (
       <div className={`flex items-end gap-2 ${isMine ? 'flex-row-reverse' : 'flex-row'}`}>
         {/* Avatar — only on last message in a group */}
         <div className="w-8 shrink-0">
-          {isLastInGroup && showAvatar && (
-            <Avatar role={msg.senderRole} email={msg.senderEmail} />
-          )}
+          {isLastInGroup && showAvatar && <Avatar role={msg.senderRole} email={msg.senderEmail} />}
         </div>
 
-        <div className={`flex flex-col gap-0.5 max-w-[75%] ${isMine ? 'items-end' : 'items-start'}`}>
+        <div
+          className={`flex flex-col gap-0.5 max-w-[75%] ${isMine ? 'items-end' : 'items-start'}`}
+        >
           <div
             className={`px-3.5 py-2.5 text-[13px] leading-relaxed break-words shadow-sm ${
               isMine
@@ -228,8 +250,12 @@ export default function DisputeChat({
 
           {/* Timestamp + name — only on last in group */}
           {isLastInGroup && (
-            <span className={`text-[10px] text-slate-400 font-mono px-1 ${isMine ? 'text-right' : 'text-left'}`}>
-              {isAdminMsg && <ShieldCheck className="inline w-2.5 h-2.5 mr-0.5 text-[#008751] mb-px" />}
+            <span
+              className={`text-[10px] text-slate-400 font-mono px-1 ${isMine ? 'text-right' : 'text-left'}`}
+            >
+              {isAdminMsg && (
+                <ShieldCheck className="inline w-2.5 h-2.5 mr-0.5 text-[#008751] mb-px" />
+              )}
               {displayName} · {formatNGT(msg.createdAt)}
             </span>
           )}
@@ -254,7 +280,6 @@ export default function DisputeChat({
     <div className={`flex flex-col ${className}`}>
       {/* ── Chat window ─────────────────────────────────────── */}
       <div className="flex flex-col gap-1 min-h-[220px] max-h-[420px] overflow-y-auto px-3 py-3 scroll-smooth bg-[#F6F8F6] rounded-2xl border border-[#E0E7E0]">
-
         {/* Initial dispute message as first bubble */}
         {initialMessage && (
           <motion.div
@@ -276,13 +301,19 @@ export default function DisputeChat({
               <div className="w-8 shrink-0">
                 <Avatar role="user" email={initialMessageEmail || currentUserEmail} />
               </div>
-              <div className={`flex flex-col gap-0.5 max-w-[75%] ${isAdmin ? 'items-start' : 'items-end'}`}>
+              <div
+                className={`flex flex-col gap-0.5 max-w-[75%] ${isAdmin ? 'items-start' : 'items-end'}`}
+              >
                 <div className="relative px-3.5 py-2.5 text-[13px] leading-relaxed break-words bg-[#1A1A1A] text-white rounded-3xl rounded-br-md shadow-sm">
-                  <span className="block text-[9px] font-bold uppercase tracking-wider text-white/50 mb-1">📌 Initial dispute</span>
+                  <span className="block text-[9px] font-bold uppercase tracking-wider text-white/50 mb-1">
+                    📌 Initial dispute
+                  </span>
                   {initialMessage}
                 </div>
                 <span className="text-[10px] text-slate-400 font-mono px-1 text-right">
-                  {initialMessageDisplayName || (initialMessageEmail || currentUserEmail).split('@')[0]} · {initialMessageAt ? formatNGT(initialMessageAt) : ''}
+                  {initialMessageDisplayName ||
+                    (initialMessageEmail || currentUserEmail).split('@')[0]}{' '}
+                  · {initialMessageAt ? formatNGT(initialMessageAt) : ''}
                 </span>
               </div>
             </div>
@@ -313,10 +344,12 @@ export default function DisputeChat({
         )}
 
         {/* Message separator if there are chat messages */}
-        {(initialMessage && messages.length > 0) && (
+        {initialMessage && messages.length > 0 && (
           <div className="flex items-center gap-2 my-1">
             <div className="flex-1 h-px bg-slate-200" />
-            <span className="text-[9px] text-slate-400 font-mono uppercase tracking-wider shrink-0">conversation</span>
+            <span className="text-[9px] text-slate-400 font-mono uppercase tracking-wider shrink-0">
+              conversation
+            </span>
             <div className="flex-1 h-px bg-slate-200" />
           </div>
         )}
@@ -334,7 +367,9 @@ export default function DisputeChat({
             <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center">
               <Send className="w-4 h-4 text-slate-400" />
             </div>
-            <p className="text-[11px] text-slate-400 font-mono">No messages yet — start the conversation.</p>
+            <p className="text-[11px] text-slate-400 font-mono">
+              No messages yet — start the conversation.
+            </p>
           </div>
         )}
 
@@ -387,7 +422,9 @@ export default function DisputeChat({
         {!isOpen && !adminResponse && messages.length > 0 && (
           <div className="flex items-center gap-2 mt-3">
             <div className="flex-1 h-px bg-slate-200" />
-            <span className="text-[9px] text-slate-400 font-mono shrink-0">Resolved · thread closed</span>
+            <span className="text-[9px] text-slate-400 font-mono shrink-0">
+              Resolved · thread closed
+            </span>
             <div className="flex-1 h-px bg-slate-200" />
           </div>
         )}
@@ -396,9 +433,7 @@ export default function DisputeChat({
       </div>
 
       {/* Send error */}
-      {sendError && (
-        <p className="text-[10px] text-rose-500 font-mono mt-1 px-1">{sendError}</p>
-      )}
+      {sendError && <p className="text-[10px] text-rose-500 font-mono mt-1 px-1">{sendError}</p>}
 
       {/* Input row — only when open */}
       {isOpen && (
@@ -439,7 +474,9 @@ export default function DisputeChat({
       {!isOpen && (
         <div className="flex items-center justify-center gap-2 mt-2 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl">
           <CheckCircle2 className="w-3.5 h-3.5 text-[#008751]" />
-          <span className="text-[11px] text-slate-500 font-mono">This dispute is resolved — thread is read-only</span>
+          <span className="text-[11px] text-slate-500 font-mono">
+            This dispute is resolved — thread is read-only
+          </span>
         </div>
       )}
     </div>

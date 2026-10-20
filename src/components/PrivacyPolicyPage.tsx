@@ -35,7 +35,9 @@ export default function PrivacyPolicyPage() {
             <ShieldCheck className="w-3.5 h-3.5" />
             Legal Document
           </div>
-          <h1 className="text-3xl sm:text-4xl font-bold text-[#1A1A1A] tracking-tight">Privacy Policy</h1>
+          <h1 className="text-3xl sm:text-4xl font-bold text-[#1A1A1A] tracking-tight">
+            Privacy Policy
+          </h1>
           <p className="mt-2 text-sm text-gray-500 font-mono">Last updated: July 2026</p>
         </div>
 
@@ -104,7 +106,10 @@ export default function PrivacyPolicyPage() {
             </h2>
             <p className="text-sm text-gray-600 leading-relaxed pl-8">
               Privacy inquiries:{' '}
-              <a href="mailto:privacy@9ijaescrow.com" className="text-[#008751] font-semibold hover:underline">
+              <a
+                href="mailto:privacy@9ijaescrow.com"
+                className="text-[#008751] font-semibold hover:underline"
+              >
                 privacy@9ijaescrow.com
               </a>
             </p>

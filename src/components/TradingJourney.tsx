@@ -10,14 +10,14 @@ interface TradingJourneyProps {
 }
 
 // ── SVG chart constants ───────────────────────────────────────────────────────
-const W       = 280;  // logical viewBox width  (scales to 100% via width="100%")
-const H_TOTAL = 120;  // logical viewBox height for the unified chart
-const PAD     = 6;    // inner padding so strokes don't clip at edges
+const W = 280; // logical viewBox width  (scales to 100% via width="100%")
+const H_TOTAL = 120; // logical viewBox height for the unified chart
+const PAD = 6; // inner padding so strokes don't clip at edges
 
 // BUY series: upper 50% of chart; SELL: lower 50%, reaching the very bottom edge
 // BUY_Y_MAX pushed to 50% so the green zone gets symmetric height to SELL
-const BUY_Y_MIN  = PAD;
-const BUY_Y_MAX  = H_TOTAL * 0.50;
+const BUY_Y_MIN = PAD;
+const BUY_Y_MAX = H_TOTAL * 0.5;
 const SELL_Y_MIN = H_TOTAL * 0.55;
 const SELL_Y_MAX = H_TOTAL;
 
@@ -25,7 +25,7 @@ interface SeriesResult {
   line: string;
   fill: string;
   firstPt: { x: number; y: number } | null;
-  lastPt:  { x: number; y: number } | null;
+  lastPt: { x: number; y: number } | null;
 }
 
 // ── Build smooth bezier line + fill path for a series within a Y zone.
@@ -36,20 +36,20 @@ function buildSeriesPaths(
   yMin: number,
   yMax: number,
   fillClosesAt: number,
-  flatDirection: 'up' | 'down',   // direction of the S-curve when all rates are identical
+  flatDirection: 'up' | 'down' // direction of the S-curve when all rates are identical
 ): SeriesResult {
   if (seriesOrders.length === 0) return { line: '', fill: '', firstPt: null, lastPt: null };
 
   const sorted = [...seriesOrders].sort((a, b) => a.createdAt - b.createdAt);
 
-  const rates     = sorted.map(o => o.rate);
-  const rateMin   = Math.min(...rates);
-  const rateMax   = Math.max(...rates);
+  const rates = sorted.map((o) => o.rate);
+  const rateMin = Math.min(...rates);
+  const rateMax = Math.max(...rates);
   const rateRange = rateMax - rateMin;
 
-  const times     = sorted.map(o => o.createdAt);
-  const timeMin   = times[0];
-  const timeMax   = times[times.length - 1];
+  const times = sorted.map((o) => o.createdAt);
+  const timeMin = times[0];
+  const timeMax = times[times.length - 1];
   const timeRange = timeMax - timeMin;
 
   const xRange = W - PAD * 2;
@@ -57,15 +57,13 @@ function buildSeriesPaths(
 
   // Higher rate → closer to yMin (top of zone).
   const toCoord = (o: Order) => ({
-    x: timeRange === 0
-      ? W / 2
-      : PAD + ((o.createdAt - timeMin) / timeRange) * xRange,
+    x: timeRange === 0 ? W / 2 : PAD + ((o.createdAt - timeMin) / timeRange) * xRange,
     y: yMax - ((o.rate - rateMin) / rateRange) * yRange,
   });
 
   let line: string;
   let firstPt: { x: number; y: number };
-  let lastPt:  { x: number; y: number };
+  let lastPt: { x: number; y: number };
 
   if (rateRange === 0 || timeRange === 0 || sorted.length === 1) {
     // All orders at the same rate (or only one order / all same timestamp).
@@ -73,25 +71,26 @@ function buildSeriesPaths(
     // direction that reflects this series' typical market direction:
     //   BUY  flatDirection='up'   → curves from bottom of zone → top
     //   SELL flatDirection='down' → curves from top of zone    → bottom
-    const yStart = flatDirection === 'up'   ? yMax        : yMin;
+    const yStart = flatDirection === 'up' ? yMax : yMin;
     // Pull the endpoint 14 units away from the zone edge so the endpoint dot
     // doesn't land on top of the corner rate label (top-right for BUY, bottom-right for SELL)
-    const yEnd   = flatDirection === 'up'   ? yMin + 14   : yMax - 14;
-    const cp1x   = (PAD + xRange * 0.38).toFixed(1);
-    const cp2x   = (PAD + xRange * 0.62).toFixed(1);
-    line    = `M ${PAD} ${yStart.toFixed(1)} C ${cp1x} ${yStart.toFixed(1)}, ${cp2x} ${yEnd.toFixed(1)}, ${(W - PAD).toFixed(1)} ${yEnd.toFixed(1)}`;
-    firstPt = { x: PAD,     y: yStart };
-    lastPt  = { x: W - PAD, y: yEnd   };
+    const yEnd = flatDirection === 'up' ? yMin + 14 : yMax - 14;
+    const cp1x = (PAD + xRange * 0.38).toFixed(1);
+    const cp2x = (PAD + xRange * 0.62).toFixed(1);
+    line = `M ${PAD} ${yStart.toFixed(1)} C ${cp1x} ${yStart.toFixed(1)}, ${cp2x} ${yEnd.toFixed(1)}, ${(W - PAD).toFixed(1)} ${yEnd.toFixed(1)}`;
+    firstPt = { x: PAD, y: yStart };
+    lastPt = { x: W - PAD, y: yEnd };
   } else {
     const coords = sorted.map(toCoord);
     line = `M ${coords[0].x.toFixed(1)} ${coords[0].y.toFixed(1)}`;
     for (let i = 1; i < coords.length; i++) {
-      const p = coords[i - 1], c = coords[i];
+      const p = coords[i - 1],
+        c = coords[i];
       const mx = ((p.x + c.x) / 2).toFixed(1);
       line += ` C ${mx} ${p.y.toFixed(1)}, ${mx} ${c.y.toFixed(1)}, ${c.x.toFixed(1)} ${c.y.toFixed(1)}`;
     }
     firstPt = coords[0];
-    lastPt  = coords[coords.length - 1];
+    lastPt = coords[coords.length - 1];
   }
 
   const fill = `${line} L ${lastPt.x.toFixed(1)} ${fillClosesAt} L ${firstPt.x.toFixed(1)} ${fillClosesAt} Z`;
@@ -102,14 +101,16 @@ function buildSeriesPaths(
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function formatVolume(n: number): string {
   if (n >= 1_000_000_000) return `₦${(n / 1_000_000_000).toFixed(1)}B`;
-  if (n >= 1_000_000)     return `₦${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000)         return `₦${(n / 1_000).toFixed(0)}K`;
+  if (n >= 1_000_000) return `₦${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `₦${(n / 1_000).toFixed(0)}K`;
   return `₦${n.toLocaleString()}`;
 }
 
 function formatTime(ts: number): string {
   return new Date(ts).toLocaleTimeString('en-NG', {
-    hour: '2-digit', minute: '2-digit', hour12: true,
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true,
   });
 }
 
@@ -117,10 +118,10 @@ function formatTime(ts: number): string {
 interface UnifiedChartProps {
   buyLine: string;
   buyFill: string;
-  buyLastPt:  { x: number; y: number } | null;
+  buyLastPt: { x: number; y: number } | null;
   sellLine: string;
   sellFill: string;
-  sellLastPt:  { x: number; y: number } | null;
+  sellLastPt: { x: number; y: number } | null;
   buyGradId: string;
   sellGradId: string;
   buyEmpty: boolean;
@@ -130,11 +131,18 @@ interface UnifiedChartProps {
 }
 
 const UnifiedChart = memo(function UnifiedChart({
-  buyLine, buyFill, buyLastPt,
-  sellLine, sellFill, sellLastPt,
-  buyGradId, sellGradId,
-  buyEmpty, sellEmpty,
-  effectiveBuyRate, effectiveSellRate,
+  buyLine,
+  buyFill,
+  buyLastPt,
+  sellLine,
+  sellFill,
+  sellLastPt,
+  buyGradId,
+  sellGradId,
+  buyEmpty,
+  sellEmpty,
+  effectiveBuyRate,
+  effectiveSellRate,
 }: UnifiedChartProps) {
   // BUY gradient: faint at top edge (y=0), grows opaque toward the line (y=1 direction)
   // SELL gradient: opaque near the line (y=0 direction), faint toward bottom edge (y=1)
@@ -151,22 +159,25 @@ const UnifiedChart = memo(function UnifiedChart({
         <defs>
           {/* BUY fill: transparent at top edge, opaque near the line */}
           <linearGradient id={buyGradId} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%"   stopColor="#10B981" stopOpacity={0.04} />
+            <stop offset="0%" stopColor="#10B981" stopOpacity={0.04} />
             <stop offset="100%" stopColor="#10B981" stopOpacity={0.35} />
           </linearGradient>
           {/* SELL fill: peaks at the line (≈55% = SELL_Y_MIN/H_TOTAL), fades toward bottom edge */}
           <linearGradient id={sellGradId} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%"   stopColor="#F43F5E" stopOpacity={0.04} />
-            <stop offset="55%"  stopColor="#F43F5E" stopOpacity={0.38} />
+            <stop offset="0%" stopColor="#F43F5E" stopOpacity={0.04} />
+            <stop offset="55%" stopColor="#F43F5E" stopOpacity={0.38} />
             <stop offset="100%" stopColor="#F43F5E" stopOpacity={0.04} />
           </linearGradient>
         </defs>
 
         {/* Subtle horizontal grid lines across full height */}
-        {[0.25, 0.5, 0.75].map(f => (
+        {[0.25, 0.5, 0.75].map((f) => (
           <line
             key={f}
-            x1={0} y1={H_TOTAL * f} x2={W} y2={H_TOTAL * f}
+            x1={0}
+            y1={H_TOTAL * f}
+            x2={W}
+            y2={H_TOTAL * f}
             stroke="white"
             strokeOpacity={0.03}
             strokeWidth="1"
@@ -177,8 +188,8 @@ const UnifiedChart = memo(function UnifiedChart({
         {/* Line/fill/dot always render — buyLine is either real order data or a
             synthesised seed point at the current rate, so new/non-trading users
             still see the curve. buyEmpty only controls the dimmed style + hint text below. */}
-        {buyFill  && <path d={buyFill}  fill={`url(#${buyGradId})`} opacity={buyEmpty ? 0.5 : 1} />}
-        {buyLine  && (
+        {buyFill && <path d={buyFill} fill={`url(#${buyGradId})`} opacity={buyEmpty ? 0.5 : 1} />}
+        {buyLine && (
           <path
             d={buyLine}
             fill="none"
@@ -200,8 +211,10 @@ const UnifiedChart = memo(function UnifiedChart({
         )}
 
         {/* ── SELL series ── */}
-        {sellFill  && <path d={sellFill}  fill={`url(#${sellGradId})`} opacity={sellEmpty ? 0.5 : 1} />}
-        {sellLine  && (
+        {sellFill && (
+          <path d={sellFill} fill={`url(#${sellGradId})`} opacity={sellEmpty ? 0.5 : 1} />
+        )}
+        {sellLine && (
           <path
             d={sellLine}
             fill="none"
@@ -244,15 +257,33 @@ const UnifiedChart = memo(function UnifiedChart({
 
       {/* Empty state hints */}
       {buyEmpty && (
-        <div className="absolute flex items-center justify-center pointer-events-none"
-          style={{ top: `${BUY_Y_MIN / H_TOTAL * 100}%`, height: `${(BUY_Y_MAX - BUY_Y_MIN) / H_TOTAL * 100}%`, left: 0, right: 0 }}>
-          <span className="text-[8px] text-gray-800 font-mono uppercase tracking-widest">no buy trades yet</span>
+        <div
+          className="absolute flex items-center justify-center pointer-events-none"
+          style={{
+            top: `${(BUY_Y_MIN / H_TOTAL) * 100}%`,
+            height: `${((BUY_Y_MAX - BUY_Y_MIN) / H_TOTAL) * 100}%`,
+            left: 0,
+            right: 0,
+          }}
+        >
+          <span className="text-[8px] text-gray-800 font-mono uppercase tracking-widest">
+            no buy trades yet
+          </span>
         </div>
       )}
       {sellEmpty && (
-        <div className="absolute flex items-center justify-center pointer-events-none"
-          style={{ top: `${SELL_Y_MIN / H_TOTAL * 100}%`, height: `${(SELL_Y_MAX - SELL_Y_MIN) / H_TOTAL * 100}%`, left: 0, right: 0 }}>
-          <span className="text-[8px] text-gray-800 font-mono uppercase tracking-widest">no sell trades yet</span>
+        <div
+          className="absolute flex items-center justify-center pointer-events-none"
+          style={{
+            top: `${(SELL_Y_MIN / H_TOTAL) * 100}%`,
+            height: `${((SELL_Y_MAX - SELL_Y_MIN) / H_TOTAL) * 100}%`,
+            left: 0,
+            right: 0,
+          }}
+        >
+          <span className="text-[8px] text-gray-800 font-mono uppercase tracking-widest">
+            no sell trades yet
+          </span>
         </div>
       )}
     </div>
@@ -265,45 +296,57 @@ export default function TradingJourney({
   effectiveBuyRate,
   effectiveSellRate,
 }: TradingJourneyProps) {
-
   // useId ensures gradient IDs are unique even if multiple instances render
   const uid = useId();
-  const buyGradId  = `tj-buy-${uid}`;
+  const buyGradId = `tj-buy-${uid}`;
   const sellGradId = `tj-sell-${uid}`;
 
   const completedOrders = useMemo(
-    () => orders.filter(o => o.status === 'completed').sort((a, b) => a.createdAt - b.createdAt),
-    [orders],
+    () => orders.filter((o) => o.status === 'completed').sort((a, b) => a.createdAt - b.createdAt),
+    [orders]
   );
 
-  const buyOrders  = useMemo(() => completedOrders.filter(o => o.type === 'buy'),  [completedOrders]);
-  const sellOrders = useMemo(() => completedOrders.filter(o => o.type === 'sell'), [completedOrders]);
+  const buyOrders = useMemo(
+    () => completedOrders.filter((o) => o.type === 'buy'),
+    [completedOrders]
+  );
+  const sellOrders = useMemo(
+    () => completedOrders.filter((o) => o.type === 'sell'),
+    [completedOrders]
+  );
 
   // When a series has no completed orders, synthesise a single seed point at the
   // current effective rate so the S-curve always renders (even for brand-new users).
   // createdAt=0 is fine here — with only one point, timeRange=0 so x is always W/2.
-  const buySeriesInput  = useMemo(
-    () => buyOrders.length  > 0 ? buyOrders  : [{ createdAt: 0, rate: effectiveBuyRate  } as Order],
-    [buyOrders,  effectiveBuyRate],
+  const buySeriesInput = useMemo(
+    () => (buyOrders.length > 0 ? buyOrders : [{ createdAt: 0, rate: effectiveBuyRate } as Order]),
+    [buyOrders, effectiveBuyRate]
   );
   const sellSeriesInput = useMemo(
-    () => sellOrders.length > 0 ? sellOrders : [{ createdAt: 0, rate: effectiveSellRate } as Order],
-    [sellOrders, effectiveSellRate],
+    () =>
+      sellOrders.length > 0 ? sellOrders : [{ createdAt: 0, rate: effectiveSellRate } as Order],
+    [sellOrders, effectiveSellRate]
   );
 
   // BUY:  upper zone, fill closes at y=0       (top edge),    S-curve ascends  when rates are flat
   // SELL: lower zone, fill closes at y=H_TOTAL (bottom edge), S-curve descends when rates are flat
   //       flatDirection:'down' starts the line at SELL_Y_MIN (top of zone, far from fillClosesAt=120)
   //       giving a large fill on the left that tapers right — mirrors the BUY fill shape.
-  const buy  = useMemo(() => buildSeriesPaths(buySeriesInput,  BUY_Y_MIN,  BUY_Y_MAX,  0,       'up'),   [buySeriesInput]);
-  const sell = useMemo(() => buildSeriesPaths(sellSeriesInput, SELL_Y_MIN, SELL_Y_MAX, H_TOTAL, 'down'), [sellSeriesInput]);
+  const buy = useMemo(
+    () => buildSeriesPaths(buySeriesInput, BUY_Y_MIN, BUY_Y_MAX, 0, 'up'),
+    [buySeriesInput]
+  );
+  const sell = useMemo(
+    () => buildSeriesPaths(sellSeriesInput, SELL_Y_MIN, SELL_Y_MAX, H_TOTAL, 'down'),
+    [sellSeriesInput]
+  );
 
   const stats = useMemo(() => {
     const volume = completedOrders.reduce((s, o) => s + o.ngnAmount, 0);
-    const rate   = orders.length ? Math.round((completedOrders.length / orders.length) * 100) : 0;
+    const rate = orders.length ? Math.round((completedOrders.length / orders.length) * 100) : 0;
     return {
       completed: completedOrders.length,
-      buyCount:  buyOrders.length,
+      buyCount: buyOrders.length,
       sellCount: sellOrders.length,
       volume,
       rate,
@@ -312,7 +355,7 @@ export default function TradingJourney({
 
   const recentOrders = useMemo(
     () => [...orders].sort((a, b) => b.createdAt - a.createdAt).slice(0, 3),
-    [orders],
+    [orders]
   );
 
   return (
@@ -349,12 +392,9 @@ export default function TradingJourney({
 
       {/* ── Body: split chart + stats ────────────────────────────────────────── */}
       <div className="flex flex-col sm:flex-row">
-
         {/* Unified chart area — BUY (upper zone) + SELL (lower zone) in one SVG */}
         <div className="flex-1 flex flex-col px-3 sm:px-6 pt-2.5 sm:pt-3 pb-3 sm:pb-5 min-w-0">
-          <div
-            className="relative h-[130px] sm:h-auto sm:flex-1 sm:min-h-[120px] rounded-xl bg-[#0A0A0A] border border-white/[0.04] overflow-hidden"
-          >
+          <div className="relative h-[130px] sm:h-auto sm:flex-1 sm:min-h-[120px] rounded-xl bg-[#0A0A0A] border border-white/[0.04] overflow-hidden">
             <UnifiedChart
               buyLine={buy.line}
               buyFill={buy.fill}
@@ -379,19 +419,31 @@ export default function TradingJourney({
         {/* Stats ── 3-col on mobile, 1-col on desktop */}
         <div className="grid grid-cols-3 sm:grid-cols-1 sm:w-40">
           <div className="px-3 sm:px-5 py-2.5 sm:py-3.5 border-r sm:border-r-0 sm:border-b border-white/[0.05]">
-            <div className="text-[8px] sm:text-[9px] text-gray-600 uppercase tracking-wider mb-0.5 sm:mb-1">Completed</div>
-            <div className="text-base sm:text-xl font-bold text-white tabular-nums leading-none">{stats.completed}</div>
-            <div className="text-[8px] text-gray-700 font-mono mt-0.5 sm:mt-1">{stats.rate}% success</div>
+            <div className="text-[8px] sm:text-[9px] text-gray-600 uppercase tracking-wider mb-0.5 sm:mb-1">
+              Completed
+            </div>
+            <div className="text-base sm:text-xl font-bold text-white tabular-nums leading-none">
+              {stats.completed}
+            </div>
+            <div className="text-[8px] text-gray-700 font-mono mt-0.5 sm:mt-1">
+              {stats.rate}% success
+            </div>
           </div>
 
           <div className="px-3 sm:px-5 py-2.5 sm:py-3.5 border-r sm:border-r-0 sm:border-b border-white/[0.05]">
-            <div className="text-[8px] sm:text-[9px] text-gray-600 uppercase tracking-wider mb-0.5 sm:mb-1">Total Volume</div>
-            <div className="text-base sm:text-xl font-bold text-white tabular-nums leading-none">{formatVolume(stats.volume)}</div>
+            <div className="text-[8px] sm:text-[9px] text-gray-600 uppercase tracking-wider mb-0.5 sm:mb-1">
+              Total Volume
+            </div>
+            <div className="text-base sm:text-xl font-bold text-white tabular-nums leading-none">
+              {formatVolume(stats.volume)}
+            </div>
             <div className="text-[8px] text-gray-700 font-mono mt-0.5 sm:mt-1">NGN</div>
           </div>
 
           <div className="px-3 sm:px-5 py-2.5 sm:py-3.5">
-            <div className="text-[8px] sm:text-[9px] text-gray-600 uppercase tracking-wider mb-0.5 sm:mb-1">Order Type</div>
+            <div className="text-[8px] sm:text-[9px] text-gray-600 uppercase tracking-wider mb-0.5 sm:mb-1">
+              Order Type
+            </div>
             <div className="text-base sm:text-xl font-bold text-white tabular-nums leading-none flex items-baseline gap-1">
               <span className="text-emerald-400">{stats.buyCount}</span>
               <span className="text-gray-700 text-xs">/</span>
@@ -415,11 +467,13 @@ export default function TradingJourney({
                 className={`flex items-center justify-between gap-2 ${idx === 2 ? 'hidden sm:flex' : ''}`}
               >
                 <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
-                  <span className={`shrink-0 text-[8px] font-extrabold px-1.5 py-[3px] rounded uppercase tracking-wide ${
-                    order.type === 'buy'
-                      ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                      : 'bg-rose-500/10   text-rose-400   border border-rose-500/20'
-                  }`}>
+                  <span
+                    className={`shrink-0 text-[8px] font-extrabold px-1.5 py-[3px] rounded uppercase tracking-wide ${
+                      order.type === 'buy'
+                        ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                        : 'bg-rose-500/10   text-rose-400   border border-rose-500/20'
+                    }`}
+                  >
                     {order.type}
                   </span>
                   <span className="text-[10px] text-gray-400 font-mono truncate">
@@ -433,11 +487,15 @@ export default function TradingJourney({
                   <span className="text-[10px] text-white font-mono font-semibold tabular-nums">
                     ₦{order.ngnAmount.toLocaleString()}
                   </span>
-                  <span className={`text-[8px] font-bold px-1.5 py-[3px] rounded-full ${
-                    order.status === 'completed' ? 'text-[#00FF85] bg-[#00FF85]/10' :
-                    order.status === 'pending'   ? 'text-amber-400 bg-amber-400/10'  :
-                                                   'text-rose-400  bg-rose-400/10'
-                  }`}>
+                  <span
+                    className={`text-[8px] font-bold px-1.5 py-[3px] rounded-full ${
+                      order.status === 'completed'
+                        ? 'text-[#00FF85] bg-[#00FF85]/10'
+                        : order.status === 'pending'
+                          ? 'text-amber-400 bg-amber-400/10'
+                          : 'text-rose-400  bg-rose-400/10'
+                    }`}
+                  >
                     {order.status}
                   </span>
                 </div>

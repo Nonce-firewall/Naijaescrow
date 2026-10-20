@@ -12,7 +12,7 @@ import {
   rowToAnnouncement,
   rowToCoin,
   rowToUserProfile,
-  rowToDispute
+  rowToDispute,
 } from './lib/dbHelpers';
 import { UserProfile, Order, AdminSettings, Announcement, CoinListing, Dispute } from './types';
 
@@ -22,17 +22,18 @@ import Notification, { ToastMessage } from './components/Notification';
 import PrivacyPolicyPage from './components/PrivacyPolicyPage';
 import TermsPage from './components/TermsPage';
 import SupportPage from './components/SupportPage';
+import ErrorBoundary from './components/ErrorBoundary';
 
 // ── Static URL routing (no react-router needed) ──────────────────────────────
 // Normalize pathname: strip trailing slash so /privacy/ === /privacy
-const _pathname = typeof window !== 'undefined'
-  ? window.location.pathname.replace(/\/$/, '') || '/'
-  : '/';
+const _pathname =
+  typeof window !== 'undefined' ? window.location.pathname.replace(/\/$/, '') || '/' : '/';
 const STATIC_ROUTES: Record<string, { title: string; component: React.ReactElement }> = {
   '/privacy': { title: 'Privacy Policy — 9ija Escrow', component: <PrivacyPolicyPage /> },
-  '/terms':   { title: 'Terms of Use — 9ija Escrow',   component: <TermsPage /> },
-  '/support': { title: 'Support — 9ija Escrow',         component: <SupportPage /> },
+  '/terms': { title: 'Terms of Use — 9ija Escrow', component: <TermsPage /> },
+  '/support': { title: 'Support — 9ija Escrow', component: <SupportPage /> },
 };
+export { STATIC_ROUTES };
 const _staticRoute = STATIC_ROUTES[_pathname] ?? null;
 if (_staticRoute && typeof document !== 'undefined') {
   document.title = _staticRoute.title;
@@ -43,10 +44,7 @@ const UserDashboard = lazy(() => import('./components/UserDashboard'));
 const AdminCMS = lazy(() => import('./components/AdminCMS'));
 const ResetPasswordPage = lazy(() => import('./components/ResetPasswordPage'));
 
-export default function App() {
-  // Serve static pages without loading auth/realtime
-  if (_staticRoute) return <>{_staticRoute.component}</>;
-
+export function MainApp() {
   const [currentPage, setCurrentPage] = useState<'landing' | 'auth' | 'dashboard'>('landing');
   const [authInitialMode, setAuthInitialMode] = useState<'signin' | 'signup'>('signin');
 
@@ -123,9 +121,13 @@ export default function App() {
   };
 
   // Keep userProfileRef in sync so realtime callbacks can read current value without stale closures
-  useEffect(() => { userProfileRef.current = userProfile; }, [userProfile]);
+  useEffect(() => {
+    userProfileRef.current = userProfile;
+  }, [userProfile]);
   // Keep showPasswordResetRef in sync so the onAuthStateChange closure (created once) never reads stale state
-  useEffect(() => { showPasswordResetRef.current = showPasswordReset; }, [showPasswordReset]);
+  useEffect(() => {
+    showPasswordResetRef.current = showPasswordReset;
+  }, [showPasswordReset]);
 
   // Seed DB when admin logs in
   useEffect(() => {
@@ -165,7 +167,11 @@ export default function App() {
           // would briefly see their dashboard before onAuthStateChange corrects it.
           // Gate on shouldHandleAccountGate so this doesn't fire a second toast
           // when onAuthStateChange's initial event handles the same session.
-          if (profile.accountStatus === 'terminated' || profile.accountStatus === 'pending_reactivation' || profile.accountStatus === 'deleted') {
+          if (
+            profile.accountStatus === 'terminated' ||
+            profile.accountStatus === 'pending_reactivation' ||
+            profile.accountStatus === 'deleted'
+          ) {
             // Enforcement (signOut) must always run regardless of dedupe — only
             // the toast is deduped, so a blocked account is never left signed in.
             await supabase.auth.signOut();
@@ -174,9 +180,15 @@ export default function App() {
                 const reason = profile.terminateReason ? ` Reason: ${profile.terminateReason}` : '';
                 addToast(`Your account has been permanently terminated.${reason}`, 'error');
               } else if (profile.accountStatus === 'pending_reactivation') {
-                addToast('Our records show you previously deleted this account. Please contact admin to reactivate it before you can regain access to your account.', 'error');
+                addToast(
+                  'Our records show you previously deleted this account. Please contact admin to reactivate it before you can regain access to your account.',
+                  'error'
+                );
               } else {
-                addToast('Your account has been deleted. Please contact support if you believe this is a mistake.', 'error');
+                addToast(
+                  'Your account has been deleted. Please contact support if you believe this is a mistake.',
+                  'error'
+                );
               }
             }
             setIsInitializing(false);
@@ -192,7 +204,9 @@ export default function App() {
       setIsInitializing(false);
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'PASSWORD_RECOVERY') {
         // User clicked the reset link — keep them on the set-new-password screen
         setShowPasswordReset(true);
@@ -219,7 +233,11 @@ export default function App() {
           const profile = await getOrCreateUserProfile(session.user.id, session.user.email || '');
           // Gate on shouldHandleAccountGate so this doesn't fire a second toast
           // when the mount-time getSession() handler already handled the same session.
-          if (profile.accountStatus === 'terminated' || profile.accountStatus === 'pending_reactivation' || profile.accountStatus === 'deleted') {
+          if (
+            profile.accountStatus === 'terminated' ||
+            profile.accountStatus === 'pending_reactivation' ||
+            profile.accountStatus === 'deleted'
+          ) {
             // Enforcement (signOut) must always run regardless of dedupe — only
             // the toast is deduped, so a blocked account is never left signed in.
             await supabase.auth.signOut();
@@ -228,9 +246,15 @@ export default function App() {
                 const reason = profile.terminateReason ? ` Reason: ${profile.terminateReason}` : '';
                 addToast(`Your account has been permanently terminated.${reason}`, 'error');
               } else if (profile.accountStatus === 'pending_reactivation') {
-                addToast('Our records show you previously deleted this account. Please contact admin to reactivate it before you can regain access to your account.', 'error');
+                addToast(
+                  'Our records show you previously deleted this account. Please contact admin to reactivate it before you can regain access to your account.',
+                  'error'
+                );
               } else {
-                addToast('Your account has been deleted. Please contact support if you believe this is a mistake.', 'error');
+                addToast(
+                  'Your account has been deleted. Please contact support if you believe this is a mistake.',
+                  'error'
+                );
               }
             }
             setIsInitializing(false);
@@ -276,15 +300,22 @@ export default function App() {
     let cancelled = false;
     const fetchRate = async () => {
       try {
-        const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=tether&vs_currencies=ngn');
+        const res = await fetch(
+          'https://api.coingecko.com/api/v3/simple/price?ids=tether&vs_currencies=ngn'
+        );
         if (!res.ok) return;
         const json = await res.json();
         if (!cancelled) setLiveNgnRate(json?.tether?.ngn ?? null);
-      } catch { /* silently ignore — markup rates are still shown */ }
+      } catch {
+        /* silently ignore — markup rates are still shown */
+      }
     };
     fetchRate();
     const iv = setInterval(fetchRate, 5 * 60 * 1000);
-    return () => { cancelled = true; clearInterval(iv); };
+    return () => {
+      cancelled = true;
+      clearInterval(iv);
+    };
   }, []);
 
   // Realtime: Settings
@@ -292,9 +323,12 @@ export default function App() {
     // Initial fetch
     // Use select('*') so no explicit column name can 400 the fetch.
     // rowToSettings handles both old (usdt_rate) and new (usdt_sell_markup/usdt_buy_markup) schemas.
-    supabase.from('settings')
+    supabase
+      .from('settings')
       .select('*')
-      .eq('id', 'admin_settings').single().then(({ data, error }) => {
+      .eq('id', 'admin_settings')
+      .single()
+      .then(({ data, error }) => {
         if (error) console.error('[settings fetch]', error.message);
         if (data) setSettings(rowToSettings(data));
       });
@@ -306,26 +340,38 @@ export default function App() {
       })
       .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   // Realtime: Announcements
   useEffect(() => {
     const ANN_COLS = 'id,title,content,scope,is_active,created_at';
-    supabase.from('announcements').select(ANN_COLS).order('created_at', { ascending: false }).then(({ data }) => {
-      if (data) setAnnouncements(data.map(rowToAnnouncement));
-    });
+    supabase
+      .from('announcements')
+      .select(ANN_COLS)
+      .order('created_at', { ascending: false })
+      .then(({ data }) => {
+        if (data) setAnnouncements(data.map(rowToAnnouncement));
+      });
 
     const channel = supabase
       .channel('announcements-changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'announcements' }, () => {
-        supabase.from('announcements').select(ANN_COLS).order('created_at', { ascending: false }).then(({ data }) => {
-          if (data) setAnnouncements(data.map(rowToAnnouncement));
-        });
+        supabase
+          .from('announcements')
+          .select(ANN_COLS)
+          .order('created_at', { ascending: false })
+          .then(({ data }) => {
+            if (data) setAnnouncements(data.map(rowToAnnouncement));
+          });
       })
       .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   // Realtime: Orders (filtered by user or admin)
@@ -337,9 +383,13 @@ export default function App() {
 
     const isTrader = userProfile?.role !== 'admin';
 
-    const ORDER_COLS = 'id,user_id,user_email,type,crypto_amount,ngn_amount,rate,status,network,token,payment_screenshot,user_bank_details,admin_bank_details,admin_wallet_address,user_wallet_address,blockchain_tx_id,rejection_reason,created_at,processed_at,usdt_equivalent';
+    const ORDER_COLS =
+      'id,user_id,user_email,type,crypto_amount,ngn_amount,rate,status,network,token,payment_screenshot,user_bank_details,admin_bank_details,admin_wallet_address,user_wallet_address,blockchain_tx_id,rejection_reason,created_at,processed_at,usdt_equivalent';
     const fetchOrders = async () => {
-      let query = supabase.from('orders').select(ORDER_COLS).order('created_at', { ascending: false });
+      let query = supabase
+        .from('orders')
+        .select(ORDER_COLS)
+        .order('created_at', { ascending: false });
       if (isTrader) query = query.eq('user_id', currentUser.id);
       // Admin: cap at 2 000 most-recent orders to prevent runaway reads at scale
       if (!isTrader) query = (query as any).limit(2000);
@@ -363,10 +413,15 @@ export default function App() {
           const processedAt: number = updated?.processed_at ?? 0;
           if (processedAt > sessionStartRef.current) {
             if (updated?.status === 'completed') {
-              const label = updated?.type === 'buy' ? `${updated?.crypto_amount} USDT purchase` : `₦${Number(updated?.ngn_amount).toLocaleString()} sell`;
+              const label =
+                updated?.type === 'buy'
+                  ? `${updated?.crypto_amount} USDT purchase`
+                  : `₦${Number(updated?.ngn_amount).toLocaleString()} sell`;
               addToast(`✅ Order approved! Your ${label} has been completed.`, 'success');
             } else if (updated?.status === 'rejected') {
-              const reason = updated?.rejection_reason ? ` Reason: ${updated.rejection_reason}` : '';
+              const reason = updated?.rejection_reason
+                ? ` Reason: ${updated.rejection_reason}`
+                : '';
               addToast(`❌ Order declined.${reason}`, 'error');
             }
           }
@@ -384,7 +439,9 @@ export default function App() {
       })
       .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [currentUser, userProfile]);
 
   // Realtime: KYC Users (admin only)
@@ -394,45 +451,68 @@ export default function App() {
       return;
     }
 
-    const USER_COLS = 'id,email,role,kyc_status,kyc_data,account_status,suspend_reason,terminate_reason,notification_preferences,created_at,deleted_at';
-    supabase.from('users').select(USER_COLS).limit(5000).then(({ data }) => {
-      if (data) setKycUsers(data.map(rowToUserProfile));
-    });
+    const USER_COLS =
+      'id,email,role,kyc_status,kyc_data,account_status,suspend_reason,terminate_reason,notification_preferences,created_at,deleted_at';
+    supabase
+      .from('users')
+      .select(USER_COLS)
+      .limit(5000)
+      .then(({ data }) => {
+        if (data) setKycUsers(data.map(rowToUserProfile));
+      });
 
     const channel = supabase
       .channel('users-changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, () => {
-        supabase.from('users').select(USER_COLS).limit(5000).then(({ data }) => {
-          if (data) setKycUsers(data.map(rowToUserProfile));
-        });
+        supabase
+          .from('users')
+          .select(USER_COLS)
+          .limit(5000)
+          .then(({ data }) => {
+            if (data) setKycUsers(data.map(rowToUserProfile));
+          });
       })
       .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [userProfile]);
 
   // Realtime: Coins
   useEffect(() => {
-    const COIN_COLS = 'id,name,symbol,network,wallet_address,rate,logo_url,published,price_pegged,fee_percentage,min_trade_amount,min_buy_amount,min_sell_amount,coin_gecko_id,created_at';
-    supabase.from('coins').select(COIN_COLS).order('created_at', { ascending: false }).then(({ data }) => {
-      if (data) setCoins(data.map(rowToCoin));
-    });
+    const COIN_COLS =
+      'id,name,symbol,network,wallet_address,rate,logo_url,published,price_pegged,fee_percentage,min_trade_amount,min_buy_amount,min_sell_amount,coin_gecko_id,created_at';
+    supabase
+      .from('coins')
+      .select(COIN_COLS)
+      .order('created_at', { ascending: false })
+      .then(({ data }) => {
+        if (data) setCoins(data.map(rowToCoin));
+      });
 
     const channel = supabase
       .channel('coins-changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'coins' }, () => {
-        supabase.from('coins').select(COIN_COLS).order('created_at', { ascending: false }).then(({ data }) => {
-          if (data) setCoins(data.map(rowToCoin));
-        });
+        supabase
+          .from('coins')
+          .select(COIN_COLS)
+          .order('created_at', { ascending: false })
+          .then(({ data }) => {
+            if (data) setCoins(data.map(rowToCoin));
+          });
       })
       .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   // Realtime: Disputes (admin sees all, user sees own) with pagination
   const fetchDisputesPage = useCallback(async (page: number, append = false) => {
-    const DISPUTE_COLS = 'id,order_id,user_id,user_email,message,image_urls,status,admin_response,created_at,resolved_at';
+    const DISPUTE_COLS =
+      'id,order_id,user_id,user_email,message,image_urls,status,admin_response,created_at,resolved_at';
     const offset = page * DISPUTES_PAGE_SIZE;
 
     const { data, count } = await supabase
@@ -443,7 +523,7 @@ export default function App() {
 
     if (data) {
       const mapped = data.map(rowToDispute);
-      setDisputes(prev => append ? [...prev, ...mapped] : mapped);
+      setDisputes((prev) => (append ? [...prev, ...mapped] : mapped));
       setHasMoreDisputes(offset + data.length < (count || 0));
     }
   }, []);
@@ -469,7 +549,9 @@ export default function App() {
       })
       .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [userProfile, fetchDisputesPage]);
 
   const loadMoreDisputes = useCallback(() => {
@@ -484,90 +566,123 @@ export default function App() {
 
     const channel = supabase
       .channel('my-profile-changes')
-      .on('postgres_changes', {
-        event: 'UPDATE',
-        schema: 'public',
-        table: 'users',
-        filter: `id=eq.${currentUser.id}`
-      }, (payload) => {
-        if (!payload.new) return;
-        // Merge the incoming partial payload with the current profile row so that
-        // fields absent from the realtime event (e.g. kyc_data when only
-        // notification_preferences changed) are preserved rather than dropped.
-        const cur = userProfileRef.current;
-        const baseRow = cur ? {
-          id: cur.uid,
-          email: cur.email,
-          role: cur.role,
-          kyc_status: cur.kycStatus,
-          kyc_data: cur.kycData,
-          account_status: cur.accountStatus,
-          suspend_reason: cur.suspendReason,
-          terminate_reason: cur.terminateReason,
-          notification_preferences: cur.notificationPreferences,
-          created_at: cur.createdAt,
-          deleted_at: cur.deletedAt,
-        } : {};
-        const newProfile = rowToUserProfile({ ...baseRow, ...payload.new });
-        const old = userProfileRef.current;
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'users',
+          filter: `id=eq.${currentUser.id}`,
+        },
+        (payload) => {
+          if (!payload.new) return;
+          // Merge the incoming partial payload with the current profile row so that
+          // fields absent from the realtime event (e.g. kyc_data when only
+          // notification_preferences changed) are preserved rather than dropped.
+          const cur = userProfileRef.current;
+          const baseRow = cur
+            ? {
+                id: cur.uid,
+                email: cur.email,
+                role: cur.role,
+                kyc_status: cur.kycStatus,
+                kyc_data: cur.kycData,
+                account_status: cur.accountStatus,
+                suspend_reason: cur.suspendReason,
+                terminate_reason: cur.terminateReason,
+                notification_preferences: cur.notificationPreferences,
+                created_at: cur.createdAt,
+                deleted_at: cur.deletedAt,
+              }
+            : {};
+          const newProfile = rowToUserProfile({ ...baseRow, ...payload.new });
+          const old = userProfileRef.current;
 
-        // KYC status notifications
-        if (old && old.kycStatus !== newProfile.kycStatus) {
-          if (newProfile.kycStatus === 'approved') {
-            addToast('🎉 KYC Approved! Your account is now verified — trading is unlocked.', 'success');
-          } else if (newProfile.kycStatus === 'rejected') {
-            addToast('⚠️ KYC Rejected. Check the reason and resubmit with clearer documents.', 'error');
-          } else if (newProfile.kycStatus === 'none') {
-            addToast('ℹ️ KYC has been reset by admin. Please resubmit your documents.', 'info');
-          } else if (newProfile.kycStatus === 'pending') {
-            addToast('⏳ KYC documents are under review. You\'ll be notified when done.', 'info');
-          }
-        }
-
-        // Account status notifications
-        if (old && old.accountStatus !== newProfile.accountStatus) {
-          if (newProfile.accountStatus === 'suspended') {
-            addToast('🚫 Your account has been suspended. Contact support for details.', 'error');
-          } else if (newProfile.accountStatus === 'active' && old.accountStatus === 'suspended') {
-            addToast('✅ Account suspension lifted! You can place orders again.', 'success');
-          } else if (newProfile.accountStatus === 'terminated') {
-            addToast('❌ Your account has been permanently terminated.', 'error');
-          } else if (newProfile.accountStatus === 'pending_reactivation') {
-            addToast('⏳ Your account is pending admin reactivation. Please contact support.', 'info');
-          } else if (newProfile.accountStatus === 'active' && old.accountStatus === 'pending_reactivation') {
-            addToast('✅ Your account has been reactivated! You can now access the platform.', 'success');
-          }
-        }
-
-        // Lockout enforcement: if admin just deleted/terminated/marked-pending
-        // this account, sign the user out immediately so they cannot continue
-        // using the dashboard or perform transactions. The realtime event fires
-        // even while the tab is open and the JWT is still cached.
-        if (newProfile.accountStatus === 'deleted' ||
-            newProfile.accountStatus === 'terminated' ||
-            newProfile.accountStatus === 'pending_reactivation') {
-          (async () => {
-            await supabase.auth.signOut();
-            setUserProfile(null);
-            setCurrentUser(null);
-            setIsAdminMode(false);
-            if (newProfile.accountStatus === 'deleted') {
-              addToast('Your account has been deleted. Please contact support if you believe this is an error.', 'error');
-            } else if (newProfile.accountStatus === 'terminated') {
-              const reason = newProfile.terminateReason ? ` Reason: ${newProfile.terminateReason}` : '';
-              addToast(`Your account has been permanently terminated.${reason}`, 'error');
-            } else {
-              addToast('Our records show you previously deleted this account. Please contact admin to reactivate it before you can regain access to your account.', 'error');
+          // KYC status notifications
+          if (old && old.kycStatus !== newProfile.kycStatus) {
+            if (newProfile.kycStatus === 'approved') {
+              addToast(
+                '🎉 KYC Approved! Your account is now verified — trading is unlocked.',
+                'success'
+              );
+            } else if (newProfile.kycStatus === 'rejected') {
+              addToast(
+                '⚠️ KYC Rejected. Check the reason and resubmit with clearer documents.',
+                'error'
+              );
+            } else if (newProfile.kycStatus === 'none') {
+              addToast('ℹ️ KYC has been reset by admin. Please resubmit your documents.', 'info');
+            } else if (newProfile.kycStatus === 'pending') {
+              addToast("⏳ KYC documents are under review. You'll be notified when done.", 'info');
             }
-          })();
-          return;
-        }
+          }
 
-        setUserProfile(newProfile);
-      })
+          // Account status notifications
+          if (old && old.accountStatus !== newProfile.accountStatus) {
+            if (newProfile.accountStatus === 'suspended') {
+              addToast('🚫 Your account has been suspended. Contact support for details.', 'error');
+            } else if (newProfile.accountStatus === 'active' && old.accountStatus === 'suspended') {
+              addToast('✅ Account suspension lifted! You can place orders again.', 'success');
+            } else if (newProfile.accountStatus === 'terminated') {
+              addToast('❌ Your account has been permanently terminated.', 'error');
+            } else if (newProfile.accountStatus === 'pending_reactivation') {
+              addToast(
+                '⏳ Your account is pending admin reactivation. Please contact support.',
+                'info'
+              );
+            } else if (
+              newProfile.accountStatus === 'active' &&
+              old.accountStatus === 'pending_reactivation'
+            ) {
+              addToast(
+                '✅ Your account has been reactivated! You can now access the platform.',
+                'success'
+              );
+            }
+          }
+
+          // Lockout enforcement: if admin just deleted/terminated/marked-pending
+          // this account, sign the user out immediately so they cannot continue
+          // using the dashboard or perform transactions. The realtime event fires
+          // even while the tab is open and the JWT is still cached.
+          if (
+            newProfile.accountStatus === 'deleted' ||
+            newProfile.accountStatus === 'terminated' ||
+            newProfile.accountStatus === 'pending_reactivation'
+          ) {
+            (async () => {
+              await supabase.auth.signOut();
+              setUserProfile(null);
+              setCurrentUser(null);
+              setIsAdminMode(false);
+              if (newProfile.accountStatus === 'deleted') {
+                addToast(
+                  'Your account has been deleted. Please contact support if you believe this is an error.',
+                  'error'
+                );
+              } else if (newProfile.accountStatus === 'terminated') {
+                const reason = newProfile.terminateReason
+                  ? ` Reason: ${newProfile.terminateReason}`
+                  : '';
+                addToast(`Your account has been permanently terminated.${reason}`, 'error');
+              } else {
+                addToast(
+                  'Our records show you previously deleted this account. Please contact admin to reactivate it before you can regain access to your account.',
+                  'error'
+                );
+              }
+            })();
+            return;
+          }
+
+          setUserProfile(newProfile);
+        }
+      )
       .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [currentUser]);
 
   // Re-validate session on tab focus / window show. When admin deletes a user's
@@ -582,7 +697,9 @@ export default function App() {
     const revalidate = () => {
       (async () => {
         try {
-          const { data: { session } } = await supabase.auth.getSession();
+          const {
+            data: { session },
+          } = await supabase.auth.getSession();
           if (!session) {
             // Auth account gone — token invalidated server-side.
             await supabase.auth.signOut();
@@ -596,7 +713,9 @@ export default function App() {
           // (deleted/terminated/pending) that happened while the tab was hidden.
           const { data: row } = await supabase
             .from('users')
-            .select('id,email,role,kyc_status,kyc_data,account_status,suspend_reason,terminate_reason,notification_preferences,created_at,deleted_at')
+            .select(
+              'id,email,role,kyc_status,kyc_data,account_status,suspend_reason,terminate_reason,notification_preferences,created_at,deleted_at'
+            )
             .eq('id', session.user.id)
             .maybeSingle();
           if (!row) {
@@ -609,9 +728,11 @@ export default function App() {
             return;
           }
           const p = rowToUserProfile(row);
-          if (p.accountStatus === 'deleted' ||
-              p.accountStatus === 'terminated' ||
-              p.accountStatus === 'pending_reactivation') {
+          if (
+            p.accountStatus === 'deleted' ||
+            p.accountStatus === 'terminated' ||
+            p.accountStatus === 'pending_reactivation'
+          ) {
             await supabase.auth.signOut();
             setUserProfile(null);
             setCurrentUser(null);
@@ -621,12 +742,18 @@ export default function App() {
             // the mount-time getSession() or onAuthStateChange gating above.
             if (shouldHandleAccountGate(session.user?.id)) {
               if (p.accountStatus === 'deleted') {
-                addToast('Your account has been deleted. Please contact support if you believe this is a mistake.', 'error');
+                addToast(
+                  'Your account has been deleted. Please contact support if you believe this is a mistake.',
+                  'error'
+                );
               } else if (p.accountStatus === 'terminated') {
                 const reason = p.terminateReason ? ` Reason: ${p.terminateReason}` : '';
                 addToast(`Your account has been permanently terminated.${reason}`, 'error');
               } else {
-                addToast('Our records show you previously deleted this account. Please contact admin to reactivate it before you can regain access to your account.', 'error');
+                addToast(
+                  'Our records show you previously deleted this account. Please contact admin to reactivate it before you can regain access to your account.',
+                  'error'
+                );
               }
             }
           } else if (p.accountStatus === 'suspended') {
@@ -641,7 +768,9 @@ export default function App() {
       })();
     };
 
-    const handleVisibility = () => { if (document.visibilityState === 'visible') revalidate(); };
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') revalidate();
+    };
     const handleFocus = () => revalidate();
     const handleOnline = () => revalidate();
 
@@ -713,15 +842,26 @@ export default function App() {
   if (showPasswordReset) {
     return (
       <MotionConfig reducedMotion="user">
-        <Suspense fallback={<div className="min-h-screen bg-[#F7F9F7] flex items-center justify-center"><div className="w-8 h-8 border-4 border-[#008751] border-t-transparent rounded-full animate-spin" /></div>}>
+        <Suspense
+          fallback={
+            <div className="min-h-screen bg-[#F7F9F7] flex items-center justify-center">
+              <div className="w-8 h-8 border-4 border-[#008751] border-t-transparent rounded-full animate-spin" />
+            </div>
+          }
+        >
           <ResetPasswordPage
             addToast={addToast}
             onSuccess={async () => {
               // updateUser already re-logs them in; load profile then go to dashboard
               try {
-                const { data: { session } } = await supabase.auth.getSession();
+                const {
+                  data: { session },
+                } = await supabase.auth.getSession();
                 if (session?.user) {
-                  const profile = await getOrCreateUserProfile(session.user.id, session.user.email || '');
+                  const profile = await getOrCreateUserProfile(
+                    session.user.id,
+                    session.user.email || ''
+                  );
                   setCurrentUser(session.user);
                   setUserProfile(profile);
                   setIsAdminMode(profile.role === 'admin');
@@ -750,108 +890,130 @@ export default function App() {
 
   return (
     <MotionConfig reducedMotion="user">
-    <div className="bg-[#F7F9F7] min-h-screen text-[#1A1A1A] flex flex-col">
-      <div className="flex-1">
-        {currentPage !== 'auth' && (
-          <Navbar
-            userProfile={userProfile}
-            isAdminMode={isAdminMode}
-            currentPage={currentPage}
-            onToggleAdminMode={handleToggleAdminView}
-            onNavigate={navigateToPage}
-            addToast={addToast}
-            bulletinCount={bulletinCount}
-            onBellClick={() => setMobileBulletinOpen(true)}
-          />
-        )}
-
-        <AnimatePresence mode="wait">
-          {currentPage === 'landing' && (
-            <motion.div
-              key="landing"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-            >
-              <LandingPage
-                announcements={announcements}
-                settings={settings}
-                liveNgnRate={liveNgnRate}
-                onNavigate={navigateToPage}
-              />
-            </motion.div>
+      <div className="bg-[#F7F9F7] min-h-screen text-[#1A1A1A] flex flex-col">
+        <div className="flex-1">
+          {currentPage !== 'auth' && (
+            <Navbar
+              userProfile={userProfile}
+              isAdminMode={isAdminMode}
+              currentPage={currentPage}
+              onToggleAdminMode={handleToggleAdminView}
+              onNavigate={navigateToPage}
+              addToast={addToast}
+              bulletinCount={bulletinCount}
+              onBellClick={() => setMobileBulletinOpen(true)}
+            />
           )}
 
-          {currentPage === 'auth' && (
-            <motion.div
-              key="auth"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.18 }}
-            >
-              <Suspense fallback={<div className="min-h-screen bg-[#F7F9F7] flex items-center justify-center"><div className="w-8 h-8 border-4 border-[#008751] border-t-transparent rounded-full animate-spin" /></div>}>
-                <AuthPage
-                  onBack={() => setCurrentPage('landing')}
-                  onAuthSuccess={() => setCurrentPage('dashboard')}
-                  addToast={addToast}
-                  initialMode={authInitialMode}
+          <AnimatePresence mode="wait">
+            {currentPage === 'landing' && (
+              <motion.div
+                key="landing"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                <LandingPage
+                  announcements={announcements}
+                  settings={settings}
+                  liveNgnRate={liveNgnRate}
+                  onNavigate={navigateToPage}
                 />
-              </Suspense>
-            </motion.div>
-          )}
+              </motion.div>
+            )}
 
-          {currentPage === 'dashboard' && userProfile && (
-            <motion.div
-              key="dashboard"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.18 }}
-            >
-              <Suspense fallback={<div className="min-h-screen bg-[#F7F9F7] flex items-center justify-center"><div className="w-8 h-8 border-4 border-[#008751] border-t-transparent rounded-full animate-spin" /></div>}>
-                {isAdminMode && userProfile.role === 'admin' ? (
-                  <AdminCMS
-                    userProfile={userProfile}
-                    orders={orders}
-                    kycUsers={kycUsers}
-                    settings={settings}
-                    announcements={announcements}
-                    coins={coins}
-                    disputes={disputes}
-                    hasMoreDisputes={hasMoreDisputes}
-                    onLoadMoreDisputes={loadMoreDisputes}
-                    liveNgnRate={liveNgnRate}
+            {currentPage === 'auth' && (
+              <motion.div
+                key="auth"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.18 }}
+              >
+                <Suspense
+                  fallback={
+                    <div className="min-h-screen bg-[#F7F9F7] flex items-center justify-center">
+                      <div className="w-8 h-8 border-4 border-[#008751] border-t-transparent rounded-full animate-spin" />
+                    </div>
+                  }
+                >
+                  <AuthPage
+                    onBack={() => setCurrentPage('landing')}
+                    onAuthSuccess={() => setCurrentPage('dashboard')}
                     addToast={addToast}
-                    onRefresh={handleDatabaseRefresh}
+                    initialMode={authInitialMode}
                   />
-                ) : (
-                  <UserDashboard
-                    userProfile={userProfile}
-                    orders={orders}
-                    settings={settings}
-                    announcements={announcements}
-                    coins={coins}
-                    disputes={disputes}
-                    hasMoreDisputes={hasMoreDisputes}
-                    onLoadMoreDisputes={loadMoreDisputes}
-                    liveNgnRate={liveNgnRate}
-                    addToast={addToast}
-                    onRefresh={handleDatabaseRefresh}
-                    mobileBulletinOpen={mobileBulletinOpen}
-                    onCloseMobileBulletin={() => setMobileBulletinOpen(false)}
-                    onBulletinCountChange={setBulletinCount}
-                  />
-                )}
-              </Suspense>
-            </motion.div>
-          )}
-        </AnimatePresence>
+                </Suspense>
+              </motion.div>
+            )}
+
+            {currentPage === 'dashboard' && userProfile && (
+              <motion.div
+                key="dashboard"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.18 }}
+              >
+                <Suspense
+                  fallback={
+                    <div className="min-h-screen bg-[#F7F9F7] flex items-center justify-center">
+                      <div className="w-8 h-8 border-4 border-[#008751] border-t-transparent rounded-full animate-spin" />
+                    </div>
+                  }
+                >
+                  {isAdminMode && userProfile.role === 'admin' ? (
+                    <AdminCMS
+                      userProfile={userProfile}
+                      orders={orders}
+                      kycUsers={kycUsers}
+                      settings={settings}
+                      announcements={announcements}
+                      coins={coins}
+                      disputes={disputes}
+                      hasMoreDisputes={hasMoreDisputes}
+                      onLoadMoreDisputes={loadMoreDisputes}
+                      liveNgnRate={liveNgnRate}
+                      addToast={addToast}
+                      onRefresh={handleDatabaseRefresh}
+                    />
+                  ) : (
+                    <UserDashboard
+                      userProfile={userProfile}
+                      orders={orders}
+                      settings={settings}
+                      announcements={announcements}
+                      coins={coins}
+                      disputes={disputes}
+                      hasMoreDisputes={hasMoreDisputes}
+                      onLoadMoreDisputes={loadMoreDisputes}
+                      liveNgnRate={liveNgnRate}
+                      addToast={addToast}
+                      onRefresh={handleDatabaseRefresh}
+                      mobileBulletinOpen={mobileBulletinOpen}
+                      onCloseMobileBulletin={() => setMobileBulletinOpen(false)}
+                      onBulletinCountChange={setBulletinCount}
+                    />
+                  )}
+                </Suspense>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        <Notification toasts={toasts} onClose={removeToast} />
       </div>
-
-      <Notification toasts={toasts} onClose={removeToast} />
-    </div>
     </MotionConfig>
+  );
+}
+
+export default function App() {
+  if (_staticRoute) return <>{_staticRoute.component}</>;
+
+  return (
+    <ErrorBoundary>
+      <MainApp />
+    </ErrorBoundary>
   );
 }

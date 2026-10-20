@@ -1,12 +1,27 @@
 import '@testing-library/jest-dom';
-import { vi } from 'vitest';
-import { mockSupabase } from '../lib/supabase.mock';
+import { vi, beforeEach, afterEach } from 'vitest';
+import { mockSupabase } from './mocks/supabase';
+import { setupFetchMock } from './mocks/handlers';
 
-// Mock Supabase client using the shared mock module
+// Mock Supabase client globally using the shared mock module
 vi.mock('../lib/supabase', () => ({
   supabase: mockSupabase,
   isSupabaseConfigured: true,
 }));
+
+let fetchMockCleanup: (() => void) | null = null;
+
+beforeEach(() => {
+  const { restore } = setupFetchMock();
+  fetchMockCleanup = restore;
+});
+
+afterEach(() => {
+  if (fetchMockCleanup) {
+    fetchMockCleanup();
+    fetchMockCleanup = null;
+  }
+});
 
 // Mock window.scrollTo
 Object.defineProperty(window, 'scrollTo', {
@@ -17,7 +32,7 @@ Object.defineProperty(window, 'scrollTo', {
 // Mock window.matchMedia
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
-  value: vi.fn().mockImplementation(query => ({
+  value: vi.fn().mockImplementation((query) => ({
     matches: false,
     media: query,
     onchange: null,

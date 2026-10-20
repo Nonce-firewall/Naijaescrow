@@ -226,7 +226,7 @@ describe('dbHelpers - Additional Mappers & Database Initializers', () => {
       await ensureDefaultSettings();
 
       expect(mockSupabase._insertCalls.length).toBe(1);
-      const insert = mockSupabase._insertCalls.find(c => c.table === 'settings');
+      const insert = mockSupabase._insertCalls.find((c) => c.table === 'settings');
       expect(insert).toBeDefined();
       expect(insert?.data).toMatchObject({
         id: 'admin_settings',
@@ -242,7 +242,7 @@ describe('dbHelpers - Additional Mappers & Database Initializers', () => {
     it('ensureDefaultAnnouncements inserts default announcements when absent', async () => {
       await ensureDefaultAnnouncements();
 
-      const insert = mockSupabase._insertCalls.find(c => c.table === 'announcements');
+      const insert = mockSupabase._insertCalls.find((c) => c.table === 'announcements');
       expect(insert).toBeDefined();
       expect(Array.isArray(insert?.data)).toBe(true);
       expect(insert?.data.length).toBeGreaterThanOrEqual(3);
@@ -251,7 +251,7 @@ describe('dbHelpers - Additional Mappers & Database Initializers', () => {
     it('ensureDefaultCoins inserts default coin listings when absent', async () => {
       await ensureDefaultCoins();
 
-      const insert = mockSupabase._insertCalls.find(c => c.table === 'coins');
+      const insert = mockSupabase._insertCalls.find((c) => c.table === 'coins');
       expect(insert).toBeDefined();
       expect(Array.isArray(insert?.data)).toBe(true);
       expect(insert?.data.length).toBeGreaterThanOrEqual(1);

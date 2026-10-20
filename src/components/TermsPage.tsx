@@ -35,7 +35,9 @@ export default function TermsPage() {
             <FileText className="w-3.5 h-3.5" />
             Legal Document
           </div>
-          <h1 className="text-3xl sm:text-4xl font-bold text-[#1A1A1A] tracking-tight">Terms of Use</h1>
+          <h1 className="text-3xl sm:text-4xl font-bold text-[#1A1A1A] tracking-tight">
+            Terms of Use
+          </h1>
           <p className="mt-2 text-sm text-gray-500 font-mono">Last updated: July 2026</p>
         </div>
 
@@ -45,7 +47,7 @@ export default function TermsPage() {
             {
               num: '1',
               title: 'Eligibility',
-              body: "You must be at least 18 years old and a resident of Nigeria to use 9ija Escrow. By signing up, you confirm that all information you provide is accurate and truthful.",
+              body: 'You must be at least 18 years old and a resident of Nigeria to use 9ija Escrow. By signing up, you confirm that all information you provide is accurate and truthful.',
             },
             {
               num: '2',
@@ -70,7 +72,7 @@ export default function TermsPage() {
             {
               num: '6',
               title: 'Dispute Resolution',
-              body: 'If you have an issue with a trade, you may submit a dispute with evidence (screenshots, transaction IDs). Admin will review and respond within 10-20 minutes. Once resolved, disputes are marked with the admin\'s decision and cannot be reopened. Abuse of the dispute system (spam submissions, false claims) may result in account suspension.',
+              body: "If you have an issue with a trade, you may submit a dispute with evidence (screenshots, transaction IDs). Admin will review and respond within 10-20 minutes. Once resolved, disputes are marked with the admin's decision and cannot be reopened. Abuse of the dispute system (spam submissions, false claims) may result in account suspension.",
             },
             {
               num: '7',

@@ -2,7 +2,12 @@ import React, { useState } from 'react';
 import { Order, AdminSettings } from '../../types';
 import { formatNGT, formatNGTDate } from '../../lib/dateUtils';
 import { processOrder } from '../../lib/dbHelpers';
-import { CheckCircle as CheckCircle2, Circle as XCircle, TrendingUp, ChevronRight } from 'lucide-react';
+import {
+  CheckCircle as CheckCircle2,
+  Circle as XCircle,
+  TrendingUp,
+  ChevronRight,
+} from 'lucide-react';
 
 interface OrdersTabProps {
   orders: Order[];
@@ -31,9 +36,9 @@ export default function OrdersTab({
   onUpdateRejectionReason,
   onApproveOrder,
   onRejectOrder,
-  addToast
+  addToast,
 }: OrdersTabProps) {
-  const pendingOrders = orders.filter(o => o.status === 'pending');
+  const pendingOrders = orders.filter((o) => o.status === 'pending');
 
   return (
     <div className="space-y-4">
@@ -41,7 +46,9 @@ export default function OrdersTab({
       <div className="bg-white rounded-2xl border border-[#E0E7E0] p-6">
         <div className="flex items-center gap-2 mb-4">
           <TrendingUp className="w-5 h-5 text-[#008751]" />
-          <h3 className="text-lg font-bold text-[#1A1A1A]">Pending Orders ({pendingOrders.length})</h3>
+          <h3 className="text-lg font-bold text-[#1A1A1A]">
+            Pending Orders ({pendingOrders.length})
+          </h3>
         </div>
 
         {pendingOrders.length === 0 ? (
@@ -87,15 +94,21 @@ export default function OrdersTab({
             </div>
             <div className="flex justify-between">
               <span className="text-sm text-gray-600">Amount:</span>
-              <span className="text-sm font-semibold text-[#1A1A1A]">{selectedOrder.cryptoAmount} USDT</span>
+              <span className="text-sm font-semibold text-[#1A1A1A]">
+                {selectedOrder.cryptoAmount} USDT
+              </span>
             </div>
             <div className="flex justify-between">
               <span className="text-sm text-gray-600">NGN Amount:</span>
-              <span className="text-sm font-semibold text-[#1A1A1A]">{formatNGT(selectedOrder.ngnAmount)}</span>
+              <span className="text-sm font-semibold text-[#1A1A1A]">
+                {formatNGT(selectedOrder.ngnAmount)}
+              </span>
             </div>
             <div className="flex justify-between">
               <span className="text-sm text-gray-600">User:</span>
-              <span className="text-sm font-semibold text-[#1A1A1A]">{selectedOrder.userEmail}</span>
+              <span className="text-sm font-semibold text-[#1A1A1A]">
+                {selectedOrder.userEmail}
+              </span>
             </div>
             <div className="flex justify-between">
               <span className="text-sm text-gray-600">Network:</span>

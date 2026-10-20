@@ -1,5 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { OrderSchema, UserProfileSchema, AdminSettingsSchema, AnnouncementSchema, CoinListingSchema, DisputeSchema } from './schemas';
+import {
+  OrderSchema,
+  UserProfileSchema,
+  AdminSettingsSchema,
+  AnnouncementSchema,
+  CoinListingSchema,
+  DisputeSchema,
+} from './schemas';
 import { formatNGT, formatNGTDate } from './dateUtils';
 
 describe('schemas validation', () => {
