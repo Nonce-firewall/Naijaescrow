@@ -10,14 +10,11 @@ export interface KycTabProps {
   onSubmitKYC?: (kycData: Omit<KYCData, 'submittedAt'>) => Promise<void>;
 }
 
-export default function KycTab({
-  userProfile,
-  addToast,
-  onRefresh,
-  onSubmitKYC,
-}: KycTabProps) {
+export default function KycTab({ userProfile, addToast, onRefresh, onSubmitKYC }: KycTabProps) {
   const [fullName, setFullName] = useState(userProfile.kycData?.fullName || '');
-  const [idType, setIdType] = useState<KYCData['idType']>(userProfile.kycData?.idType || 'nin_paper');
+  const [idType, setIdType] = useState<KYCData['idType']>(
+    userProfile.kycData?.idType || 'nin_paper'
+  );
   const [idNumber, setIdNumber] = useState(userProfile.kycData?.idNumber || '');
   const [screenshotUrl, setScreenshotUrl] = useState(userProfile.kycData?.screenshotUrl || '');
   const [holdingIdUrl, setHoldingIdUrl] = useState(userProfile.kycData?.holdingIdUrl || '');
@@ -104,7 +101,10 @@ export default function KycTab({
       )}
 
       {userProfile.kycStatus !== 'approved' && (
-        <form onSubmit={handleSubmit} className="bg-white p-6 rounded-2xl border border-[#E0E7E0] space-y-4">
+        <form
+          onSubmit={handleSubmit}
+          className="bg-white p-6 rounded-2xl border border-[#E0E7E0] space-y-4"
+        >
           <h4 className="font-bold text-sm text-[#1A1A1A]">Submit Identity Information</h4>
 
           <div>
@@ -133,7 +133,9 @@ export default function KycTab({
               </select>
             </div>
             <div>
-              <label className="block text-xs font-bold text-gray-700 mb-1">ID / Document Number</label>
+              <label className="block text-xs font-bold text-gray-700 mb-1">
+                ID / Document Number
+              </label>
               <input
                 type="text"
                 value={idNumber}

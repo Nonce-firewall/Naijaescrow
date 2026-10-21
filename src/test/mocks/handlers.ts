@@ -27,7 +27,8 @@ export function setupFetchMock(customRates?: MockRates) {
   const originalFetch = global.fetch;
 
   const mockFetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-    const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
+    const url =
+      typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
 
     // CoinGecko API calls
     if (url.includes('api.coingecko.com')) {

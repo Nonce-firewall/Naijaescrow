@@ -105,7 +105,10 @@ export default function AnnouncementsTab({
       </div>
 
       {isCreating && (
-        <form onSubmit={handleCreate} className="bg-white p-6 rounded-2xl border border-[#008751]/30 shadow-sm space-y-4">
+        <form
+          onSubmit={handleCreate}
+          className="bg-white p-6 rounded-2xl border border-[#008751]/30 shadow-sm space-y-4"
+        >
           <h4 className="font-bold text-sm text-[#1A1A1A]">Compose New Announcement</h4>
           <div>
             <label className="block text-xs font-bold text-gray-700 mb-1">Title</label>
@@ -179,8 +182,8 @@ export default function AnnouncementsTab({
                         ann.scope === 'all'
                           ? 'bg-blue-50 text-blue-700 border border-blue-200'
                           : ann.scope === 'public'
-                          ? 'bg-purple-50 text-purple-700 border border-purple-200'
-                          : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                            ? 'bg-purple-50 text-purple-700 border border-purple-200'
+                            : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                       }`}
                     >
                       {ann.scope === 'all' && <Users className="w-3 h-3" />}
@@ -190,7 +193,9 @@ export default function AnnouncementsTab({
                     </span>
                     <span
                       className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                        ann.isActive ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-200 text-gray-700'
+                        ann.isActive
+                          ? 'bg-emerald-50 text-emerald-700'
+                          : 'bg-gray-200 text-gray-700'
                       }`}
                     >
                       {ann.isActive ? 'Active' : 'Archived'}

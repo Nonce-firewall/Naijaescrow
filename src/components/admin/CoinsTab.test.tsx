@@ -33,12 +33,7 @@ describe('CoinsTab', () => {
   ];
 
   it('renders coin listings with rates and networks', () => {
-    render(
-      <CoinsTab
-        coins={sampleCoins}
-        addToast={vi.fn()}
-      />
-    );
+    render(<CoinsTab coins={sampleCoins} addToast={vi.fn()} />);
 
     expect(screen.getByText('Tether USD')).toBeInTheDocument();
     expect(screen.getByText('Bitcoin')).toBeInTheDocument();
@@ -48,12 +43,7 @@ describe('CoinsTab', () => {
   });
 
   it('filters coin list based on search term', () => {
-    render(
-      <CoinsTab
-        coins={sampleCoins}
-        addToast={vi.fn()}
-      />
-    );
+    render(<CoinsTab coins={sampleCoins} addToast={vi.fn()} />);
 
     const searchInput = screen.getByPlaceholderText('Search coins...');
     fireEvent.change(searchInput, { target: { value: 'Bitcoin' } });
@@ -66,13 +56,7 @@ describe('CoinsTab', () => {
     const onTogglePublish = vi.fn();
     const addToast = vi.fn();
 
-    render(
-      <CoinsTab
-        coins={sampleCoins}
-        onTogglePublish={onTogglePublish}
-        addToast={addToast}
-      />
-    );
+    render(<CoinsTab coins={sampleCoins} onTogglePublish={onTogglePublish} addToast={addToast} />);
 
     const hideButtons = screen.getAllByRole('button', { name: /hide/i });
     fireEvent.click(hideButtons[0]);

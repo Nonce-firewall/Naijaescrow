@@ -41,13 +41,7 @@ describe('KycTab (User Dashboard)', () => {
     const onSubmitKYC = vi.fn().mockResolvedValue(undefined);
     const addToast = vi.fn();
 
-    render(
-      <KycTab
-        userProfile={unverifiedUser}
-        addToast={addToast}
-        onSubmitKYC={onSubmitKYC}
-      />
-    );
+    render(<KycTab userProfile={unverifiedUser} addToast={addToast} onSubmitKYC={onSubmitKYC} />);
 
     expect(screen.getByText(/Unverified/i)).toBeInTheDocument();
     expect(screen.getByText(/Submit Identity Information/i)).toBeInTheDocument();

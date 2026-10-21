@@ -129,13 +129,17 @@ describe('dbHelpers - Additional Functions 2', () => {
     it('processes order to completed with blockchainTxId', async () => {
       await processOrder('ord-1', 'completed', '0xTxHashConfirmed');
       expect(mockSupabase._updateCalls.some((c) => c.data.status === 'completed')).toBe(true);
-      expect(mockSupabase._updateCalls.some((c) => c.data.blockchain_tx_id === '0xTxHashConfirmed')).toBe(true);
+      expect(
+        mockSupabase._updateCalls.some((c) => c.data.blockchain_tx_id === '0xTxHashConfirmed')
+      ).toBe(true);
     });
 
     it('processes order to rejected with rejection reason', async () => {
       await processOrder('ord-1', 'rejected', undefined, 'Payment invalid');
       expect(mockSupabase._updateCalls.some((c) => c.data.status === 'rejected')).toBe(true);
-      expect(mockSupabase._updateCalls.some((c) => c.data.rejection_reason === 'Payment invalid')).toBe(true);
+      expect(
+        mockSupabase._updateCalls.some((c) => c.data.rejection_reason === 'Payment invalid')
+      ).toBe(true);
     });
   });
 
@@ -196,18 +200,30 @@ describe('dbHelpers - Additional Functions 2', () => {
   describe('User Administration & Disputes', () => {
     it('suspends and terminates users', async () => {
       await suspendUser('usr-1', 'Suspicious activity');
-      expect(mockSupabase._updateCalls.some((c) => c.data.account_status === 'suspended')).toBe(true);
+      expect(mockSupabase._updateCalls.some((c) => c.data.account_status === 'suspended')).toBe(
+        true
+      );
 
       await terminateUser('usr-1', 'Fraud violation');
-      expect(mockSupabase._updateCalls.some((c) => c.data.account_status === 'terminated')).toBe(true);
+      expect(mockSupabase._updateCalls.some((c) => c.data.account_status === 'terminated')).toBe(
+        true
+      );
 
       await reinstateUser('usr-1');
       expect(mockSupabase._updateCalls.some((c) => c.data.account_status === 'active')).toBe(true);
     });
 
     it('updates user notification preferences', async () => {
-      await updateNotificationPreferences('usr-1', { orderUpdates: true, kycUpdates: true, announcements: false });
-      expect(mockSupabase._updateCalls.some((c) => c.data.notification_preferences?.orderUpdates === true)).toBe(true);
+      await updateNotificationPreferences('usr-1', {
+        orderUpdates: true,
+        kycUpdates: true,
+        announcements: false,
+      });
+      expect(
+        mockSupabase._updateCalls.some(
+          (c) => c.data.notification_preferences?.orderUpdates === true
+        )
+      ).toBe(true);
     });
 
     it('submits and resolves disputes and sends dispute messages', async () => {

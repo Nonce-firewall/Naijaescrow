@@ -1,7 +1,12 @@
 import React, { useState } from 'react';
 import { UserProfile } from '../../types';
 import { Users, Shield, ShieldAlert, CheckCircle, XCircle, Search, UserCheck } from 'lucide-react';
-import { suspendUser, terminateUser, reinstateUser, reactivatePendingUser } from '../../lib/dbHelpers';
+import {
+  suspendUser,
+  terminateUser,
+  reinstateUser,
+  reactivatePendingUser,
+} from '../../lib/dbHelpers';
 
 export interface UsersTabProps {
   users: UserProfile[];
@@ -10,12 +15,7 @@ export interface UsersTabProps {
   onSelectUser?: (user: UserProfile) => void;
 }
 
-export default function UsersTab({
-  users,
-  onRefresh,
-  addToast,
-  onSelectUser,
-}: UsersTabProps) {
+export default function UsersTab({ users, onRefresh, addToast, onSelectUser }: UsersTabProps) {
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
@@ -32,8 +32,8 @@ export default function UsersTab({
       filterStatus === 'all'
         ? true
         : filterStatus === 'pending_kyc'
-        ? u.kycStatus === 'pending'
-        : u.accountStatus === filterStatus;
+          ? u.kycStatus === 'pending'
+          : u.accountStatus === filterStatus;
 
     return matchesSearch && matchesStatus;
   });
@@ -113,7 +113,8 @@ export default function UsersTab({
             <h3 className="text-lg font-bold text-[#1A1A1A]">User Directory & Access Control</h3>
           </div>
           <p className="text-xs text-gray-500 mt-1">
-            Manage trader accounts, review status, handle sanctions, and oversee account reactivation.
+            Manage trader accounts, review status, handle sanctions, and oversee account
+            reactivation.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
@@ -166,7 +167,9 @@ export default function UsersTab({
                   <tr key={u.uid} className="hover:bg-gray-50/50 transition">
                     <td className="py-3 px-4">
                       <div className="font-semibold text-gray-900">{u.email}</div>
-                      <div className="text-[10px] font-mono text-gray-400 truncate max-w-xs">{u.uid}</div>
+                      <div className="text-[10px] font-mono text-gray-400 truncate max-w-xs">
+                        {u.uid}
+                      </div>
                       {u.kycData?.fullName && (
                         <div className="text-[11px] text-gray-600 mt-0.5">{u.kycData.fullName}</div>
                       )}
@@ -188,10 +191,10 @@ export default function UsersTab({
                           u.kycStatus === 'approved'
                             ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                             : u.kycStatus === 'pending'
-                            ? 'bg-amber-50 text-amber-700 border border-amber-200'
-                            : u.kycStatus === 'rejected'
-                            ? 'bg-rose-50 text-rose-700 border border-rose-200'
-                            : 'bg-gray-100 text-gray-500'
+                              ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                              : u.kycStatus === 'rejected'
+                                ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                                : 'bg-gray-100 text-gray-500'
                         }`}
                       >
                         {u.kycStatus}
@@ -203,10 +206,10 @@ export default function UsersTab({
                           u.accountStatus === 'active' || !u.accountStatus
                             ? 'bg-emerald-50 text-emerald-700'
                             : u.accountStatus === 'suspended'
-                            ? 'bg-amber-100 text-amber-800'
-                            : u.accountStatus === 'terminated'
-                            ? 'bg-rose-100 text-rose-800'
-                            : 'bg-blue-100 text-blue-800'
+                              ? 'bg-amber-100 text-amber-800'
+                              : u.accountStatus === 'terminated'
+                                ? 'bg-rose-100 text-rose-800'
+                                : 'bg-blue-100 text-blue-800'
                         }`}
                       >
                         {u.accountStatus || 'active'}
@@ -272,7 +275,8 @@ export default function UsersTab({
               </button>
             )}
 
-            {(selectedUser.accountStatus === 'suspended' || selectedUser.accountStatus === 'terminated') && (
+            {(selectedUser.accountStatus === 'suspended' ||
+              selectedUser.accountStatus === 'terminated') && (
               <button
                 type="button"
                 disabled={isProcessing}
@@ -283,16 +287,17 @@ export default function UsersTab({
               </button>
             )}
 
-            {selectedUser.accountStatus !== 'suspended' && selectedUser.accountStatus !== 'terminated' && (
-              <button
-                type="button"
-                disabled={isProcessing}
-                onClick={() => handleSuspend(selectedUser.uid)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold transition disabled:opacity-50"
-              >
-                <Shield className="w-3.5 h-3.5" /> Suspend Account
-              </button>
-            )}
+            {selectedUser.accountStatus !== 'suspended' &&
+              selectedUser.accountStatus !== 'terminated' && (
+                <button
+                  type="button"
+                  disabled={isProcessing}
+                  onClick={() => handleSuspend(selectedUser.uid)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold transition disabled:opacity-50"
+                >
+                  <Shield className="w-3.5 h-3.5" /> Suspend Account
+                </button>
+              )}
 
             {selectedUser.accountStatus !== 'terminated' && (
               <button

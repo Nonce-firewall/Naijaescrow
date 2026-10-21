@@ -96,11 +96,18 @@ export function createMockSupabase(initialStore?: Partial<MockStore>) {
           const insertChain: any = {
             then: (res: any, rej?: any) => resultPromise.then(res, rej),
             select: vi.fn((_cols?: string) => ({
-              then: (res: any, rej?: any) => Promise.resolve({ data: rowsToInsert, error: null }).then(res, rej),
-              single: vi.fn(async () => ({ data: rowsToInsert[0] || { id: 'mock-id-123' }, error: null })),
+              then: (res: any, rej?: any) =>
+                Promise.resolve({ data: rowsToInsert, error: null }).then(res, rej),
+              single: vi.fn(async () => ({
+                data: rowsToInsert[0] || { id: 'mock-id-123' },
+                error: null,
+              })),
               maybeSingle: vi.fn(async () => ({ data: rowsToInsert[0] || null, error: null })),
             })),
-            single: vi.fn(async () => ({ data: rowsToInsert[0] || { id: 'mock-id-123' }, error: null })),
+            single: vi.fn(async () => ({
+              data: rowsToInsert[0] || { id: 'mock-id-123' },
+              error: null,
+            })),
           };
           return insertChain;
         }),
@@ -115,8 +122,12 @@ export function createMockSupabase(initialStore?: Partial<MockStore>) {
           const upsertChain: any = {
             then: (res: any, rej?: any) => resultPromise.then(res, rej),
             select: vi.fn(() => ({
-              then: (res: any, rej?: any) => Promise.resolve({ data: rowsToInsert, error: null }).then(res, rej),
-              single: vi.fn(async () => ({ data: rowsToInsert[0] || { id: 'mock-id-123' }, error: null })),
+              then: (res: any, rej?: any) =>
+                Promise.resolve({ data: rowsToInsert, error: null }).then(res, rej),
+              single: vi.fn(async () => ({
+                data: rowsToInsert[0] || { id: 'mock-id-123' },
+                error: null,
+              })),
             })),
           };
           return upsertChain;

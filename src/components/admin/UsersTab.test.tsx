@@ -40,12 +40,7 @@ describe('UsersTab', () => {
   ];
 
   it('renders user directory table with statuses and roles', () => {
-    render(
-      <UsersTab
-        users={sampleUsers}
-        addToast={vi.fn()}
-      />
-    );
+    render(<UsersTab users={sampleUsers} addToast={vi.fn()} />);
 
     expect(screen.getByText('trader1@test.com')).toBeInTheDocument();
     expect(screen.getByText('badactor@test.com')).toBeInTheDocument();
@@ -54,12 +49,7 @@ describe('UsersTab', () => {
   });
 
   it('filters users by search term', () => {
-    render(
-      <UsersTab
-        users={sampleUsers}
-        addToast={vi.fn()}
-      />
-    );
+    render(<UsersTab users={sampleUsers} addToast={vi.fn()} />);
 
     const searchInput = screen.getByPlaceholderText(/Search by email/i);
     fireEvent.change(searchInput, { target: { value: 'badactor' } });
@@ -70,13 +60,7 @@ describe('UsersTab', () => {
 
   it('opens manage modal and triggers onSelectUser', () => {
     const onSelectUser = vi.fn();
-    render(
-      <UsersTab
-        users={sampleUsers}
-        onSelectUser={onSelectUser}
-        addToast={vi.fn()}
-      />
-    );
+    render(<UsersTab users={sampleUsers} onSelectUser={onSelectUser} addToast={vi.fn()} />);
 
     const manageButtons = screen.getAllByRole('button', { name: /Manage/i });
     fireEvent.click(manageButtons[0]);

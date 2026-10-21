@@ -97,10 +97,16 @@ export default function DisputesTab({
                       : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
                   }`}
                 >
-                  {disp.status === 'open' ? <Clock className="w-3 h-3" /> : <CheckCircle className="w-3 h-3" />}
+                  {disp.status === 'open' ? (
+                    <Clock className="w-3 h-3" />
+                  ) : (
+                    <CheckCircle className="w-3 h-3" />
+                  )}
                   {disp.status}
                 </span>
-                <span className="text-[10px] font-mono text-gray-400">Order #{disp.orderId.substring(0, 8)}</span>
+                <span className="text-[10px] font-mono text-gray-400">
+                  Order #{disp.orderId.substring(0, 8)}
+                </span>
               </div>
 
               <div className="space-y-1 mb-4">
@@ -110,7 +116,9 @@ export default function DisputesTab({
                 </p>
                 {disp.adminResponse && (
                   <div className="mt-2 text-xs text-emerald-900 bg-emerald-50 rounded-xl p-3 border border-emerald-200">
-                    <span className="font-bold block text-[11px] text-emerald-800 mb-0.5">Admin Resolution:</span>
+                    <span className="font-bold block text-[11px] text-emerald-800 mb-0.5">
+                      Admin Resolution:
+                    </span>
                     {disp.adminResponse}
                   </div>
                 )}
@@ -146,7 +154,10 @@ export default function DisputesTab({
       )}
 
       {selectedDispute && (
-        <form onSubmit={handleResolve} className="bg-white p-6 rounded-2xl border border-amber-300 shadow-sm space-y-4">
+        <form
+          onSubmit={handleResolve}
+          className="bg-white p-6 rounded-2xl border border-amber-300 shadow-sm space-y-4"
+        >
           <div className="flex justify-between items-center border-b pb-3">
             <h4 className="font-bold text-sm text-[#1A1A1A]">
               Resolve Dispute for Order #{selectedDispute.orderId}

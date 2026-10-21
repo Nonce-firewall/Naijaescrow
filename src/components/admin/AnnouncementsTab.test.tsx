@@ -25,12 +25,7 @@ describe('AnnouncementsTab', () => {
   ];
 
   it('renders announcements list and active/archived tags', () => {
-    render(
-      <AnnouncementsTab
-        announcements={sampleAnnouncements}
-        addToast={vi.fn()}
-      />
-    );
+    render(<AnnouncementsTab announcements={sampleAnnouncements} addToast={vi.fn()} />);
 
     expect(screen.getByText('Platform Maintenance Notice')).toBeInTheDocument();
     expect(screen.getByText(/Servers will update tonight/i)).toBeInTheDocument();
@@ -40,18 +35,15 @@ describe('AnnouncementsTab', () => {
   });
 
   it('toggles compose form visibility when New Notice button is clicked', () => {
-    render(
-      <AnnouncementsTab
-        announcements={sampleAnnouncements}
-        addToast={vi.fn()}
-      />
-    );
+    render(<AnnouncementsTab announcements={sampleAnnouncements} addToast={vi.fn()} />);
 
     const newNoticeBtn = screen.getByRole('button', { name: /New Notice/i });
     fireEvent.click(newNoticeBtn);
 
     expect(screen.getByText('Compose New Announcement')).toBeInTheDocument();
-    expect(screen.getByPlaceholderText(/e\.g\., Scheduled Network Maintenance/i)).toBeInTheDocument();
+    expect(
+      screen.getByPlaceholderText(/e\.g\., Scheduled Network Maintenance/i)
+    ).toBeInTheDocument();
   });
 
   it('triggers onToggleActive when visibility icon is clicked', () => {

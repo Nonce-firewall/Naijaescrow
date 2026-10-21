@@ -45,7 +45,9 @@ describe('DisputesTab (User Dashboard)', () => {
       />
     );
 
-    expect(screen.getByText(/Bank transfer completed but crypto not released/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Bank transfer completed but crypto not released/i)
+    ).toBeInTheDocument();
     expect(screen.getByText('open')).toBeInTheDocument();
   });
 
@@ -79,7 +81,10 @@ describe('DisputesTab (User Dashboard)', () => {
     fireEvent.click(submitBtn);
 
     await waitFor(() => {
-      expect(onSubmitDispute).toHaveBeenCalledWith('ord-abc-12345678', 'Dispute description details');
+      expect(onSubmitDispute).toHaveBeenCalledWith(
+        'ord-abc-12345678',
+        'Dispute description details'
+      );
       expect(addToast).toHaveBeenCalledWith(expect.stringContaining('Dispute opened'), 'success');
     });
   });

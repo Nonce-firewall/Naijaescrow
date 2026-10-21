@@ -9,11 +9,7 @@ export interface OrdersTabProps {
   onOpenDispute?: (order: Order) => void;
 }
 
-export default function OrdersTab({
-  orders,
-  onSelectOrder,
-  onOpenDispute,
-}: OrdersTabProps) {
+export default function OrdersTab({ orders, onSelectOrder, onOpenDispute }: OrdersTabProps) {
   const [filterType, setFilterType] = useState<'all' | 'buy' | 'sell'>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
 
@@ -29,7 +25,9 @@ export default function OrdersTab({
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-white p-4 rounded-2xl border border-[#E0E7E0]">
         <div>
           <h3 className="font-bold text-sm text-[#1A1A1A]">My Transaction History</h3>
-          <p className="text-xs text-gray-500">Track the real-time status of your NGN/USDT escrow trades.</p>
+          <p className="text-xs text-gray-500">
+            Track the real-time status of your NGN/USDT escrow trades.
+          </p>
         </div>
         <div className="flex items-center gap-2 w-full sm:w-auto">
           <select
@@ -69,7 +67,9 @@ export default function OrdersTab({
               <div className="flex items-center gap-3">
                 <div
                   className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-                    order.type === 'buy' ? 'bg-emerald-50 text-emerald-600' : 'bg-blue-50 text-blue-600'
+                    order.type === 'buy'
+                      ? 'bg-emerald-50 text-emerald-600'
+                      : 'bg-blue-50 text-blue-600'
                   }`}
                 >
                   {order.type === 'buy' ? (
@@ -88,15 +88,16 @@ export default function OrdersTab({
                         order.status === 'completed'
                           ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                           : order.status === 'pending'
-                          ? 'bg-amber-50 text-amber-700 border border-amber-200'
-                          : 'bg-rose-50 text-rose-700 border border-rose-200'
+                            ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                            : 'bg-rose-50 text-rose-700 border border-rose-200'
                       }`}
                     >
                       {order.status}
                     </span>
                   </div>
                   <div className="text-xs text-gray-500 font-mono mt-0.5">
-                    ₦{order.ngnAmount.toLocaleString()} @ ₦{order.rate.toLocaleString()} • {order.network}
+                    ₦{order.ngnAmount.toLocaleString()} @ ₦{order.rate.toLocaleString()} •{' '}
+                    {order.network}
                   </div>
                   <div className="text-[10px] text-gray-400 mt-1">
                     {formatNGTDate(order.createdAt)} • Ref: {order.id.substring(0, 8)}

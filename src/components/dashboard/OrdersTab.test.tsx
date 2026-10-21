@@ -57,12 +57,7 @@ describe('OrdersTab (User Dashboard)', () => {
 
   it('triggers onOpenDispute when Open Dispute is clicked on a pending order', () => {
     const onOpenDispute = vi.fn();
-    render(
-      <OrdersTab
-        orders={sampleOrders}
-        onOpenDispute={onOpenDispute}
-      />
-    );
+    render(<OrdersTab orders={sampleOrders} onOpenDispute={onOpenDispute} />);
 
     const disputeBtn = screen.getByRole('button', { name: /Open Dispute/i });
     fireEvent.click(disputeBtn);

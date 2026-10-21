@@ -29,12 +29,7 @@ describe('DisputesTab (Admin)', () => {
   ];
 
   it('renders dispute cards and status labels', () => {
-    render(
-      <DisputesTab
-        disputes={sampleDisputes}
-        addToast={vi.fn()}
-      />
-    );
+    render(<DisputesTab disputes={sampleDisputes} addToast={vi.fn()} />);
 
     expect(screen.getByText('trader1@test.com')).toBeInTheDocument();
     expect(screen.getByText(/Paid via bank transfer/i)).toBeInTheDocument();
@@ -43,12 +38,7 @@ describe('DisputesTab (Admin)', () => {
   });
 
   it('filters disputes by status', () => {
-    render(
-      <DisputesTab
-        disputes={sampleDisputes}
-        addToast={vi.fn()}
-      />
-    );
+    render(<DisputesTab disputes={sampleDisputes} addToast={vi.fn()} />);
 
     const filterSelect = screen.getByRole('combobox');
     fireEvent.change(filterSelect, { target: { value: 'open' } });
@@ -60,11 +50,7 @@ describe('DisputesTab (Admin)', () => {
   it('opens resolution form on Resolve Dispute click', () => {
     const onSelectDispute = vi.fn();
     render(
-      <DisputesTab
-        disputes={sampleDisputes}
-        onSelectDispute={onSelectDispute}
-        addToast={vi.fn()}
-      />
+      <DisputesTab disputes={sampleDisputes} onSelectDispute={onSelectDispute} addToast={vi.fn()} />
     );
 
     const resolveBtn = screen.getByRole('button', { name: /Resolve Dispute/i });

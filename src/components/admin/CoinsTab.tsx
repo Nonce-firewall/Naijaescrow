@@ -91,7 +91,9 @@ export default function CoinsTab({
             <div
               key={coin.id}
               className={`bg-white rounded-2xl border p-5 flex flex-col justify-between transition-shadow hover:shadow-sm ${
-                coin.published !== false ? 'border-[#E0E7E0]' : 'border-gray-200 opacity-60 bg-gray-50'
+                coin.published !== false
+                  ? 'border-[#E0E7E0]'
+                  : 'border-gray-200 opacity-60 bg-gray-50'
               }`}
             >
               <div>
@@ -137,11 +139,15 @@ export default function CoinsTab({
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-500">Min Trade:</span>
-                    <span className="font-bold text-gray-800">{coin.minTradeAmount ?? 1} {coin.symbol}</span>
+                    <span className="font-bold text-gray-800">
+                      {coin.minTradeAmount ?? 1} {coin.symbol}
+                    </span>
                   </div>
                   <div className="pt-1 border-t border-gray-200/60 truncate">
                     <span className="text-gray-400 block text-[10px]">Deposit Wallet:</span>
-                    <span className="text-[11px] text-gray-700 break-all">{coin.walletAddress}</span>
+                    <span className="text-[11px] text-gray-700 break-all">
+                      {coin.walletAddress}
+                    </span>
                   </div>
                 </div>
               </div>

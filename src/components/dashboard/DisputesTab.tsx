@@ -69,7 +69,8 @@ export default function DisputesTab({
             <h3 className="font-bold text-base text-[#1A1A1A]">Dispute Resolution</h3>
           </div>
           <p className="text-xs text-gray-500 mt-1">
-            Need help with an order? Open an official dispute and get support from our escrow mediation team.
+            Need help with an order? Open an official dispute and get support from our escrow
+            mediation team.
           </p>
         </div>
         <button
@@ -83,7 +84,10 @@ export default function DisputesTab({
       </div>
 
       {isOpeningNew && (
-        <form onSubmit={handleSubmit} className="bg-white p-6 rounded-2xl border border-amber-300 shadow-sm space-y-4">
+        <form
+          onSubmit={handleSubmit}
+          className="bg-white p-6 rounded-2xl border border-amber-300 shadow-sm space-y-4"
+        >
           <h4 className="font-bold text-sm text-[#1A1A1A]">File a Transaction Dispute</h4>
           <div>
             <label className="block text-xs font-bold text-gray-700 mb-1">Select Transaction</label>
@@ -95,7 +99,8 @@ export default function DisputesTab({
               <option value="">-- Choose Order to Dispute --</option>
               {eligibleOrders.map((ord) => (
                 <option key={ord.id} value={ord.id}>
-                  #{ord.id.substring(0, 8)}: {ord.type.toUpperCase()} {ord.cryptoAmount} {ord.token} (₦{ord.ngnAmount.toLocaleString()})
+                  #{ord.id.substring(0, 8)}: {ord.type.toUpperCase()} {ord.cryptoAmount} {ord.token}{' '}
+                  (₦{ord.ngnAmount.toLocaleString()})
                 </option>
               ))}
             </select>
@@ -147,7 +152,9 @@ export default function DisputesTab({
               }`}
             >
               <div className="flex justify-between items-center mb-2">
-                <span className="text-xs font-bold text-gray-900">Order Ref: #{disp.orderId.substring(0, 8)}</span>
+                <span className="text-xs font-bold text-gray-900">
+                  Order Ref: #{disp.orderId.substring(0, 8)}
+                </span>
                 <span
                   className={`text-[10px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1 uppercase ${
                     disp.status === 'open'
@@ -155,7 +162,11 @@ export default function DisputesTab({
                       : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
                   }`}
                 >
-                  {disp.status === 'open' ? <Clock className="w-3 h-3" /> : <CheckCircle className="w-3 h-3" />}
+                  {disp.status === 'open' ? (
+                    <Clock className="w-3 h-3" />
+                  ) : (
+                    <CheckCircle className="w-3 h-3" />
+                  )}
                   {disp.status}
                 </span>
               </div>
@@ -164,7 +175,9 @@ export default function DisputesTab({
               </p>
               {disp.adminResponse && (
                 <div className="mt-3 text-xs text-emerald-900 bg-emerald-50 rounded-xl p-3 border border-emerald-200">
-                  <span className="font-bold block text-[11px] text-emerald-800 mb-0.5">Admin Response:</span>
+                  <span className="font-bold block text-[11px] text-emerald-800 mb-0.5">
+                    Admin Response:
+                  </span>
                   {disp.adminResponse}
                 </div>
               )}

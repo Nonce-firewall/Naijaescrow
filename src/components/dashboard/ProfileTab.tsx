@@ -122,8 +122,12 @@ export default function ProfileTab({
             <span className="font-semibold text-gray-800 capitalize">{userProfile.kycStatus}</span>
           </div>
           <div>
-            <span className="text-gray-400 block text-[10px] uppercase font-bold">Account Status</span>
-            <span className="font-semibold text-gray-800 capitalize">{userProfile.accountStatus || 'active'}</span>
+            <span className="text-gray-400 block text-[10px] uppercase font-bold">
+              Account Status
+            </span>
+            <span className="font-semibold text-gray-800 capitalize">
+              {userProfile.accountStatus || 'active'}
+            </span>
           </div>
         </div>
       </div>
@@ -139,7 +143,9 @@ export default function ProfileTab({
           <label className="flex items-center justify-between p-3 rounded-xl bg-gray-50 border border-gray-100 cursor-pointer">
             <div>
               <div className="font-semibold text-gray-900">Order Updates</div>
-              <div className="text-gray-500 text-[11px]">Receive notifications when your order status changes</div>
+              <div className="text-gray-500 text-[11px]">
+                Receive notifications when your order status changes
+              </div>
             </div>
             <input
               type="checkbox"
@@ -152,7 +158,9 @@ export default function ProfileTab({
           <label className="flex items-center justify-between p-3 rounded-xl bg-gray-50 border border-gray-100 cursor-pointer">
             <div>
               <div className="font-semibold text-gray-900">KYC Status Updates</div>
-              <div className="text-gray-500 text-[11px]">Get notified when your verification is approved or reviewed</div>
+              <div className="text-gray-500 text-[11px]">
+                Get notified when your verification is approved or reviewed
+              </div>
             </div>
             <input
               type="checkbox"
@@ -165,7 +173,9 @@ export default function ProfileTab({
           <label className="flex items-center justify-between p-3 rounded-xl bg-gray-50 border border-gray-100 cursor-pointer">
             <div>
               <div className="font-semibold text-gray-900">System Bulletins</div>
-              <div className="text-gray-500 text-[11px]">Get alerted to rate changes and maintenance windows</div>
+              <div className="text-gray-500 text-[11px]">
+                Get alerted to rate changes and maintenance windows
+              </div>
             </div>
             <input
               type="checkbox"
@@ -189,7 +199,10 @@ export default function ProfileTab({
       </div>
 
       {/* Change Password */}
-      <form onSubmit={handleChangePassword} className="bg-white p-6 rounded-2xl border border-[#E0E7E0] space-y-4">
+      <form
+        onSubmit={handleChangePassword}
+        className="bg-white p-6 rounded-2xl border border-[#E0E7E0] space-y-4"
+      >
         <div className="flex items-center gap-2">
           <KeyRound className="w-5 h-5 text-[#008751]" />
           <h4 className="font-bold text-sm text-[#1A1A1A]">Security & Password</h4>
@@ -207,7 +220,9 @@ export default function ProfileTab({
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-gray-700 mb-1">Confirm New Password</label>
+            <label className="block text-xs font-bold text-gray-700 mb-1">
+              Confirm New Password
+            </label>
             <input
               type="password"
               value={confirmPassword}
@@ -236,7 +251,8 @@ export default function ProfileTab({
           <h4 className="font-bold text-sm">Delete Account</h4>
         </div>
         <p className="text-xs text-rose-700">
-          Permanently scrub your profile. In accordance with anti-fraud financial laws, KYC records are retained for compliance purposes.
+          Permanently scrub your profile. In accordance with anti-fraud financial laws, KYC records
+          are retained for compliance purposes.
         </p>
 
         {!showDeleteConfirm ? (
